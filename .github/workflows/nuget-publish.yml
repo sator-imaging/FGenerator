@@ -4,45 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        cli-unity: ["", "--unity"]
-        cli-merge: ["", "--merge"]
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.x.x
-
-    - name: Test (release)
-      run: |
-        dotnet clean          cli
-        dotnet run  --project cli -c Release -- build \
-          ${{ matrix.cli-unity }} \
-          ${{ matrix.cli-merge }} \
-          --force --output  ./.z__merged_dll__ \
-          "./sample/*.cs"  # enquote to prevent expanding
-
-        dotnet clean         sample/SampleConsumer
-        dotnet run --project sample/SampleConsumer  -c Release
-
-    - name: Pack (release)
-      run: |
-        ##dotnet build -c Release -p:ContinuousIntegrationBuild=true
-
-        cd ./${{ matrix.package }}
-        dotnet pack  -c Release -p:ContinuousIntegrationBuild=true
-        cd ..
 
   publish:
-    needs: test
-    if: ${{ !failure() }}
-
     runs-on: ubuntu-latest
 
     permissions:
@@ -52,6 +15,15 @@ jobs:
     strategy:
       matrix:
         package: [sdk, cli, src]
+
+    steps:
+    - uses: ./.github/workflows/test.yml
+
+    - name: Pack (release)
+      run: |
+        cd ./${{ matrix.package }}
+        dotnet pack  -c Release -p:ContinuousIntegrationBuild=true
+        cd ..
 
     ################################
     #  NUGET
