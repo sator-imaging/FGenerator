@@ -1,6 +1,6 @@
-using System;
 using StackArrayGenerator;
 using StackListGenerator;
+using System;
 
 namespace SampleConsumer
 {
