@@ -12,6 +12,12 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        cli-unity: ["", "--unity"]
+        cli-merge: ["", "--merge"]
+        package: [sdk, cli, src]
+
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
@@ -19,23 +25,25 @@ jobs:
       with:
         dotnet-version: 10.x.x
 
+    - name: Test (release)
+      run: |
+        dotnet clean          cli
+        dotnet run  --project cli -c Release -- build \
+          ${{ matrix.cli-unity }} \
+          ${{ matrix.cli-merge }} \
+          --force --output  ./.z__merged_dll__ \
+          ./sample/*.cs
+
+        dotnet clean         sample/SampleConsumer
+        dotnet run --project sample/SampleConsumer  -c Release
+
     - name: Pack (release)
       run: |
         ##dotnet build -c Release -p:ContinuousIntegrationBuild=true
 
-        cd ./sdk
+        cd ./${{ matrix.package }}
         dotnet pack  -c Release -p:ContinuousIntegrationBuild=true
         cd ..
-
-    - name: Test (release)
-      run: |
-        #dotnet run --project cli -c Release -- build \
-        #  --unity --force --output  ./.z__merged_dll__ \
-        #  ./sample/*.cs
-
-        #dotnet clean         sample/SampleConsumer
-        #dotnet run --project sample/SampleConsumer  -c Debug
-        #dotnet run --project sample/SampleConsumer  -c Release
 
     ################################
     #  NUGET
@@ -47,7 +55,7 @@ jobs:
 
     - name: NuGet Publish
       run: |
-        cd ./sdk
+        cd ./${{ matrix.package }}
         dotnet nuget push "bin/Release/*.nupkg"  \
           -k ${{ steps.login.outputs.NUGET_API_KEY }}  \
           -s https://api.nuget.org/v3/index.json \
