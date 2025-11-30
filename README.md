@@ -1,7 +1,12 @@
-`FGenerator` is a lightweight framework for creating feature-rich `Roslyn` source generators including diagnostic reporting capability, within a single `.cs` file.
+[![nuget](https://img.shields.io/nuget/vpre/FGenerator)](https://www.nuget.org/packages/FGenerator)
+[![Cli](https://img.shields.io/nuget/vpre/FGenerator.Cli?label=Cli)](https://www.nuget.org/packages/FGenerator.Cli)
+[![Sdk](https://img.shields.io/nuget/vpre/FGenerator.Sdk?label=Sdk)](https://www.nuget.org/packages/FGenerator.Sdk)
 
 
 
+
+
+`FGenerator` is a lightweight framework for creating feature-rich Roslyn incremental source generators (`IIncrementalGenerator`) including diagnostic reporting capability, within a single `.cs` file.
 
 
 # ✨ Key Concepts
@@ -9,7 +14,8 @@
 - **Focus on Logic**: The framework finds targets, generates code and report diagnostic on your behalf.
 - **Single File**: Optimized for file-based app project; develop full-featured generator and analyzer in a day.
 - **Type-Handling**: Nested/generic-safe naming and partial declarations stay consistent without boilerplate.
-- **🤖 AI Agent Friendly**: Produce valid and well-designed generators without extra prompts and instructions.
+- **AI Agent Friendly**: Produce valid and well-designed generators without extra prompts and instructions.
+- **Unity Engine Supported**: Unity 2022.3.12 or newer is supported.
 
 
 
@@ -23,11 +29,11 @@ A trimmed-down starting point for a generator that targets an attribute named `M
 
 > [!IMPORTANT]
 > *For AI Coding Agents:* .NET 10.0 introduced new directives for file-based app.
-> - SHALL use `#:sdk FGenerator.Sdk` directive.
+> - SHALL use `#:sdk FGenerator.Sdk@*` directive.
 > - SHALL NOT use `#r` or other directives formerly used for *dotnet-script* (`.csx`) files.
 
 ```csharp
-#:sdk FGenerator.Sdk
+#:sdk FGenerator.Sdk@*
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -193,7 +199,7 @@ dnx FGenerator.Cli -- build "generators/**/*.cs" --output ./artifacts
 ```
 
 Options:
-- `--unity` to emit Unity `.meta` files alongside DLLs.
+- `--unity` to emit Unity `.meta` files alongside DLLs (Unity 2022.3.12 or newer).
 - `--merge` to merge build outputs into a single DLL.
 - `--force` to overwrite existing files.
 - `--debug` to build with `-c Debug` instead of Release.
