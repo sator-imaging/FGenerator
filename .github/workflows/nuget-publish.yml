@@ -4,19 +4,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish:
-
-    permissions:
-      id-token: write  # enable GitHub OIDC token issuance for this job
-      contents: read   # required for private repo
-
+  test:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         cli-unity: ["", "--unity"]
         cli-merge: ["", "--merge"]
-        package: [sdk, cli, src]
 
     steps:
     - uses: actions/checkout@v4
@@ -44,6 +38,20 @@ jobs:
         cd ./${{ matrix.package }}
         dotnet pack  -c Release -p:ContinuousIntegrationBuild=true
         cd ..
+
+  publish:
+    needs: test
+    if: ${{ !failure() }}
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # enable GitHub OIDC token issuance for this job
+      contents: read   # required for private repo
+
+    strategy:
+      matrix:
+        package: [sdk, cli, src]
 
     ################################
     #  NUGET
