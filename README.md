@@ -1,6 +1,8 @@
 [![nuget](https://img.shields.io/nuget/vpre/FGenerator)](https://www.nuget.org/packages/FGenerator)
 [![Cli](https://img.shields.io/nuget/vpre/FGenerator.Cli?label=Cli)](https://www.nuget.org/packages/FGenerator.Cli)
 [![Sdk](https://img.shields.io/nuget/vpre/FGenerator.Sdk?label=Sdk)](https://www.nuget.org/packages/FGenerator.Sdk)
+&nbsp;
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
 
 
 
@@ -29,11 +31,11 @@ A trimmed-down starting point for a generator that targets an attribute named `M
 
 > [!IMPORTANT]
 > *For AI Coding Agents:* .NET 10.0 introduced new directives for file-based app.
-> - SHALL use `#:sdk FGenerator.Sdk@*` directive.
+> - SHALL use `#:sdk FGenerator.Sdk@1.0.0` directive.
 > - SHALL NOT use `#r` or other directives formerly used for *dotnet-script* (`.csx`) files.
 
 ```csharp
-#:sdk FGenerator.Sdk@*
+#:sdk FGenerator.Sdk@1.0.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
