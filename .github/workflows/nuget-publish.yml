@@ -32,7 +32,7 @@ jobs:
           ${{ matrix.cli-unity }} \
           ${{ matrix.cli-merge }} \
           --force --output  ./.z__merged_dll__ \
-          ./sample/*.cs
+          "./sample/*.cs"  # enquote to prevent expanding
 
         dotnet clean         sample/SampleConsumer
         dotnet run --project sample/SampleConsumer  -c Release
