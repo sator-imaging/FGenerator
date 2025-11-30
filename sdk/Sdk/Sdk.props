@@ -37,7 +37,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>10.0</LangVersion>  <!-- 10.0 required for 'global using' -->
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
