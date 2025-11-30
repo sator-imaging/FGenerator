@@ -17,6 +17,8 @@ jobs:
         package: [sdk, cli, src]
 
     steps:
+    - uses: actions/checkout@v4
+
     - uses: ./.github/workflows/test.yml
 
     - name: Pack (release)
