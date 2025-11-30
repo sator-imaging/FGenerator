@@ -10,7 +10,7 @@ jobs:
 
   publish:
     needs: test
-    if: $ {{ !failure() }}
+    if: ${{ !failure() }}
     runs-on: ubuntu-latest
 
     permissions:
