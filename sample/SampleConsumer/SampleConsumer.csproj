@@ -19,6 +19,7 @@
     -->
 
     <Analyzer Include="../../.z__merged_dll__/debug-all-types.dll" />
+    <Analyzer Include="../../.z__merged_dll__/debug-any-target.dll" />
 
     <Analyzer Include="../../.z__merged_dll__/FGenerator.dll"
               Condition=" Exists('../../.z__merged_dll__/FGenerator.dll') " />
