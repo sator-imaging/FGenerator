@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference the generator project -->
+    <!-- OutputItemType="Analyzer" makes it work as a source generator -->
+    <!--
+    <ProjectReference Include="../AutoNotifyGenerator/AutoNotifyGenerator.csproj" 
+                      OutputItemType="Analyzer" 
+                      ReferenceOutputAssembly="false" />
+    -->
+
+    <Analyzer Include="../../.z__merged_dll__/FGenerator.dll" />
+    <Analyzer Include="../../.z__merged_dll__/FGDebugGenerator.dll" />
+    <Analyzer Include="../../.z__merged_dll__/AutoNotifyGenerator.dll" />
+    <Analyzer Include="../../.z__merged_dll__/StackArrayGenerator.dll" />
+    <Analyzer Include="../../.z__merged_dll__/StackListGenerator.dll" />
+
+  </ItemGroup>
+
+</Project>
