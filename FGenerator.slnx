@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/FGenerator.csproj" />
+  <Project Path="cli/FGenerator.Cli.csproj" />
+  <Project Path="sample/SampleConsumer/SampleConsumer.csproj" />
+</Solution>
