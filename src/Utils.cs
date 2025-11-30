@@ -51,16 +51,14 @@ namespace FGenerator
             return sb.ToString();
         }
 
-        private static ImmutableStack<ITypeSymbol> GetContainingTypes(ISymbol target)
+        private static ImmutableStack<ISymbol> GetContainingTypes(ISymbol target)
         {
-            var result = ImmutableStack<ITypeSymbol>.Empty;
+            var result = ImmutableStack<ISymbol>.Empty;
 
-            if (target is ITypeSymbol containing)
+            ISymbol containing = target;
+            while ((containing = containing.ContainingType) != null)
             {
-                while ((containing = containing.ContainingType) != null)
-                {
-                    result = result.Push(containing);
-                }
+                result = result.Push(containing);
             }
 
             return result;
