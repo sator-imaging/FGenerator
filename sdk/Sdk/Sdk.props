@@ -37,8 +37,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <LangVersion>10.0</LangVersion>  <!-- 10.0 required for 'global using' -->
     <Nullable>enable</Nullable>
+    
+    <!-- 10.0 required for 'global using' -->
+    <LangVersion>10.0</LangVersion>
+
+    <!-- Declare types in namespaces -->
+    <!-- Missing XML comment for publicly visible type or member -->
+    <NoWarn>$(NoWarn);CA1050;CS1591</NoWarn>
   </PropertyGroup>
 
 </Project>
