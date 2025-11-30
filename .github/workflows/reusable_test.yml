@@ -32,4 +32,12 @@ jobs:
           "test/*.cs" -f -o ./.z__merged_dll__
 
         dotnet clean         sample/SampleConsumer
-        dotnet run --project sample/SampleConsumer  -c Release
+        dotnet run --project sample/SampleConsumer  -c Release \
+          -p:EmitCompilerGeneratedFiles=true \
+          -p:CompilerGeneratedFilesOutputPath="../../.generated"
+
+    - name: Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-sources
+        path: ./.generated/**
