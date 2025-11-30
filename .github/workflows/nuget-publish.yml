@@ -5,7 +5,12 @@ on:
 
 jobs:
 
+  test:
+    uses: ./.github/workflows/reusable_test.yml
+
   publish:
+    needs: test
+    if: $ {{ !failure() }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -17,10 +22,6 @@ jobs:
         package: [sdk, cli, src]
 
     steps:
-    - uses: actions/checkout@v4
-
-    - uses: ./.github/workflows/test.yml
-
     - name: Pack (release)
       run: |
         cd ./${{ matrix.package }}

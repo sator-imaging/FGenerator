@@ -1,0 +1,32 @@
+on:
+  workflow_call:
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        cli-unity: ["", "--unity"]
+        cli-merge: ["", "--merge"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.x.x
+
+    - name: Test (release)
+      run: |
+        dotnet clean          cli
+        dotnet run  --project cli -c Release -- build \
+          ${{ matrix.cli-unity }} \
+          ${{ matrix.cli-merge }} \
+          --force --output  ./.z__merged_dll__ \
+          "./sample/*.cs"  # enquote to prevent expanding
+
+        dotnet clean         sample/SampleConsumer
+        dotnet run --project sample/SampleConsumer  -c Release
