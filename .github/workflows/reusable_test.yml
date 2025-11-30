@@ -45,3 +45,4 @@ jobs:
       with:
         name: generated-sources
         path: ./.generated/**
+        include-hidden-files: true
