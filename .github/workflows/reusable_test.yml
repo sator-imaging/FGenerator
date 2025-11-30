@@ -41,7 +41,7 @@ jobs:
         ls -al
 
     - name: Artifact
-      if: ${{ !matrix.cli-unity }} && ${{ !matrix.cli-merge }}
+      if: ${{ matrix.cli-unity == '' }} && ${{ matrix.cli-merge == '' }}
       uses: actions/upload-artifact@v4
       with:
         name: generated-sources
