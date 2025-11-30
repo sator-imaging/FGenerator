@@ -129,9 +129,9 @@ namespace AutoNotifyGenerator
             sb.AppendLine("        /// Sets the field value and raises PropertyChanged if the value changed.");
             sb.AppendLine("        /// </summary>");
             sb.AppendLine("        /// <returns>True if the value changed, false otherwise.</returns>");
-            sb.AppendLine("        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)");
+            sb.AppendLine("        protected bool SetField<A>(ref A field, A value, [CallerMemberName] string? propertyName = null)");
             sb.AppendLine("        {");
-            sb.AppendLine("            if (System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))");
+            sb.AppendLine("            if (System.Collections.Generic.EqualityComparer<A>.Default.Equals(field, value))");
             sb.AppendLine("            {");
             sb.AppendLine("                return false;");
             sb.AppendLine("            }");
