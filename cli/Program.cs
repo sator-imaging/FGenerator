@@ -194,29 +194,36 @@ namespace FGenerator.Cli
 
                 Console.WriteLine("Build succeeded.");
 
+                var generatedFiles = new List<FileInfo>();
+
                 if (merge)
                 {
-                    int mergeResult = PerformMerge(input, tempDir, output, force);
+                    int mergeResult = PerformMerge(input, tempDir, output, force, out var mergedFile);
                     if (mergeResult != 0)
                     {
                         return mergeResult;
+                    }
+                    if (mergedFile != null)
+                    {
+                        generatedFiles.Add(mergedFile);
                     }
                 }
                 else
                 {
                     // Move .dll files from temp to output directory
-                    int moveResult = MoveDllFiles(tempDir, output, force);
+                    int moveResult = MoveDllFiles(tempDir, output, force, out var movedFiles);
                     if (moveResult != 0)
                     {
                         return moveResult;
                     }
+                    generatedFiles.AddRange(movedFiles);
                 }
 
                 if (unity)
                 {
                     Console.WriteLine("Unity mode enabled. Generating .meta files...");
-                    // Generate .meta files in the actual output directory
-                    foreach (var file in output.GetFiles("*.dll"))
+                    // Generate .meta files only for the files we just created/moved
+                    foreach (var file in generatedFiles)
                     {
                         Utils.GenerateUnityMeta(file, force);
                     }
@@ -261,8 +268,9 @@ namespace FGenerator.Cli
             return 0;
         }
 
-        static int PerformMerge(FileInfo input, DirectoryInfo buildOutputDir, DirectoryInfo finalOutputDir, bool force)
+        static int PerformMerge(FileInfo input, DirectoryInfo buildOutputDir, DirectoryInfo finalOutputDir, bool force, out FileInfo? resultFile)
         {
+            resultFile = null;
             try
             {
                 Console.WriteLine("Merge mode enabled.");
@@ -300,6 +308,7 @@ namespace FGenerator.Cli
                 finalOutputDir.Create();
                 File.Copy(mergedDllPath, destPath, overwrite: true);
 
+                resultFile = new FileInfo(destPath);
                 return 0;
             }
             catch (Exception ex)
@@ -309,8 +318,9 @@ namespace FGenerator.Cli
             }
         }
 
-        static int MoveDllFiles(DirectoryInfo sourceDir, DirectoryInfo destDir, bool force)
+        static int MoveDllFiles(DirectoryInfo sourceDir, DirectoryInfo destDir, bool force, out List<FileInfo> movedFiles)
         {
+            movedFiles = new List<FileInfo>();
             try
             {
                 Console.WriteLine($"Moving .dll files to {destDir.FullName}...");
@@ -343,6 +353,7 @@ namespace FGenerator.Cli
 
                     Console.WriteLine($"Moving: {dllFile.Name}");
                     File.Copy(dllFile.FullName, destPath, overwrite: true);
+                    movedFiles.Add(new FileInfo(destPath));
                 }
 
                 return 0;
