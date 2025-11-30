@@ -1,0 +1,44 @@
+<Project>
+  <!-- Forward to Microsoft.NET.Sdk -->
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
+
+  <!-- Minimal requirements for roslyn development -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <!-- false to simplify CI workflow -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <!-- Do not include the generator as a lib dependency -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- Debug settings for Visual Studio -->
+    <VSSDKTargetPlatformRegRootSuffix>Roslyn</VSSDKTargetPlatformRegRootSuffix>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
+    <StartArguments>/rootsuffix $(VSSDKTargetPlatformRegRootSuffix)</StartArguments>
+  </PropertyGroup>
+
+  <!-- Required for file-based app project -->
+  <PropertyGroup>
+    <PublishAot>false</PublishAot>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!-- FGenerator -->
+  <ItemGroup>
+    <!-- no way to 'bake' target version easily (this file is not preprocessed by msbuild) -->
+    <PackageReference Include="FGenerator" Version="*" />
+  </ItemGroup>
+
+  <!-- Optional -->
+  <PropertyGroup Condition=" '$(Configuration)'=='Release' ">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

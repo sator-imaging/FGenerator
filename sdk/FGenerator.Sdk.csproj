@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageType>MSBuildSdk</PackageType>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <IncludeSymbols>false</IncludeSymbols>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Sdk/Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
+    <None Include="Sdk/Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
+  </ItemGroup>
+
+  <!-- https://github.com/sator-imaging/Csproj.Sdk/tree/main/src/Properties -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>
+      net10.0;
+      net9.0;
+      net8.0;
+      net7.0;
+      net6.0;
+      net5.0;
+      net481;
+      netcore451;
+      netcoreapp3.1;
+      netstandard2.1;
+      netstandard2.0;
+    </TargetFrameworks>
+  </PropertyGroup>
+
+</Project>
