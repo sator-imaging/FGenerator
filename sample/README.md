@@ -3,10 +3,10 @@
 Single-file source generators built with `FGeneratorBase`, plus a console app that consumes them.
 
 ## 📂 What's Inside
-- [AutoNotifyGenerator](#🔔-autonotifygenerator) — adds `INotifyPropertyChanged` to partial classes marked with `[AutoNotify]`.
-- [StackListGenerator](#📦-stacklistgenerator) — emits a fixed-capacity `IList<T>` implementation for partial structs annotated with `[StackList(length, SwapRemove = ...)]`.
-- [StackArrayGenerator](#🧱-stackarraygenerator) — emits inline array storage for partial structs annotated with `[StackArray(length, typeof(T))]`.
-- [SampleConsumer](#▶️-sampleconsumer) — console app that references the merged generator DLLs and exercises all three generators.
+- [AutoNotifyGenerator](#-autonotifygenerator) — adds `INotifyPropertyChanged` to partial classes marked with `[AutoNotify]`.
+- [StackListGenerator](#-stacklistgenerator) — emits a fixed-capacity `IList<T>` implementation for partial structs annotated with `[StackList(length, SwapRemove = ...)]`.
+- [StackArrayGenerator](#-stackarraygenerator) — emits inline array storage for partial structs annotated with `[StackArray(length, typeof(T))]`.
+- [SampleConsumer](#-sampleconsumer) — console app that references the merged generator DLLs and exercises all three generators.
 
 ## 🔔 AutoNotifyGenerator
 📝 [AutoNotifyGenerator.cs](AutoNotifyGenerator.cs)
