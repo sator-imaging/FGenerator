@@ -18,7 +18,8 @@
                       ReferenceOutputAssembly="false" />
     -->
 
-    <Analyzer Include="../../.z__merged_dll__/FGenerator.dll" />
+    <Analyzer Include="../../.z__merged_dll__/FGenerator.dll"
+              Condition=" Exists('../../.z__merged_dll__/FGenerator.dll') " />
     <Analyzer Include="../../.z__merged_dll__/FGDebugGenerator.dll" />
     <Analyzer Include="../../.z__merged_dll__/AutoNotifyGenerator.dll" />
     <Analyzer Include="../../.z__merged_dll__/StackArrayGenerator.dll" />
