@@ -153,6 +153,7 @@ namespace StackArrayGenerator
                 sb.AppendLine(";");
             }
 
+            sb.AppendLine($"        public const int Length = {length};");
             sb.AppendLine();
             sb.AppendLine("        private int _enumeratorIndex;");
             sb.AppendLine();
@@ -173,8 +174,6 @@ namespace StackArrayGenerator
             sb.AppendLine("            var destination = AsSpan();");
             sb.AppendLine("            source.Slice(0, copyLength).CopyTo(destination);");
             sb.AppendLine("        }");
-            sb.AppendLine();
-            sb.AppendLine($"        public const int Length = {length};");
             sb.AppendLine();
             sb.AppendLine($"        public Span<{elementTypeName}> AsSpan() => MemoryMarshal.CreateSpan(ref _value0, Length);");
             sb.AppendLine();
