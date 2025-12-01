@@ -52,22 +52,22 @@ namespace FGDebugGenerator
 
                 // toName
                 sb.AppendLine(HR);
-                sb.AppendLine("sb.AppendLine(\" ToNameString(nameOnly: false, noGeneric: false, noNullable: false)\");");
+                sb.AppendLine("sb.AppendLine(\" ToNameString(localName: false, noGeneric: false, noNullable: false)\");");
                 sb.AppendLine(HR);
                 foreach (var member in target.Members)
                 {
                     sb.Append("sb.AppendLine(\"* ");
-                    sb.Append(member.ToNameString(nameOnly: false, noGeneric: false, noNullable: false));
+                    sb.Append(member.ToNameString(localName: false, noGeneric: false, noNullable: false));
                     sb.AppendLine("\");");
                 }
 
                 sb.AppendLine(HR);
-                sb.AppendLine("sb.AppendLine(\" ToNameString(nameOnly: true, noGeneric: true, noNullable: true)\");");
+                sb.AppendLine("sb.AppendLine(\" ToNameString(localName: true, noGeneric: true, noNullable: true)\");");
                 sb.AppendLine(HR);
                 foreach (var member in target.Members)
                 {
-                    var fullName = member.ToNameString(nameOnly: true, noGeneric: true, noNullable: true);
-                    var shortName = member.ToNameString(nameOnly: false, noGeneric: false, noNullable: false);
+                    var fullName = member.ToNameString(localName: true, noGeneric: true, noNullable: true);
+                    var shortName = member.ToNameString(localName: false, noGeneric: false, noNullable: false);
                     sb.Append("sb.AppendLine(\"* ");
                     sb.Append(shortName == fullName ? "<same>" : fullName);
                     sb.AppendLine("\");");

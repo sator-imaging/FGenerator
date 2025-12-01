@@ -123,9 +123,9 @@ namespace StackArrayGenerator
         {
             // Pre-size to reduce StringBuilder reallocations; most content scales with element count.
             var sb = new StringBuilder(512 + (length * 80));
-            var elementTypeName = elementType.ToNameString(nameOnly: false, noGeneric: false, noNullable: false);
-            var typeName = target.RawSymbol.ToNameString(nameOnly: false, noGeneric: false, noNullable: false);
-            var ctorTypeName = target.RawSymbol.ToNameString(nameOnly: true, noGeneric: true, noNullable: true);
+            var elementTypeName = elementType.ToNameString(localName: false, noGeneric: false, noNullable: false);
+            var typeName = target.RawSymbol.ToNameString(localName: false, noGeneric: false, noNullable: false);
+            var ctorTypeName = target.RawSymbol.ToNameString(localName: true, noGeneric: true, noNullable: true);
 
             sb.AppendLine("#nullable enable");
             sb.AppendLine();
