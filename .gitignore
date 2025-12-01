@@ -4,6 +4,7 @@
 
 *.md
 !README.md
+!README.*.md
 !LICENSE.md
 
 bin

@@ -4,6 +4,12 @@
 &nbsp;
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
 
+[🇺🇸 English](./README.md)
+&nbsp; ❘ &nbsp;
+[🇯🇵 日本語版](./README.ja.md)
+&nbsp; ❘ &nbsp;
+[🇨🇳 简体中文版](./README.zh-CN.md)
+
 
 
 
