@@ -1,3 +1,5 @@
+name: nuget publish on release
+
 on:
   release:
     types: [published]
