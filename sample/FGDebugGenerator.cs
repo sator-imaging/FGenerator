@@ -66,10 +66,10 @@ namespace FGDebugGenerator
                 sb.AppendLine(HR);
                 foreach (var member in target.Members)
                 {
-                    var fullName = member.ToNameString(localName: true, noGeneric: true, noNullable: true);
-                    var shortName = member.ToNameString(localName: false, noGeneric: false, noNullable: false);
+                    var bareName = member.ToNameString(localName: true, noGeneric: true, noNullable: true);
+                    var fullName = member.ToNameString(localName: false, noGeneric: false, noNullable: false);
                     sb.Append("sb.AppendLine(\"* ");
-                    sb.Append(shortName == fullName ? "<same>" : fullName);
+                    sb.Append(fullName == bareName ? "<same>" : bareName);
                     sb.AppendLine("\");");
                 }
 
