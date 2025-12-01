@@ -158,8 +158,8 @@ var decl = target.ToDeclarationString(modifiers: true, genericConstraints: true)
 
 // Friendly names with options for namespace/generics/nullability
 var fullName = target.ToNameString();                  // global::My.Namespace.MyType.NestedType<T?>
-var simpleName = target.ToNameString(nameOnly: true);  // NestedType<T?>
-var bareName = target.ToNameString(nameOnly: true, noGeneric: true, noNullable: true);  // NestedType
+var simpleName = target.ToNameString(localName: true);  // NestedType<T?>
+var bareName = target.ToNameString(localName: true, noGeneric: true, noNullable: true);  // NestedType
 ```
 
 **Partial scaffolding (nested/generic safe):**

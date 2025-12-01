@@ -176,10 +176,10 @@ namespace FGenerator
         /// </summary>
         public static string ToNameString(
             this Target target,
-            bool nameOnly = false,
+            bool localName = false,
             bool noGeneric = false,
             bool noNullable = false)
-            => ToNameString(target.RawSymbol, nameOnly, noGeneric, noNullable);
+            => ToNameString(target.RawSymbol, localName, noGeneric, noNullable);
 
         /// <summary>
         /// Renders a display name for the symbol with options for qualification, generics, and nullability.
@@ -187,11 +187,11 @@ namespace FGenerator
         /// </summary>
         public static string ToNameString(
             this ISymbol symbol,
-            bool nameOnly = false,
+            bool localName = false,
             bool noGeneric = false,
             bool noNullable = false)
         {
-            var key = (nameOnly, noGeneric, noNullable);
+            var key = (localName, noGeneric, noNullable);
 
             if (!cache_ToNameStringFormat.TryGetValue(key, out var format))
             {
@@ -199,11 +199,11 @@ namespace FGenerator
                 = format
                 = new(
                     globalNamespaceStyle:
-                        nameOnly
+                        localName
                             ? SymbolDisplayGlobalNamespaceStyle.Omitted
                             : SymbolDisplayGlobalNamespaceStyle.Included,
                     typeQualificationStyle:
-                        nameOnly
+                        localName
                             ? SymbolDisplayTypeQualificationStyle.NameOnly
                             : SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
                     genericsOptions:
@@ -232,13 +232,13 @@ namespace FGenerator
 
             var result = symbol.ToDisplayString(format);
 
-            if (!nameOnly)
+            if (!localName)
             {
                 var eii = GetExplicitInterfaceImplementationSymbol(symbol);
                 if (eii != null)
                 {
                     // DO NOT forward arguments!!
-                    var prefix = eii.ToNameString(nameOnly: false, noGeneric: false, noNullable: false);
+                    var prefix = eii.ToNameString(localName: false, noGeneric: false, noNullable: false);
 
                     result = $"{prefix}.{result}";
                 }

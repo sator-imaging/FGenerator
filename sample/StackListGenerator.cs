@@ -122,7 +122,7 @@ namespace StackListGenerator
             }
 
             var usesEquatable = elementTypeParameter.ConstraintTypes.Any(ct =>
-                ct.OriginalDefinition.ToNameString(nameOnly: false, noGeneric: true, noNullable: true) == "global::System.IEquatable");
+                ct.OriginalDefinition.ToNameString(localName: false, noGeneric: true, noNullable: true) == "global::System.IEquatable");
 
             if (!usesEquatable)
             {
@@ -130,7 +130,7 @@ namespace StackListGenerator
                     "010",
                     "IEquatable constraint recommended",
                     DiagnosticSeverity.Warning,
-                    $"Element type '{elementTypeParameter.ToNameString(nameOnly: false, noGeneric: false, noNullable: false)}' is not constrained to IEquatable<T>; Contains/IndexOf will fall back to EqualityComparer and may be slower.");
+                    $"Element type '{elementTypeParameter.ToNameString(localName: false, noGeneric: false, noNullable: false)}' is not constrained to IEquatable<T>; Contains/IndexOf will fall back to EqualityComparer and may be slower.");
             }
 
             var source = GenerateStackList(target, elementTypeParameter, length, swapRemove, usesEquatable);
@@ -141,8 +141,8 @@ namespace StackListGenerator
         {
             // Pre-size to reduce StringBuilder reallocations; body grows with configured length.
             var sb = new StringBuilder(768 + (length * 120));
-            var elementTypeName = elementTypeSymbol.ToNameString(nameOnly: false, noGeneric: false, noNullable: false);
-            var typeName = target.RawSymbol.ToNameString(nameOnly: false, noGeneric: false, noNullable: false);
+            var elementTypeName = elementTypeSymbol.ToNameString(localName: false, noGeneric: false, noNullable: false);
+            var typeName = target.RawSymbol.ToNameString(localName: false, noGeneric: false, noNullable: false);
 
             sb.AppendLine("#nullable enable");
             sb.AppendLine();
