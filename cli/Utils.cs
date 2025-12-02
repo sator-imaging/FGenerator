@@ -56,25 +56,26 @@ namespace FGenerator.Cli
 
         public static bool PromptOverwrite(string filePath, bool force)
         {
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
-                if (force)
-                {
-                    Console.WriteLine($"Overwriting: {Path.GetFileName(filePath)}");
-                    return true;
-                }
-                else
-                {
-                    Console.Write($"{Path.GetFileName(filePath)} already exists. Overwrite? (y/N): ");
-                    var response = Console.ReadLine()?.Trim().ToLowerInvariant();
-                    if (response != "y")
-                    {
-                        Console.WriteLine($"Skipped: {Path.GetFileName(filePath)}");
-                        return false;
-                    }
-                }
+                return true;
             }
-            return true;
+
+            if (force)
+            {
+                Console.WriteLine($"Overwriting: {Path.GetFileName(filePath)}");
+                return true;
+            }
+
+            Console.Write($"{Path.GetFileName(filePath)} already exists. Overwrite? (y/N): ");
+            var response = Console.ReadLine()?.Trim().ToLowerInvariant();
+            if (response == "y")
+            {
+                return true;
+            }
+
+            Console.WriteLine($"Skipped: {Path.GetFileName(filePath)}");
+            return false;
         }
 
         public static void GenerateUnityMeta(FileInfo dllFile, bool force)
