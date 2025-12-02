@@ -54,26 +54,37 @@ namespace FGenerator.Cli
         }
 
 
+        public static bool PromptOverwrite(string filePath, bool force)
+        {
+            if (!File.Exists(filePath))
+            {
+                return true;
+            }
+
+            if (force)
+            {
+                Console.WriteLine($"Overwriting: {Path.GetFileName(filePath)}");
+                return true;
+            }
+
+            Console.Write($"{Path.GetFileName(filePath)} already exists. Overwrite? (y/N): ");
+            var response = Console.ReadLine()?.Trim().ToLowerInvariant();
+            if (response == "y")
+            {
+                return true;
+            }
+
+            Console.WriteLine($"Skipped: {Path.GetFileName(filePath)}");
+            return false;
+        }
+
         public static void GenerateUnityMeta(FileInfo dllFile, bool force)
         {
             var metaPath = dllFile.FullName + ".meta";
 
-            if (File.Exists(metaPath))
+            if (!PromptOverwrite(metaPath, force))
             {
-                if (force)
-                {
-                    Console.WriteLine($"Overwriting: {dllFile.Name}.meta");
-                }
-                else
-                {
-                    Console.Write($"{dllFile.Name}.meta already exists. Overwrite? (y/N): ");
-                    var response = Console.ReadLine()?.Trim().ToLowerInvariant();
-                    if (response != "y")
-                    {
-                        Console.WriteLine($"Skipped: {dllFile.Name}.meta");
-                        return;
-                    }
-                }
+                return;
             }
 
             // 2022.3.12 or newer: https://qiita.com/amenone_games/items/762cbea245f95b212cfa

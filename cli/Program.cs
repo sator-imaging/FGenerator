@@ -292,15 +292,9 @@ namespace FGenerator.Cli
                 mergedDll.MoveTo(mergedDllPath, overwrite: true);
 
                 // Check if destination exists and handle force flag
-                if (File.Exists(destPath) && !force)
+                if (!Utils.PromptOverwrite(destPath, force))
                 {
-                    Console.Write($"{mergedFileName} already exists in output directory. Overwrite? (y/N): ");
-                    var response = Console.ReadLine()?.Trim().ToLowerInvariant();
-                    if (response != "y")
-                    {
-                        Console.WriteLine($"Skipped: {mergedFileName}");
-                        return 0;
-                    }
+                    return 0;
                 }
 
                 // Copy to actual output directory
@@ -340,15 +334,9 @@ namespace FGenerator.Cli
                     var destPath = Path.Combine(destDir.FullName, dllFile.Name);
 
                     // Check if destination exists and handle force flag
-                    if (File.Exists(destPath) && !force)
+                    if (!Utils.PromptOverwrite(destPath, force))
                     {
-                        Console.Write($"{dllFile.Name} already exists in output directory. Overwrite? (y/N): ");
-                        var response = Console.ReadLine()?.Trim().ToLowerInvariant();
-                        if (response != "y")
-                        {
-                            Console.WriteLine($"Skipped: {dllFile.Name}");
-                            continue;
-                        }
+                        continue;
                     }
 
                     Console.WriteLine($"Moving: {dllFile.Name}");
