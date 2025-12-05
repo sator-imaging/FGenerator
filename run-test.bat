@@ -6,7 +6,7 @@ dotnet run --project cli -- build ^
 
 dotnet run --project cli -- build ^
     %* ^
-    --unity --force --output "./.z__merged_dll__" ^
+    --unity --output "./.z__merged_dll__" ^
     "./sample/*.cs" ^
     || (echo === ERROR === & exit 1)
 
