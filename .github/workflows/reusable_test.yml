@@ -30,7 +30,7 @@ jobs:
           --force --output  ./.z__merged_dll__ \
           "./sample/*.cs"  # enquote to prevent expanding
 
-        dotnet run  --project cli -c Release -- build \
+        dnx -y FGenerator.Cli -- build \
           "test/*.cs" -f -o ./.z__merged_dll__
 
         dotnet clean         sample/SampleConsumer
