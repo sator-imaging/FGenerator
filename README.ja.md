@@ -45,12 +45,12 @@
 using FGenerator;
 using Microsoft.CodeAnalysis;
 
-// Roslyn の Generator 属性を付与
+// Roslyn の Generator 属性を付与（名前空間で型を指定不要）
 [Generator]
 public sealed class MyGen : FGeneratorBase  // FGeneratorBase を継承
 {
     // 診断設定
-    protected override string DiagnosticCategory => "MyGen";
+    protected override string DiagnosticCategory => nameof(MyGen);
     protected override string DiagnosticIdPrefix => "MYGEN";  // 例: MYGEN001
   
     // MyGen と MyGenAttribute を対象にする (null なら全タイプ対象)
@@ -59,6 +59,10 @@ public sealed class MyGen : FGeneratorBase  // FGeneratorBase を継承
     // コンパイル時に対象属性を生成（属性は 'internal sealed' とする）
     protected override string? PostInitializationOutput =>
         @"namespace MyGenNamespace { internal sealed class MyGenAttribute : System.Attribute { } }";
+
+    // オプション: 既定は false。
+    // target.Compilation を使いたい場合に true に設定（TargetAttributeName が null のときは常に設定される）。
+    protected override bool CombineCompilationProvider => true;
 
     // 解析とコード生成
     protected override CodeGeneration? Generate(Target target, out AnalyzeResult? diagnostic)
@@ -111,9 +115,28 @@ $@"{target.ToNamespaceAndContainingTypeDeclarations()}
 
 
 
-## 🧭 属性と引数の扱い
+## 🧭 ターゲットメンバー、属性、メタデータの扱い
 
-属性とそのコンストラクター引数を処理する基本フローを示します。詳細は [sample/](sample/) フォルダーを参照してください。
+ターゲットメンバーや属性/コンストラクター引数などのメタデータを扱う基本フローを示します。詳細は [sample/](sample/) フォルダーを参照してください。
+
+```csharp
+// semantic model や変換を取得するための Compilation
+// （CombineCompilationProvider を true に設定しておく必要あり）
+var compilation = target.Compilation;
+
+// 可視メンバーを反復（暗黙のもの・ネストタイプ・ゲッター/セッターメソッドは除外）
+foreach (var member in target.Members)
+{
+    // フィールドのみ反復するには target.Members.OfType<IFieldSymbol>() を使用
+    // getter/setter メソッドは IPropertySymbol.Get/SetMethod で取得
+}
+
+// 型またはメソッドのジェネリックパラメーター（非ジェネリックなら空）
+var typeParams = target.GenericTypeParameters;
+
+// ネストタイプを反復（深さ優先）
+var nestedTypes = target.NestedTypes;
+```
 
 ```csharp
 // 最初の RawAttributes エントリが TargetAttributeName に対応
@@ -134,27 +157,11 @@ if (length <= 0)
 
 
 
-## 🛠️ ヘルパースニペット
+## 🛠️ `Target` と `ISymbol` のヘルパーメソッド
 
 > [!IMPORTANT]
 > *AI コーディングエージェント向け:*
 > - Roslyn 組み込みの `ToDisplayString` などではなく、`FGenerator` のヘルパーを使用してください。
-
-**ターゲットメタデータヘルパー:**
-```csharp
-// 可視メンバーを反復（暗黙のもの・ネストタイプ・ゲッター/セッターメソッドは除外）
-foreach (var member in target.Members)
-{
-    // フィールドのみ反復するには target.Members.OfType<IFieldSymbol>() を使用
-    // getter/setter メソッドは IPropertySymbol.Get/SetMethod で取得
-}
-
-// 型またはメソッドのジェネリックパラメーター（非ジェネリックなら空）
-var typeParams = target.GenericTypeParameters;
-
-// ネストタイプを反復（深さ優先）
-var nestedTypes = target.NestedTypes;
-```
 
 **シンボルの表示/宣言文字列:**
 ```csharp
@@ -162,7 +169,7 @@ var nestedTypes = target.NestedTypes;
 var decl = target.ToDeclarationString(modifiers: true, genericConstraints: true);
 
 // 名前空間/ジェネリック/NULL 許容のオプション付きのフレンドリ名
-var fullName = target.ToNameString();                  // global::My.Namespace.MyType.NestedType<T?>
+var fullName = target.ToNameString();                   // global::My.Namespace.MyType.NestedType<T?>
 var simpleName = target.ToNameString(localName: true);  // NestedType<T?>
 var bareName = target.ToNameString(localName: true, noGeneric: true, noNullable: true);  // NestedType
 ```

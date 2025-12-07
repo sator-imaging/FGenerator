@@ -45,12 +45,12 @@
 using FGenerator;
 using Microsoft.CodeAnalysis;
 
-// 添加 Roslyn 的 Generator 特性
+// 添加 Roslyn 的 Generator 特性（在命名空间中无需声明类型）
 [Generator]
 public sealed class MyGen : FGeneratorBase  // 继承 FGeneratorBase
 {
     // 诊断设置
-    protected override string DiagnosticCategory => "MyGen";
+    protected override string DiagnosticCategory => nameof(MyGen);
     protected override string DiagnosticIdPrefix => "MYGEN";  // 例如: MYGEN001
   
     // 目标为 MyGen 与 MyGenAttribute（null 则匹配所有类型）
@@ -59,6 +59,10 @@ public sealed class MyGen : FGeneratorBase  // 继承 FGeneratorBase
     // 为编译生成目标特性（特性应声明为 'internal sealed'）
     protected override string? PostInitializationOutput =>
         @"namespace MyGenNamespace { internal sealed class MyGenAttribute : System.Attribute { } }";
+
+    // 可选：默认 false。
+    // 需要 target.Compilation 时设为 true（当 TargetAttributeName 为 null 时始终会设定）。
+    protected override bool CombineCompilationProvider => true;
 
     // 分析并生成源码
     protected override CodeGeneration? Generate(Target target, out AnalyzeResult? diagnostic)
@@ -111,9 +115,28 @@ $@"{target.ToNamespaceAndContainingTypeDeclarations()}
 
 
 
-## 🧭 处理特性与参数
+## 🧭 处理目标成员、特性与元数据
 
-下面展示处理特性及其构造参数的基本流程。更多细节见 [sample/](sample/) 目录。
+下面展示处理目标成员或其他元数据（包括特性及其构造参数）的基本流程。更多细节见 [sample/](sample/) 目录。
+
+```csharp
+// 用于获取 semantic model 或转换的 Compilation
+// （需要将 CombineCompilationProvider 设为 true）
+var compilation = target.Compilation;
+
+// 遍历可见成员（不含隐式成员、嵌套类型、getter/setter 方法）
+foreach (var member in target.Members)
+{
+    // 只遍历字段则用 target.Members.OfType<IFieldSymbol>()
+    // getter/setter 方法通过 IPropertySymbol.Get/SetMethod 获取
+}
+
+// 类型或方法的泛型参数（非泛型则为空）
+var typeParams = target.GenericTypeParameters;
+
+// 遍历嵌套类型（深度优先）
+var nestedTypes = target.NestedTypes;
+```
 
 ```csharp
 // 第一个 RawAttributes 条目对应 TargetAttributeName
@@ -134,27 +157,11 @@ if (length <= 0)
 
 
 
-## 🛠️ 助手代码片段
+## 🛠️ `Target` 与 `ISymbol` 的助手方法
 
 > [!IMPORTANT]
 > *面向 AI 编码代理:*
 > - 请使用 `FGenerator` 的助手方法，而不是 Roslyn 内置的 `ToDisplayString` 等方法。
-
-**目标元数据助手:**
-```csharp
-// 遍历可见成员（不含隐式成员、嵌套类型、getter/setter 方法）
-foreach (var member in target.Members)
-{
-    // 只遍历字段则用 target.Members.OfType<IFieldSymbol>()
-    // getter/setter 方法通过 IPropertySymbol.Get/SetMethod 获取
-}
-
-// 类型或方法的泛型参数（非泛型则为空）
-var typeParams = target.GenericTypeParameters;
-
-// 遍历嵌套类型（深度优先）
-var nestedTypes = target.NestedTypes;
-```
 
 **符号显示/声明字符串:**
 ```csharp
@@ -162,7 +169,7 @@ var nestedTypes = target.NestedTypes;
 var decl = target.ToDeclarationString(modifiers: true, genericConstraints: true);
 
 // 具备命名空间/泛型/可空选项的易读名称
-var fullName = target.ToNameString();                  // global::My.Namespace.MyType.NestedType<T?>
+var fullName = target.ToNameString();                   // global::My.Namespace.MyType.NestedType<T?>
 var simpleName = target.ToNameString(localName: true);  // NestedType<T?>
 var bareName = target.ToNameString(localName: true, noGeneric: true, noNullable: true);  // NestedType
 ```

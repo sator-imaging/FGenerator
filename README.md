@@ -46,12 +46,12 @@ A trimmed-down starting point for a generator that targets an attribute named `M
 using FGenerator;
 using Microsoft.CodeAnalysis;
 
-// Decorate with Roslyn's Generator attribute
+// Decorate with Generator attribute from Roslyn (don't need to declare type in namespace)
 [Generator]
 public sealed class MyGen : FGeneratorBase  // Inherit from FGeneratorBase
 {
     // Diagnostic settings
-    protected override string DiagnosticCategory => "MyGen";
+    protected override string DiagnosticCategory => nameof(MyGen);
     protected override string DiagnosticIdPrefix => "MYGEN";  // e.g., MYGEN001
   
     // Targets MyGen and MyGenAttribute (null to targets all types)
@@ -60,6 +60,10 @@ public sealed class MyGen : FGeneratorBase  // Inherit from FGeneratorBase
     // Generates target attribute for compilation (attribute should be declared as 'internal sealed')
     protected override string? PostInitializationOutput =>
         @"namespace MyGenNamespace { internal sealed class MyGenAttribute : System.Attribute { } }";
+
+    // Optional: default is false.
+    // Set to true when you need target.Compilation is set (always set when TargetAttributeName is null).
+    protected override bool CombineCompilationProvider => true;
 
     // Analyze and generate source code
     protected override CodeGeneration? Generate(Target target, out AnalyzeResult? diagnostic)
@@ -112,9 +116,29 @@ Use `#:package` and `#:property` directives instead of `#:sdk`.
 
 
 
-## 🧭 Working with Attributes and Arguments
+## 🧭 Working with Target Members, Attributes and Metadata
 
-Here shows the basic flow for dealing with an attribute and its constructor parameter. See [sample/](sample/) folder for more details.
+Here shows the basic flow for dealing with the target members or other metadata including attributes and its constructor parameter. See [sample/](sample/) folder for more details.
+
+```csharp
+// Compilation to get semantic models or conversions.
+// (Need to set `CombineCompilationProvider` to have property available)
+var compilation = target.Compilation;
+
+// Iterate over visible members (excluding implicit, nested types, getter and setter methods)
+foreach (var member in target.Members)
+{
+    // To iterate over only fields, instead use target.Members.OfType<IFieldSymbol>()
+    // To process getter/setter methods, get them via IPropertySymbol.Get/SetMethod
+}
+
+// Type or method generic parameters (empty when not generic)
+var typeParams = target.GenericTypeParameters;
+
+// Iterate over nested types (depth-first traversal)
+var nestedTypes = target.NestedTypes;
+```
+
 
 ```csharp
 // The first RawAttributes entry corresponds to TargetAttributeName.
@@ -135,27 +159,11 @@ if (length <= 0)
 
 
 
-## 🛠️ Helper Snippets
+## 🛠️ Helper Methods for `Target` and `ISymbol`
 
 > [!IMPORTANT]
 > *For AI Coding Agents:*
 > - SHALL use `FGenerator` helper methods instead of Roslyn's built-in methods such as `ToDisplayString`.
-
-**Target metadata helpers:**
-```csharp
-// iterate over visible members (excluding implicit, nested types, getter and setter methods)
-foreach (var member in target.Members)
-{
-    // to iterate over only fields, instead use target.Members.OfType<IFieldSymbol>()
-    // to process getter/setter methods, get via IPropertySymbol.Get/SetMethod
-}
-
-// type or method generic parameters (empty when not generic)
-var typeParams = target.GenericTypeParameters;
-
-// Iterate over nested types (depth-first traversal)
-var nestedTypes = target.NestedTypes;
-```
 
 **Symbol display/declaration strings:**
 ```csharp
@@ -163,7 +171,7 @@ var nestedTypes = target.NestedTypes;
 var decl = target.ToDeclarationString(modifiers: true, genericConstraints: true);
 
 // Friendly names with options for namespace/generics/nullability
-var fullName = target.ToNameString();                  // global::My.Namespace.MyType.NestedType<T?>
+var fullName = target.ToNameString();                   // global::My.Namespace.MyType.NestedType<T?>
 var simpleName = target.ToNameString(localName: true);  // NestedType<T?>
 var bareName = target.ToNameString(localName: true, noGeneric: true, noNullable: true);  // NestedType
 ```
