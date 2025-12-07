@@ -23,11 +23,25 @@
 
     <Analyzer Include="../../.z__merged_dll__/FGenerator.dll"
               Condition=" Exists('../../.z__merged_dll__/FGenerator.dll') " />
+
     <Analyzer Include="../../.z__merged_dll__/FGDebugGenerator.dll" />
     <Analyzer Include="../../.z__merged_dll__/AutoNotifyGenerator.dll" />
     <Analyzer Include="../../.z__merged_dll__/StackArrayGenerator.dll" />
     <Analyzer Include="../../.z__merged_dll__/StackListGenerator.dll" />
 
+    <Analyzer Include="../../.z__merged_dll__/UnityAsyncMethodAuditor.dll" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SatorImaging.PragmaAnalyzer" Version="1.1.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SatorImaging.StaticMemberAnalyzer" Version="2.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
