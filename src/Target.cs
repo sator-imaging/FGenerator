@@ -79,6 +79,11 @@ namespace FGenerator
         public bool IsGeneric { get; }
 
         /// <summary>
+        /// Compilation that contains the target when it was discovered.
+        /// </summary>
+        public Compilation? Compilation { get; internal set; } = (((default)))!;
+
+        /// <summary>
         /// Generic type parameters when the symbol is generic; otherwise an empty array.
         /// </summary>
         public ImmutableArray<ITypeParameterSymbol> GenericTypeParameters
