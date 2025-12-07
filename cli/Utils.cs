@@ -1,3 +1,6 @@
+// Licensed under the Apache-2.0 License
+// https://github.com/sator-imaging/FGenerator
+
 using System.Diagnostics;
 
 namespace FGenerator.Cli
