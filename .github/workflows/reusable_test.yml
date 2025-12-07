@@ -31,7 +31,16 @@ jobs:
           "./sample/*.cs"  # enquote to prevent expanding
 
         dnx -y FGenerator.Cli -- build \
+          ${{ matrix.unity }} \
+          ${{ matrix.merge }} \
+          ${{ matrix.debug }} \
           "test/*.cs" -f -o ./.z__merged_dll__
+
+        dnx -y FGenerator.Cli -- build \
+          ${{ matrix.unity }} \
+          ${{ matrix.merge }} \
+          ${{ matrix.debug }} \
+          "Unity/*.cs" -f -o ./.z__merged_dll__
 
         dotnet clean         sample/SampleConsumer
         dotnet run --project sample/SampleConsumer  -c Release \
