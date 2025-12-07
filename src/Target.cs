@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
+#pragma warning disable IDE0301  // Use collection expression for empty
+#pragma warning disable IDE0045  // Use conditional expression for assignment
+
 namespace FGenerator
 {
     /// <summary>
@@ -24,16 +27,25 @@ namespace FGenerator
         public readonly ImmutableArray<AttributeData> RawAttributes;
 
         /// <summary>
+        /// Compilation that contains the target when it was discovered.
+        /// </summary>
+        public Compilation? Compilation;
+
+        /// <summary>
         /// Creates a new target for the discovered symbol and matching attributes.
         /// </summary>
         /// <param name="rawSymbol">Symbol representing the target (type, method, etc.).</param>
         /// <param name="rawAttributes">Attributes that matched the target attribute filter.</param>
+        /// <param name="compilation">Compilation that contains the target when it was discovered.</param>
         public Target(
             ISymbol rawSymbol,
-            ImmutableArray<AttributeData> rawAttributes)
+            ImmutableArray<AttributeData> rawAttributes,
+            Compilation? compilation = null
+        )
         {
             RawSymbol = rawSymbol;
             RawAttributes = rawAttributes;
+            Compilation = compilation;
 
             IsPartial = rawSymbol.DeclaringSyntaxReferences.Any(sr =>
             {
@@ -77,11 +89,6 @@ namespace FGenerator
         /// Indicates whether the symbol is generic (type or method).
         /// </summary>
         public bool IsGeneric { get; }
-
-        /// <summary>
-        /// Compilation that contains the target when it was discovered.
-        /// </summary>
-        public Compilation? Compilation { get; internal set; } = (((default)))!;
 
         /// <summary>
         /// Generic type parameters when the symbol is generic; otherwise an empty array.
@@ -170,13 +177,18 @@ namespace FGenerator
         }
 
         // IEquatable<T>
+        /// <inheritdoc/>
         public override int GetHashCode() => SymbolEqualityComparer.Default.GetHashCode(this.RawSymbol);
+        /// <inheritdoc/>
         public override bool Equals(object? obj) => obj is Target other && Equals(other);
+        /// <inheritdoc/>
         public bool Equals(Target? other)
         {
             return SymbolEqualityComparer.Default.Equals(this.RawSymbol, other?.RawSymbol);
         }
+        /// <inheritdoc/>
         public static bool operator ==(Target? left, Target? right) => ReferenceEquals(left, right) || left?.Equals(right) == true;
+        /// <inheritdoc/>
         public static bool operator !=(Target? left, Target? right) => !(left == right);
     }
 }
