@@ -1,4 +1,4 @@
-#:sdk FGenerator.Sdk@1.3.0
+#:sdk FGenerator.Sdk@1.4.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
