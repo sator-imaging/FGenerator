@@ -16,6 +16,7 @@ namespace FGenerator
         private readonly string Title;
         private readonly DiagnosticSeverity Severity;
         private readonly string Message;
+        private readonly Location? OverrideLocation;
 
         /// <summary>
         /// Creates a new analysis result with the specified diagnostic details.
@@ -24,12 +25,20 @@ namespace FGenerator
         /// <param name="title">Diagnostic title displayed by IDE tooling.</param>
         /// <param name="severity">Severity level reported for the diagnostic.</param>
         /// <param name="message">Diagnostic message describing the issue.</param>
-        public AnalyzeResult(string id, string title, DiagnosticSeverity severity, string message)
+        /// <param name="overrideLocation">Optional location to use instead of the target's location.</param>
+        public AnalyzeResult(
+            string id,
+            string title,
+            DiagnosticSeverity severity,
+            string message,
+            Location? overrideLocation = null  // TODO: v2
+        )
         {
             Id = id;
             Title = title;
             Severity = severity;
             Message = message;
+            OverrideLocation = overrideLocation;
         }
 
         /// <summary>
@@ -37,7 +46,7 @@ namespace FGenerator
         /// </summary>
         /// <param name="diagnosticIdPrefix">Prefix applied to the diagnostic ID (e.g., "GEN").</param>
         /// <param name="diagnosticCategory">Category reported to Roslyn for this diagnostic.</param>
-        /// <param name="location">Location to associate with the diagnostic.</param>
+        /// <param name="location">Location used when no override location was provided on the result.</param>
         /// <returns>A diagnostic created from a cached descriptor keyed by the composed diagnostic ID.</returns>
         public Diagnostic ToDiagnostic(string diagnosticIdPrefix, string diagnosticCategory, Location location)
         {
@@ -54,7 +63,7 @@ namespace FGenerator
                     isEnabledByDefault: true);
             }
 
-            return Diagnostic.Create(result, location, Message);
+            return Diagnostic.Create(result, OverrideLocation ?? location, Message);
         }
     }
 }

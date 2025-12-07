@@ -26,6 +26,13 @@ namespace FGenerator
         protected abstract string DiagnosticCategory { get; }
 
         /// <summary>
+        /// Indicates whether to merge the target provider with the compilation provider so targets carry their Compilation.
+        /// If <see cref="TargetAttributeName"/> is null (enumerate all types), the providers are always combined.
+        /// Optional (default false); setting this to false when attributes are used can improve performance by avoiding the combine step.
+        /// </summary>
+        protected virtual bool CombineCompilationProvider { get; }
+
+        /// <summary>
         /// Gets the name of the attribute to search for on target symbols.
         /// If null, all types in the compilation will be enumerated as targets.
         /// The "Attribute" suffix is optional - specifying "My" will match both [My] and [MyAttribute].
@@ -37,6 +44,9 @@ namespace FGenerator
         /// Optional support code added during post-initialization (e.g., attribute definitions).
         /// </summary>
         protected abstract string? PostInitializationOutput { get; }
+
+        // TODO: for v2, support multiple diagnostics by `out ImmutableArray<AnalyzeResult>`
+        //       (may hurt performance, but useful for reporting warnings and performance tips at once)
 
         /// <summary>
         /// Generates code for a target or returns diagnostic to report.
@@ -77,8 +87,8 @@ namespace FGenerator
                 context.RegisterPostInitializationOutput(ctx =>
                 {
                     ctx.AddSource(
-                        $"{nameof(FGenerator)} - {this.GetType().Name}.g.cs",
-                        SourceText.From(postInit!, Encoding.UTF8));
+                        $"- {nameof(FGenerator)} - {this.GetType().Name}.g.cs",
+                        GenerateSourceText((((postInit)))!));
                 });
             }
 
@@ -89,11 +99,9 @@ namespace FGenerator
             {
                 // Enumerate all types in the compilation
                 provider = context.CompilationProvider
-                    .SelectMany((compilation, _) =>
+                    .SelectMany(static (compilation, _) =>
                     {
-                        var allTypes = new List<Target>();
-                        EnumerateTypes(compilation.Assembly.GlobalNamespace, allTypes);
-                        return allTypes;
+                        return EnumerateTypes(compilation, compilation.Assembly.GlobalNamespace);
                     });
             }
             else
@@ -103,39 +111,86 @@ namespace FGenerator
                     .CreateSyntaxProvider(
                         predicate: (s, _) => IsSyntaxTargetForGeneration(s),
                         transform: (ctx, _) => GetSemanticTargetForGeneration(ctx))
-                    .Where(t => t != null);
+                    .Where(t => t != null)
+                    !;  // netstandard2.0 doesn't have .OfType<T>...!
+
+                if (CombineCompilationProvider)
+                {
+                    provider = provider
+                        .Combine(context.CompilationProvider)
+                        .Select(static (pair, _) =>
+                        {
+                            var (target, c) = pair;
+
+                            // TODO: target = target with { Compilation = c };
+                            target.Compilation = c;
+
+                            return target;
+                        });
+                }
             }
 
             // Generate source
             context.RegisterSourceOutput(provider, (spc, target) =>
             {
+#if DEBUG
+                foreach (var ra in target.RawAttributes)
+                {
+                    var location = ra.ApplicationSyntaxReference?.GetSyntax().GetLocation();
+                    if (location != null)
+                    {
+                        var d = new AnalyzeResult("", "DEBUG", DiagnosticSeverity.Info, $"Attribute found: {target}");
+                        spc.ReportDiagnostic(d.ToDiagnostic(DiagnosticIdPrefix, DiagnosticCategory, location));
+                    }
+                }
+#endif
+
                 var codeGen = Generate(target, out AnalyzeResult? diagnosticResult);
 
                 if (diagnosticResult.HasValue)
                 {
                     var result = diagnosticResult.Value;
-                    foreach (var location in target.RawSymbol.Locations)
+
+                    if (target.RawSymbol is IAssemblySymbol)
                     {
-                        spc.ReportDiagnostic(result.ToDiagnostic(DiagnosticIdPrefix, DiagnosticCategory, location));
+                        foreach (var attr in target.RawAttributes)
+                        {
+                            var location = attr.ApplicationSyntaxReference?.GetSyntax().GetLocation();
+                            if (location != null)
+                            {
+                                spc.ReportDiagnostic(result.ToDiagnostic(DiagnosticIdPrefix, DiagnosticCategory, location));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var location in target.RawSymbol.Locations)
+                        {
+                            spc.ReportDiagnostic(result.ToDiagnostic(DiagnosticIdPrefix, DiagnosticCategory, location));
+                        }
                     }
                 }
 
                 if (codeGen.HasValue)
                 {
-                    var source = codeGen.Value.Source;
-                    if (!source.Contains("<auto-generated", StringComparison.OrdinalIgnoreCase))
-                    {
-                        _generatedCodeHeader ??=
+                    spc.AddSource(codeGen.Value.HintName, GenerateSourceText(codeGen.Value.Source));
+                }
+            });
+        }
+
+        private SourceText GenerateSourceText(string source)
+        {
+            if (!source.Contains("<auto-generated", StringComparison.OrdinalIgnoreCase))
+            {
+                _generatedCodeHeader ??=
 $@"// <auto-generated>{this.GetType().FullName}</auto-generated>
 
 ";
 
-                        source = $"{_generatedCodeHeader}{source}";
-                    }
+                source = $"{_generatedCodeHeader}{source}";
+            }
 
-                    spc.AddSource(codeGen.Value.HintName, SourceText.From(source, Encoding.UTF8));
-                }
-            });
+            return SourceText.From(source, Encoding.UTF8);
         }
 
         private bool IsSyntaxTargetForGeneration(SyntaxNode node)
@@ -165,10 +220,12 @@ $@"// <auto-generated>{this.GetType().FullName}</auto-generated>
                 {
                     var lastIdentifier = attribute.Name switch
                     {
-                        IdentifierNameSyntax id => id.Identifier.Text,
+                        // NOTE: in C# 14, attribute cannot be generic anyway include GenericNameSyntax.
+                        //       * IdentifierNameSyntax and GenericNameSyntax inherit from SimpleNameSyntax
+                        SimpleNameSyntax s => s.Identifier.Text,
                         QualifiedNameSyntax q => q.Right.Identifier.Text,
                         AliasQualifiedNameSyntax a => a.Name.Identifier.Text,
-                        _ => (attribute.Name as SimpleNameSyntax)?.Identifier.Text ?? attribute.Name.ToString(),
+                        _ => attribute.Name.ToString(),
                     };
 
                     if (lastIdentifier == _targetAttributeBaseName ||
@@ -203,7 +260,14 @@ $@"// <auto-generated>{this.GetType().FullName}</auto-generated>
             var _targetAttributeNameWithSuffix = this._targetAttributeNameWithSuffix;
 
             // Collect all matching attributes from the symbol
-            var matchingAttributes = symbol.GetAttributes()
+            var matchingAttributes = symbol.GetAttributes();
+
+            if (symbol is IMethodSymbol methodSymbol)
+            {
+                matchingAttributes = matchingAttributes.AddRange(methodSymbol.GetReturnTypeAttributes());
+            }
+
+            matchingAttributes = matchingAttributes
                 .Where(attr =>
                 {
                     var attrType = attr.AttributeClass;
@@ -225,39 +289,52 @@ $@"// <auto-generated>{this.GetType().FullName}</auto-generated>
             return new Target(symbol, matchingAttributes);
         }
 
-        private void EnumerateTypes(INamespaceSymbol namespaceSymbol, List<Target> targets)
+        private static IEnumerable<Target> EnumerateTypes(Compilation compilation, INamespaceSymbol namespaceSymbol)
         {
             foreach (var member in namespaceSymbol.GetMembers())
             {
                 if (member is INamespaceSymbol childNamespace)
                 {
-                    EnumerateTypes(childNamespace, targets);
+                    foreach (var t in EnumerateTypes(compilation, childNamespace))
+                    {
+                        yield return t;
+                    }
                 }
                 else if (member is INamedTypeSymbol typeSymbol)
                 {
-                    targets.Add(CreateTargetFromType(typeSymbol));
+                    yield return CreateTargetFromType(compilation, typeSymbol);
 
                     // Recursively enumerate nested types
-                    EnumerateNestedTypes(typeSymbol, targets);
+                    foreach (var nested in EnumerateNestedTypes(compilation, typeSymbol))
+                    {
+                        yield return nested;
+                    }
                 }
             }
         }
 
-        private void EnumerateNestedTypes(INamedTypeSymbol typeSymbol, List<Target> targets)
+        private static IEnumerable<Target> EnumerateNestedTypes(Compilation compilation, INamedTypeSymbol typeSymbol)
         {
             foreach (var nestedType in typeSymbol.GetTypeMembers())
             {
-                targets.Add(CreateTargetFromType(nestedType));
-                EnumerateNestedTypes(nestedType, targets);
+                yield return CreateTargetFromType(compilation, nestedType);
+
+                foreach (var deep in EnumerateNestedTypes(compilation, nestedType))
+                {
+                    yield return deep;
+                }
             }
         }
 
-        private Target CreateTargetFromType(INamedTypeSymbol typeSymbol)
+        private static Target CreateTargetFromType(Compilation compilation, INamedTypeSymbol typeSymbol)
         {
             return new Target(
                 typeSymbol,
                 ImmutableArray<AttributeData>.Empty // No attributes when enumerating all types
-            );
+            )
+            {
+                Compilation = compilation,
+            };
         }
 
     }
