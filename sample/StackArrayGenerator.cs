@@ -25,8 +25,8 @@ namespace StackArrayGenerator
         protected override string DiagnosticIdPrefix => "StackArray";
         protected override string? TargetAttributeName => "StackArray";
 
-        protected override string? PostInitializationOutput => @"
-using System;
+        protected override string? PostInitializationOutput =>
+@"using System;
 
 namespace StackArrayGenerator
 {

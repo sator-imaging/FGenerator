@@ -18,8 +18,8 @@ namespace FGDebugGenerator
         protected override string DiagnosticIdPrefix => "FGDEBUG";
 
         protected override string? TargetAttributeName => "FGDebugAttribute";
-        protected override string? PostInitializationOutput => @"
-using System;
+        protected override string? PostInitializationOutput =>
+@"using System;
 
 namespace FGDebugGenerator
 {

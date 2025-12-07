@@ -1,4 +1,4 @@
-
+[module: AnyTarget]    // won't support
 [assembly: AnyTarget]
 
 namespace SampleConsumer.NestedNamespace.AnyTarget
@@ -11,9 +11,11 @@ namespace SampleConsumer.NestedNamespace.AnyTarget
     }
 
     [AnyTarget]
-    readonly record struct Class<T>
+    readonly record struct Class<[AnyTarget] TValue>
     {
+        // TODO: there is no way to emit diagnostic on return type of method symbol.
+        [return: AnyTarget]
         [AnyTarget]
-        public static void Method<U>() { }
+        public static TResult Method<TResult>([AnyTarget] TResult value) => value;
     }
 }

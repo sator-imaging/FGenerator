@@ -39,8 +39,8 @@ namespace AutoNotifyGenerator
         /// Support contents that will be added to the compilation.
         /// This defines the [AutoNotify] attribute that users will apply to their classes.
         /// </summary>
-        protected override string? PostInitializationOutput => @"
-using System;
+        protected override string? PostInitializationOutput =>
+@"using System;
 
 namespace AutoNotifyGenerator
 {

@@ -28,8 +28,8 @@ namespace StackListGenerator
         protected override string DiagnosticIdPrefix => "StackList";
         protected override string? TargetAttributeName => "StackList";
 
-        protected override string? PostInitializationOutput => @"
-using System;
+        protected override string? PostInitializationOutput =>
+@"using System;
 
 namespace StackListGenerator
 {

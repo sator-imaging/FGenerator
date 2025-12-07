@@ -25,7 +25,7 @@ internal sealed class AnyTargetAttribute : Attribute { }
 
     protected override CodeGeneration? Generate(Target target, out AnalyzeResult? diagnostic)
     {
-        diagnostic = null;
+        diagnostic = new("001", nameof(AnyTargetGenerator), DiagnosticSeverity.Warning, target.ToString());
         return new CodeGeneration(target.ToHintName(), "// " + string.Join("\n// ", target.ToNameString()));
     }
 }
