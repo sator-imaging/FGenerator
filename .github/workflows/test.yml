@@ -48,25 +48,16 @@ jobs:
           ${{ matrix.debug }} \
           "Unity/*.cs" -f -o ./.z__merged_dll__
 
-        ### Tests ###
+        ### Tests: Separate build and run to exclude unnecessary warnings from STDOUT ###
 
-        dotnet build         EnvObfuscator.Test  -c Release
-        dotnet run --project EnvObfuscator.Test  -c Release  --no-build --verbosity quiet -p:WarningLevel=0 \
-          -p:EmitCompilerGeneratedFiles=true \
-          -p:CompilerGeneratedFilesOutputPath="../.generated" \
-          --markdown >> $GITHUB_STEP_SUMMARY
+        dotnet build         EnvObfuscator.Test   -c Release -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+        dotnet run --project EnvObfuscator.Test   -c Release --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
-        dotnet build         FinalEnumGenerator.Test  -c Release
-        dotnet run --project FinalEnumGenerator.Test  -c Release  --no-build --verbosity quiet -p:WarningLevel=0 \
-          -p:EmitCompilerGeneratedFiles=true \
-          -p:CompilerGeneratedFilesOutputPath="../.generated" \
-          --markdown >> $GITHUB_STEP_SUMMARY
+        dotnet build         FinalEnumGenerator.Test   -c Release -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+        dotnet run --project FinalEnumGenerator.Test   -c Release --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
-        dotnet build         sandbox  -c Release
-        dotnet run --project sandbox  -c Release  --no-build --verbosity quiet -p:WarningLevel=0 \
-          -p:EmitCompilerGeneratedFiles=true \
-          -p:CompilerGeneratedFilesOutputPath="../.generated" \
-          --markdown >> $GITHUB_STEP_SUMMARY
+        dotnet build         sandbox   -c Release -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+        dotnet run --project sandbox   -c Release --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
     - name: Pathfinder
       run:
