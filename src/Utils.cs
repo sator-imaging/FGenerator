@@ -2,6 +2,7 @@
 // https://github.com/sator-imaging/FGenerator
 
 using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -86,6 +87,9 @@ namespace FGenerator
                     AppendNameWithGenericTypeParameterCount(sb, p.Type);
                 }
             }
+
+            sb.Replace(".", separator);  // namespace
+            sb.Replace("+", separator);  // nested type (maybe)
 
             return sb.ToString();
         }
