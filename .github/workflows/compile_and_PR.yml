@@ -1,0 +1,65 @@
+name: "[release.published] Compile & PR"
+
+on:
+  #push:
+  #  branches: [ "main" ]
+  #pull_request:
+  #  branches: [ "main" ]
+  release:
+    types: [ published ]
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+
+  compile:
+    #strategy:
+    #  matrix:
+    #    configuration: [Debug, Release]
+
+    runs-on: ubuntu-latest   # tip: runs-on can use ${{ matrix.<name> }}
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5      # v4.3.1
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9  # v4.3.1
+        with:
+          dotnet-version: 10.x.x
+
+      - run: |
+          OUTDIR=./Compiled
+
+          dotnet run --project cli -c Release -- build \
+            --unity --merge \
+            --force --output $OUTDIR \
+            "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
+
+
+          ### Git work ####
+
+          TITLE="[bot] Compiled Generators"
+          BRANCH="bot/update-compiled-$(date +%Y%m%d-%H%M%S)"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add $OUTDIR
+
+          if git diff --cached --quiet; then
+            echo "No changes, skip PR"
+            exit 0
+          fi
+
+          git commit -m "$TITLE"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "$TITLE"
