@@ -49,10 +49,10 @@ jobs:
           ${{ matrix.debug }} \
           "Unity/*.cs" -f -o ./.z__merged_dll__
 
-        dotnet clean         sandbox
-        dotnet run --project sandbox  -c Release \
-          -p:EmitCompilerGeneratedFiles=true \
-          -p:CompilerGeneratedFilesOutputPath="../.generated"
+        #dotnet clean         sandbox
+        #dotnet run --project sandbox  -c Release \
+        #  -p:EmitCompilerGeneratedFiles=true \
+        #  -p:CompilerGeneratedFilesOutputPath="../.generated"
 
     - name: Pathfinder
       run:
