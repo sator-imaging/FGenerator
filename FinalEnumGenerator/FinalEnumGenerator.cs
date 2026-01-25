@@ -1,13 +1,7 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-#:project ../src
-#:property TargetFramework=netstandard2.0
-#:property IsRoslynComponent=true
-#:property PublishAot=false
-#:property LangVersion=latest
-#:property OutputType=Library
-#:property GenerateDocumentationFile=false
+#:sdk FGenerator.Sdk@2.0.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
