@@ -8,7 +8,7 @@
   -->
   <Target Name="CopyFGeneratorToOutput" AfterTargets="Build">
     <Copy
-      SourceFiles="$(NuGetPackageRoot)fgenerator/2.0.4/lib/netstandard2.0/FGenerator.dll"
+      SourceFiles="$(NuGetPackageRoot)fgenerator/2.0.5/lib/netstandard2.0/FGenerator.dll"
       DestinationFiles="$(OutputPath)/FGenerator.dll"
       SkipUnchangedFiles="true"
     />

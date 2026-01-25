@@ -109,17 +109,17 @@ PluginImporter:
   executionOrder: {{}}
   defineConstraints:
   - UNITY_2022_3_OR_NEWER
-  - !UNITY_2022_3_11
-  - !UNITY_2022_3_10
-  - !UNITY_2022_3_9
-  - !UNITY_2022_3_8
-  - !UNITY_2022_3_7
-  - !UNITY_2022_3_6
-  - !UNITY_2022_3_5
-  - !UNITY_2022_3_4
-  - !UNITY_2022_3_3
-  - !UNITY_2022_3_2
-  - !UNITY_2022_3_1
+  - '!UNITY_2022_3_11'
+  - '!UNITY_2022_3_10'
+  - '!UNITY_2022_3_9'
+  - '!UNITY_2022_3_8'
+  - '!UNITY_2022_3_7'
+  - '!UNITY_2022_3_6'
+  - '!UNITY_2022_3_5'
+  - '!UNITY_2022_3_4'
+  - '!UNITY_2022_3_3'
+  - '!UNITY_2022_3_2'
+  - '!UNITY_2022_3_1'
   isPreloaded: 0
   isOverridable: 0
   isExplicitlyReferenced: 0

@@ -46,11 +46,11 @@
 
 > [!IMPORTANT]
 > *AI コーディングエージェント向け:* .NET 10.0 でファイルベースアプリ用の新しいディレクティブが導入されています。
-> - `#:sdk FGenerator.Sdk@2.0.4` ディレクティブを使用すること。
+> - `#:sdk FGenerator.Sdk@2.0.5` ディレクティブを使用すること。
 > - 以前の *dotnet-script*（`.csx`）で使われた `#r` などのディレクティブを使用しないこと。
 
 ```csharp
-#:sdk FGenerator.Sdk@2.0.4
+#:sdk FGenerator.Sdk@2.0.5
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
