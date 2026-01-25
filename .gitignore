@@ -1,11 +1,23 @@
-.*
+bin
+obj
+
+/*
 !.github
+!cli
+!EnvObfuscator
+!FinalEnumGenerator
+!sample
+!sandbox
+!sdk
+!src
+!test
+!Unity
+
 !.gitignore
+!Directory.Build.props
+!FGenerator.slnx
 
 *.md
 !README.md
 !README.*.md
 !LICENSE.md
-
-bin
-obj

@@ -8,6 +8,7 @@
 using FGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 /// <summary>
 /// Analyzer that audits async methods for calls to UnityEngine.Object members.

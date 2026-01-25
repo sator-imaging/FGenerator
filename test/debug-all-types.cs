@@ -8,6 +8,8 @@
 using FGenerator;
 using Microsoft.CodeAnalysis;
 using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 
 [Generator]
 public class FGDebugAllTypes : FGeneratorBase

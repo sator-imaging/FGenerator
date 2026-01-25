@@ -9,6 +9,7 @@ using FGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
+using System.Linq;
 
 namespace AutoNotifyGenerator
 {
@@ -95,8 +96,6 @@ namespace AutoNotifyGenerator
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("#nullable enable");
-            sb.AppendLine();
             sb.AppendLine("using System.ComponentModel;");
             sb.AppendLine("using System.Runtime.CompilerServices;");
             sb.AppendLine();
