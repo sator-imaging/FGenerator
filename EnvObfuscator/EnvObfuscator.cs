@@ -1,16 +1,13 @@
+#:sdk FGenerator.Sdk@2.0.0
+
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
-
-#:sdk FGenerator.Sdk@2.0.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
