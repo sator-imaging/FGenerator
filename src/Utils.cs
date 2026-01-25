@@ -18,38 +18,74 @@ namespace FGenerator
         /// <summary>
         /// Builds a generated file hint name for the target (including ".g.cs").
         /// </summary>
-        public static string ToHintName(this Target target) => target.RawSymbol.ToHintName();
-
-        /// <summary>
-        /// Builds a generated file hint name without extension for the target.
-        /// </summary>
-        public static string ToHintNameWithoutExtension(this Target target) => target.RawSymbol.ToHintNameWithoutExtension();
+        public static string ToHintName(this Target target) => ToHintName(target.RawSymbol);
 
         /// <summary>
         /// Builds a generated file hint name (including ".g.cs") for the symbol.
         /// </summary>
-        public static string ToHintName(this ISymbol symbol) => symbol.ToHintNameWithoutExtension() + ".g.cs";
+        public static string ToHintName(this ISymbol symbol) => ToAssemblyUniqueIdentifier(symbol, separator: ".") + ".g.cs";
+
+
+        const string DefaultSeparator = "_";
+
+        /// <inheritdoc cref="ToAssemblyUniqueIdentifier(ISymbol, string)"/>
+        public static string ToAssemblyUniqueIdentifier(this Target target, string separator = DefaultSeparator)
+            => ToAssemblyUniqueIdentifier(target.RawSymbol, separator);
 
         /// <summary>
-        /// Builds a generated file hint name without extension for the symbol.
+        /// Builds an identifier string that is intended to be unique within an assembly
+        /// by including the symbol's containing namespace, types, and signature.
+        /// Uses <paramref name="separator"/> to separate namespaces, types, and signature components.
         /// </summary>
-        public static string ToHintNameWithoutExtension(this ISymbol symbol)
+        public static string ToAssemblyUniqueIdentifier(this ISymbol symbol, string separator = DefaultSeparator)
         {
-            var sb = new StringBuilder(capacity: 64);
+            var sb = new StringBuilder(capacity: 128);
 
             if (symbol.ContainingNamespace != null && !symbol.ContainingNamespace.IsGlobalNamespace)
             {
                 sb.Append(symbol.ContainingNamespace.ToDisplayString());
-                sb.Append(".");
+                sb.Append(separator);
             }
 
             foreach (var containing in GetContainingTypes(symbol))
             {
-                AppendNameWithGeneric(sb, containing);
-                sb.Append(".");
+                AppendNameWithGenericTypeParameterCount(sb, containing);
+                sb.Append(separator);
             }
 
-            AppendNameWithGeneric(sb, symbol);
+            if (GetExplicitInterfaceImplementationSymbol(symbol) is ISymbol iface)
+            {
+                AppendNameWithGenericTypeParameterCount(sb, iface);
+                sb.Append(separator);
+            }
+
+            AppendNameWithGenericTypeParameterCount(sb, symbol);
+
+            if (symbol is IPropertySymbol property &&
+                property.IsIndexer)
+            {
+                for (int i = 0; i < property.Parameters.Length; i++)
+                {
+                    sb.Append(separator);
+                    AppendNameWithGenericTypeParameterCount(sb, property.Parameters[i].Type);
+                }
+            }
+            else if (symbol is IMethodSymbol method)
+            {
+                for (int i = 0; i < method.Parameters.Length; i++)
+                {
+                    sb.Append(separator);
+
+                    var p = method.Parameters[i];
+                    if (p.RefKind != RefKind.None)
+                    {
+                        sb.Append(p.RefKind.ToString().ToLowerInvariant());
+                        sb.Append(separator);
+                    }
+
+                    AppendNameWithGenericTypeParameterCount(sb, p.Type);
+                }
+            }
 
             return sb.ToString();
         }
@@ -67,7 +103,7 @@ namespace FGenerator
             return result;
         }
 
-        private static void AppendNameWithGeneric(StringBuilder sb, ISymbol symbol)
+        private static void AppendNameWithGenericTypeParameterCount(StringBuilder sb, ISymbol symbol)
         {
             sb.Append(symbol.Name);
 
@@ -83,7 +119,7 @@ namespace FGenerator
 
             if (typeParamCount > 0)
             {
-                sb.Append("T");
+                sb.Append('T');
                 sb.Append(typeParamCount);
             }
         }
@@ -135,7 +171,7 @@ namespace FGenerator
             {
                 sb.Length -= OPEN.Length;
                 sb.AppendLine();
-                sb.Append("{");
+                sb.Append('{');
             }
 
             return sb.ToString();

@@ -2,6 +2,14 @@
   <!-- Forward to Microsoft.NET.Sdk -->
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
+  <!-- FGenerator -->
+  <ItemGroup>
+    <!--
+      no way to 'bake' target version automatically (this file is not preprocessed by msbuild on build)
+    -->
+    <PackageReference Include="FGenerator" Version="1.4.0" />
+  </ItemGroup>
+
   <!-- Minimal requirements for roslyn development -->
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -25,17 +33,6 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
-  <!-- FGenerator -->
-  <ItemGroup>
-    <!-- no way to 'bake' target version easily (this file is not preprocessed by msbuild) -->
-    <PackageReference Include="FGenerator" Version="*" />
-  </ItemGroup>
-
-  <!-- Optional -->
-  <PropertyGroup Condition=" '$(Configuration)'=='Release' ">
-    <DebugType>none</DebugType>
-  </PropertyGroup>
-
   <PropertyGroup>
     <Nullable>enable</Nullable>
     
@@ -43,7 +40,16 @@
     <LangVersion>10.0</LangVersion>
 
     <!-- CS1591: Missing XML comment for publicly visible type or member -->
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- CA1050: Declare types in namespaces -->
+    <NoWarn>$(NoWarn);CS1591;CA1050</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- Optional -->
+  <PropertyGroup Condition=" '$(Configuration)'=='Release' ">
+    <DebugType>none</DebugType>
   </PropertyGroup>
 
 </Project>

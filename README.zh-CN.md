@@ -1,29 +1,39 @@
+<div align="center">
+
+# FGenerator
+
+**将 C# 源生成器构建为文件型应用**
+
 [![nuget](https://img.shields.io/nuget/vpre/FGenerator)](https://www.nuget.org/packages/FGenerator)
 [![Cli](https://img.shields.io/nuget/vpre/FGenerator.Cli?label=Cli)](https://www.nuget.org/packages/FGenerator.Cli)
 [![Sdk](https://img.shields.io/nuget/vpre/FGenerator.Sdk?label=Sdk)](https://www.nuget.org/packages/FGenerator.Sdk)
 &nbsp;
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
 
-[🇺🇸 English](./README.md)
-&nbsp; ❘ &nbsp;
-[🇯🇵 日本語版](./README.ja.md)
-&nbsp; ❘ &nbsp;
-[🇨🇳 简体中文版](./README.zh-CN.md)
+[<kbd>🇺🇸 English</kbd>](./README.md)
+&nbsp;
+[<kbd>🇯🇵 日本語版</kbd>](./README.ja.md)
+&nbsp;
+[<kbd>🇨🇳 简体中文版</kbd>](./README.zh-CN.md)
+
+</div>
 
 
+&nbsp;
 
 
+## ✨ 关键特性
 
-`FGenerator` 是一个轻量级框架，可在单个 `.cs` 文件中创建功能丰富的 Roslyn 增量源码生成器（`IIncrementalGenerator`），并提供诊断报告能力。
-
-
-# ✨ 关键概念
 - **声明式**：描述要扫描或注入的内容即可，无需处理 Roslyn 内部；一切所需都已打包。
 - **专注业务逻辑**：框架会为你查找目标、生成代码并上报诊断。
 - **单文件**：为基于文件的应用项目优化；1 天内即可完成全功能的生成器和分析器。
 - **类型处理**：即使有嵌套/泛型也能保持一致的命名和 partial 声明，无需样板代码。
 - **友好于 AI 代理**：无需额外提示即可生成有效且设计良好的生成器。
 - **支持 Unity 引擎**：支持 Unity 2022.3.12 及更高版本。
+
+
+&nbsp;
+
 
 
 
@@ -69,7 +79,7 @@ public sealed class MyGen : FGeneratorBase  // 继承 FGeneratorBase
     {
         diagnostic = null;
 
-        if (target.IsPartial)
+        if (!target.IsPartial)
         {
             // 为 IDE 报告错误诊断
             diagnostic = new AnalyzeResult(
@@ -111,6 +121,7 @@ $@"{target.ToNamespaceAndContainingTypeDeclarations()}
 #:property PublishAot=false
 #:property LangVersion=latest
 #:property OutputType=Library
+#:property GenerateDocumentationFile=false
 ```
 
 
@@ -172,6 +183,9 @@ var decl = target.ToDeclarationString(modifiers: true, genericConstraints: true)
 var fullName = target.ToNameString();                   // global::My.Namespace.MyType.NestedType<T?>
 var simpleName = target.ToNameString(localName: true);  // NestedType<T?>
 var bareName = target.ToNameString(localName: true, noGeneric: true, noNullable: true);  // NestedType
+
+// 构建在程序集内唯一的标识符，可用于生成不冲突的字段名等
+var id = target.ToAssemblyUniqueIdentifier("_");  // My_Namespace_MyType_NestedTypeT1
 ```
 
 **partial 脚手架（嵌套/泛型安全）:**
@@ -205,7 +219,7 @@ var hint = target.ToHintName();  // 例如: My.Namespace.Type.MyNestedT1.g.cs
 
 # 📦 构建与打包
 
-使用 CLI 构建生成器项目（默认 Release；Debug 可加 `--debug`）:
+使用 CLI 构建生成器项目（可多个，默认 Release；Debug 可加 `--debug`）:
 
 ```sh
 dnx FGenerator.Cli -- build "generators/**/*.cs" --output ./artifacts

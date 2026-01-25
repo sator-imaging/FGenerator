@@ -1,29 +1,39 @@
+<div align="center">
+
+# FGenerator
+
+**C# ソースジェネレーターをファイルベースアプリとして構築**
+
 [![nuget](https://img.shields.io/nuget/vpre/FGenerator)](https://www.nuget.org/packages/FGenerator)
 [![Cli](https://img.shields.io/nuget/vpre/FGenerator.Cli?label=Cli)](https://www.nuget.org/packages/FGenerator.Cli)
 [![Sdk](https://img.shields.io/nuget/vpre/FGenerator.Sdk?label=Sdk)](https://www.nuget.org/packages/FGenerator.Sdk)
 &nbsp;
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
 
-[🇺🇸 English](./README.md)
-&nbsp; ❘ &nbsp;
-[🇯🇵 日本語版](./README.ja.md)
-&nbsp; ❘ &nbsp;
-[🇨🇳 简体中文版](./README.zh-CN.md)
+[<kbd>🇺🇸 English</kbd>](./README.md)
+&nbsp;
+[<kbd>🇯🇵 日本語版</kbd>](./README.ja.md)
+&nbsp;
+[<kbd>🇨🇳 简体中文版</kbd>](./README.zh-CN.md)
+
+</div>
 
 
+&nbsp;
 
 
+## ✨ 主な機能
 
-`FGenerator` は、診断レポート機能を含む機能豊富な Roslyn 増分ソースジェネレーター（`IIncrementalGenerator`）を 1 つの `.cs` ファイルで作成できる軽量フレームワークです。
-
-
-# ✨ キーコンセプト
 - **宣言的**: 何をスキャン・注入するかを記述するだけで Roslyn の内部は不要。必要なものがすべて同梱されています。
 - **ロジックに集中**: フレームワークが対象検出・コード生成・診断レポートを代行します。
 - **単一ファイル**: ファイルベースのアプリプロジェクト向けに最適化。1 日でフル機能のジェネレーターとアナライザーを開発可能。
 - **型ハンドリング**: ネスト/ジェネリックでも安全な命名と partial 宣言をボイラープレート無しで維持。
 - **AI エージェントに優しい**: 追加プロンプト無しで有効かつ適切なジェネレーターを生成できます。
 - **Unity 対応**: Unity 2022.3.12 以降をサポートします。
+
+
+&nbsp;
+
 
 
 
@@ -69,7 +79,7 @@ public sealed class MyGen : FGeneratorBase  // FGeneratorBase を継承
     {
         diagnostic = null;
 
-        if (target.IsPartial)
+        if (!target.IsPartial)
         {
             // IDE にエラーダイアグノスティックを報告
             diagnostic = new AnalyzeResult(
@@ -111,6 +121,7 @@ $@"{target.ToNamespaceAndContainingTypeDeclarations()}
 #:property PublishAot=false
 #:property LangVersion=latest
 #:property OutputType=Library
+#:property GenerateDocumentationFile=false
 ```
 
 
@@ -172,6 +183,9 @@ var decl = target.ToDeclarationString(modifiers: true, genericConstraints: true)
 var fullName = target.ToNameString();                   // global::My.Namespace.MyType.NestedType<T?>
 var simpleName = target.ToNameString(localName: true);  // NestedType<T?>
 var bareName = target.ToNameString(localName: true, noGeneric: true, noNullable: true);  // NestedType
+
+// アセンブリ内で一意となる識別子を生成（大きな partial クラスなどでフィールド名衝突を防ぐのに便利）
+var id = target.ToAssemblyUniqueIdentifier("_");  // My_Namespace_MyType_NestedTypeT1
 ```
 
 **部分型の足場（ネスト/ジェネリック安全）:**
@@ -205,7 +219,7 @@ var hint = target.ToHintName();  // 例: My.Namespace.Type.MyNestedT1.g.cs
 
 # 📦 ビルドとパッケージング
 
-CLI を使ってジェネレーター プロジェクトをビルドします（デフォルトは Release。Debug なら `--debug` を付与）:
+CLI を使ってジェネレーター プロジェクト群をビルドします（デフォルトは Release。Debug なら `--debug` を付与）:
 
 ```sh
 dnx FGenerator.Cli -- build "generators/**/*.cs" --output ./artifacts

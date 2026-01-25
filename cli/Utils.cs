@@ -27,6 +27,9 @@ namespace FGenerator.Cli
             stderr = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
+            stdout = Colorize(stdout);
+            stderr = Colorize(stderr);
+
             return process.ExitCode;
         }
 
@@ -90,6 +93,10 @@ namespace FGenerator.Cli
                 return;
             }
 
+            // HACK: We can omit the 'serializedVersion' property.
+            //       It is 3 for Unity 6+ but older versions of Unity require 2.
+            //       There is no way to determine the target version, but, just omit it.
+
             // 2022.3.12 or newer: https://qiita.com/amenone_games/items/762cbea245f95b212cfa
             var metaContent =
 $@"fileFormatVersion: 2
@@ -98,7 +105,6 @@ labels:
 - RoslynAnalyzer
 PluginImporter:
   externalObjects: {{}}
-  serializedVersion: 2
   iconMap: {{}}
   executionOrder: {{}}
   defineConstraints:
@@ -127,6 +133,35 @@ PluginImporter:
 ";
             File.WriteAllText(metaPath, metaContent);
             Console.WriteLine($"Generated meta for: {dllFile.Name}");
+        }
+
+        // https://github.com/sator-imaging/FUnit/blob/main/cli/Program.cs#L486
+        static string Colorize(string message)
+        {
+            const string AnsiColorRed = "\u001b[97;41m";
+            const string AnsiColorYellow = "\u001b[97;43m";
+            const string AnsiColorReset = "\u001b[0m";
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return message;
+            }
+
+            var ansiEscapeIndex = message.IndexOf('\u001b');
+            if (ansiEscapeIndex == -1)
+            {
+                message = message.Replace("error", $"{AnsiColorRed}error{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
+                message = message.Replace("warning", $"{AnsiColorYellow}warning{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                var head = message[..ansiEscapeIndex];
+                var tail = message[ansiEscapeIndex..];
+                head = head.Replace("error", $"{AnsiColorRed}error{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
+                head = head.Replace("warning", $"{AnsiColorYellow}warning{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
+                message = head + tail;
+            }
+            return message;
         }
     }
 }
