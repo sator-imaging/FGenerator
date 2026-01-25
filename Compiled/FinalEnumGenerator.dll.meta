@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 47a219b3ff354ab18860ed8ea65dee65
+guid: eb12e1c86f7d4f0ebd6682c059c1ac3e
 labels:
 - RoslynAnalyzer
 PluginImporter:
@@ -8,17 +8,17 @@ PluginImporter:
   executionOrder: {}
   defineConstraints:
   - UNITY_2022_3_OR_NEWER
-  - !UNITY_2022_3_11
-  - !UNITY_2022_3_10
-  - !UNITY_2022_3_9
-  - !UNITY_2022_3_8
-  - !UNITY_2022_3_7
-  - !UNITY_2022_3_6
-  - !UNITY_2022_3_5
-  - !UNITY_2022_3_4
-  - !UNITY_2022_3_3
-  - !UNITY_2022_3_2
-  - !UNITY_2022_3_1
+  - '!UNITY_2022_3_11'
+  - '!UNITY_2022_3_10'
+  - '!UNITY_2022_3_9'
+  - '!UNITY_2022_3_8'
+  - '!UNITY_2022_3_7'
+  - '!UNITY_2022_3_6'
+  - '!UNITY_2022_3_5'
+  - '!UNITY_2022_3_4'
+  - '!UNITY_2022_3_3'
+  - '!UNITY_2022_3_2'
+  - '!UNITY_2022_3_1'
   isPreloaded: 0
   isOverridable: 0
   isExplicitlyReferenced: 0
