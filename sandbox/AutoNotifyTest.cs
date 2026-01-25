@@ -1,6 +1,6 @@
 using AutoNotifyGenerator;
 
-namespace SampleConsumer.NestedNamespace
+namespace FGenerator.Sandbox
 {
     /// <summary>
     /// Example class that uses the AutoNotify generator.

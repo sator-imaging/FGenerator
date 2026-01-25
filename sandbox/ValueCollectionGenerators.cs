@@ -2,7 +2,7 @@ using StackArrayGenerator;
 using StackListGenerator;
 using System;
 
-namespace SampleConsumer
+namespace FGenerator.Sandbox
 {
     namespace StackArray
     {

@@ -1,7 +1,6 @@
 [module: AnyTarget]    // won't support
 [assembly: AnyTarget]
-
-namespace SampleConsumer.NestedNamespace.AnyTarget
+namespace FGenerator.Sandbox.AnyTarget
 {
     [AnyTarget]
     class Class
