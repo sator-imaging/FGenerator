@@ -7,7 +7,7 @@
     <!--
       no way to 'bake' target version automatically (this file is not preprocessed by msbuild on build)
     -->
-    <PackageReference Include="FGenerator" Version="2.0.0-rc.1" />
+    <PackageReference Include="FGenerator" Version="2.0.0" />
   </ItemGroup>
 
   <!-- Minimal requirements for roslyn development -->

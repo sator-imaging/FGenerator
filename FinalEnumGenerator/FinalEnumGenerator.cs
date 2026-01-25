@@ -655,6 +655,10 @@ namespace FinalEnums
             sb.AppendLine("            return false;");
             sb.AppendLine("        }");
             sb.AppendLine();
+            // TODO: TryParseFlags(utf8) can be optmized by separating IgnoreCase mode from shared method.
+            //       - Current:   if (ignoreCase ? ContainsTokenIgnoreCase(...) : ContainsToken(...))
+            //       - Optimized: if (ContainsToken[IgnoreCase](...))
+            //       --> No huge impact on performance but code size will bloat in both this and target assembly.
             sb.AppendLine($"        // {enumKindLabel}");
             sb.AppendLine($"        private static bool TryParseFlags(ReadOnlySpan<byte> utf8, out {fullyQualifiedEnumName} result, bool ignoreCase)");
             sb.AppendLine("        {");
