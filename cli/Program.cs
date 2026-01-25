@@ -44,10 +44,10 @@ namespace FGenerator.Cli
                 Description = "Force overwrite existing files without prompting",
             };
 
-            var inputArgument = new Argument<string>(name: "input")
+            var inputArgument = new Argument<string[]>(name: "input")
             {
-                Description = "Input .cs file or glob pattern to process. Supports * (match files) and ** (recursive). e.g., file.cs, **/*.cs",
-                Arity = ArgumentArity.ExactlyOne,
+                Description = "Input .cs files or glob patterns to process. Supports * (match files) and ** (recursive). e.g., file.cs, **/*.cs",
+                Arity = ArgumentArity.OneOrMore,
             };
 
 
@@ -83,28 +83,34 @@ namespace FGenerator.Cli
         }
 
 
-        static int RunBuildWithGlobPattern(string inputPattern, DirectoryInfo output, bool unity, bool merge, bool force, bool debug)
+        static int RunBuildWithGlobPattern(string[] inputPatterns, DirectoryInfo output, bool unity, bool merge, bool force, bool debug)
         {
             // Resolve glob pattern to list of files (also works with single file paths)
             var matcher = new Matcher();
             var baseDirectory = Directory.GetCurrentDirectory();
 
-            matcher.AddInclude(inputPattern);
+            foreach (var pattern in inputPatterns)
+            {
+                matcher.AddInclude(pattern);
+            }
 
             // Execute the glob pattern match
             var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(baseDirectory)));
-            var matchedFiles = result.Files.Select(f => new FileInfo(Path.Combine(baseDirectory, f.Path))).ToList();
+            var matchedFiles = result.Files
+                                     .Select(f => new FileInfo(Path.Combine(baseDirectory, f.Path)))
+                                     .Where(x => File.Exists(x.FullName))
+                                     .ToList();
 
             // Filter to only .cs files
             matchedFiles = matchedFiles.Where(f => f.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)).ToList();
 
             if (matchedFiles.Count == 0)
             {
-                WriteFailure($"No .cs files matched the pattern: {inputPattern}");
+                WriteFailure($"No .cs files matched the pattern(s): {string.Join(", ", inputPatterns)}");
                 return 1;
             }
 
-            Console.WriteLine($"Found {matchedFiles.Count} file(s) matching pattern: {inputPattern}");
+            Console.WriteLine($"Found {matchedFiles.Count} file(s) matching pattern(s): {string.Join(", ", inputPatterns)}");
             Console.WriteLine();
 
             int successCount = 0;

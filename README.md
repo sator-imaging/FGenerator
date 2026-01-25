@@ -1,29 +1,38 @@
+<div align="center">
+
+# FGenerator
+
+**Building C# Source Generator as a File-based App**
+
 [![nuget](https://img.shields.io/nuget/vpre/FGenerator)](https://www.nuget.org/packages/FGenerator)
 [![Cli](https://img.shields.io/nuget/vpre/FGenerator.Cli?label=Cli)](https://www.nuget.org/packages/FGenerator.Cli)
 [![Sdk](https://img.shields.io/nuget/vpre/FGenerator.Sdk?label=Sdk)](https://www.nuget.org/packages/FGenerator.Sdk)
 &nbsp;
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
 
-[🇺🇸 English](./README.md)
-&nbsp; ❘ &nbsp;
-[🇯🇵 日本語版](./README.ja.md)
-&nbsp; ❘ &nbsp;
-[🇨🇳 简体中文版](./README.zh-CN.md)
+[<kbd>🇺🇸 English</kbd>](./README.md)
+&nbsp;
+[<kbd>🇯🇵 日本語版</kbd>](./README.ja.md)
+&nbsp;
+[<kbd>🇨🇳 简体中文版</kbd>](./README.zh-CN.md)
+
+</div>
 
 
+&nbsp;
 
 
+## ✨ Key Features
 
-`FGenerator` is a lightweight framework for creating feature-rich Roslyn incremental source generators (`IIncrementalGenerator`) including diagnostic reporting capability, within a single `.cs` file.
-
-
-# ✨ Key Concepts
 - **Declarative**: Say what to scan or inject and skip Roslyn internals; everything you need is bundled.
 - **Focus on Logic**: The framework finds targets, generates code and report diagnostic on your behalf.
 - **Single File**: Optimized for file-based app project; develop full-featured generator and analyzer in a day.
 - **Type-Handling**: Nested/generic-safe naming and partial declarations stay consistent without boilerplate.
 - **AI Agent Friendly**: Produce valid and well-designed generators without extra prompts and instructions.
 - **Unity Engine Supported**: Unity 2022.3.12 or newer is supported.
+
+
+&nbsp;
 
 
 
@@ -70,7 +79,7 @@ public sealed class MyGen : FGeneratorBase  // Inherit from FGeneratorBase
     {
         diagnostic = null;
 
-        if (target.IsPartial)
+        if (!target.IsPartial)
         {
             // Report error diagnostic for IDE
             diagnostic = new AnalyzeResult(
@@ -112,6 +121,7 @@ Use `#:package` and `#:property` directives instead of `#:sdk`.
 #:property PublishAot=false
 #:property LangVersion=latest
 #:property OutputType=Library
+#:property GenerateDocumentationFile=false
 ```
 
 
@@ -174,6 +184,10 @@ var decl = target.ToDeclarationString(modifiers: true, genericConstraints: true)
 var fullName = target.ToNameString();                   // global::My.Namespace.MyType.NestedType<T?>
 var simpleName = target.ToNameString(localName: true);  // NestedType<T?>
 var bareName = target.ToNameString(localName: true, noGeneric: true, noNullable: true);  // NestedType
+
+// Builds an identifier string that is intended to be unique within an assembly
+// that can be used to generate non-conflicting field name in large partial classes or etc.
+var id = target.ToAssemblyUniqueIdentifier("_");  // My_Namespace_MyType_NestedTypeT1
 ```
 
 **Partial scaffolding (nested/generic safe):**
@@ -208,7 +222,7 @@ var hint = target.ToHintName();  // e.g., My.Namespace.Type.MyNestedT1.g.cs
 
 # 📦 Building and Packaging
 
-Use the CLI to build a generator project (defaults to Release; pass `--debug` for Debug):
+Use the CLI to build generator projects (defaults to Release; pass `--debug` for Debug):
 
 ```sh
 dnx FGenerator.Cli -- build "generators/**/*.cs" --output ./artifacts
