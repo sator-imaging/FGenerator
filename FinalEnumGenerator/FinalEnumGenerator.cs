@@ -427,7 +427,7 @@ namespace FinalEnums
             if (isFlagsEnum)
             {
                 sb.AppendLine("            */");
-                sb.AppendLine($"            return {(hasZeroDefined ? "/*" : "/* As 0 is not defined --> */ ")}value != 0 &&{(hasZeroDefined ? "*/" : string.Empty)} (value & ~(({finalValueTypeName}){(isUnsigned ? flagsValueMaskUnsigned : flagsValueMaskSigned)})) == 0;");
+                sb.AppendLine($"            return value == 0 ? {hasZeroDefined.ToString().ToLowerInvariant()} : (value & ~(({finalValueTypeName}){(isUnsigned ? flagsValueMaskUnsigned : flagsValueMaskSigned)})) == 0;");
             }
         }
         sb.AppendLine("        }");

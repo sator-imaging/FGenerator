@@ -101,4 +101,3 @@ if (MyEnum.Flag1.IsDefined(100))
 > [!NOTE]
 > `TryParse` always allows fuzzy match (can contain undefined name).
 > `ToStringFast/Utf8` does not allow converting undefined value.
-> `Flags` enums should have value 0 is defined (FinalEnum doesn't validate).
