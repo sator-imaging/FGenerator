@@ -1,8 +1,11 @@
-name: "[release.published] Compile & PR"
+name: "[push, release] Compile & PR"
 
 on:
-  #push:
-  #  branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+    paths:
+      - "EnvObfuscator/**"
+      - "FinalEnumGenerator/**"
   #pull_request:
   #  branches: [ "main" ]
   release:
