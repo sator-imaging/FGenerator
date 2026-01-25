@@ -42,7 +42,13 @@ jobs:
 
           ### Git work ####
 
-          TITLE="[bot] Compiled Generators"
+          if [ "${{ github.event_name }}" == "release" ]; then
+            REF="tag:${GITHUB_REF#refs/tags/}"
+          else
+            REF="branch:${GITHUB_REF#refs/heads/}"
+          fi
+
+          TITLE="[bot] Compiled Generators ($REF)"
           BRANCH="bot/update-compiled-$(date +%Y%m%d-%H%M%S)"
 
           git config user.name  "github-actions[bot]"
@@ -62,4 +68,5 @@ jobs:
           gh pr create \
             --base main \
             --head "$BRANCH" \
-            --fill
+            --title "$TITLE" \
+            --body "$TITLE"
