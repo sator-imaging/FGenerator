@@ -7,9 +7,12 @@
     It causes error when merge option is enabled.
   -->
   <Target Name="CopyFGeneratorToOutput" AfterTargets="Build">
+    <ItemGroup>
+      <__FGeneratorDll Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
+    </ItemGroup>
     <Copy
-      SourceFiles="$(NuGetPackageRoot)fgenerator/2.0.5/lib/netstandard2.0/FGenerator.dll"
-      DestinationFiles="$(OutputPath)/FGenerator.dll"
+      SourceFiles="@(__FGeneratorDll)"
+      DestinationFiles="@(__FGeneratorDll->'$(OutputPath)%(Filename)%(Extension)')"
       SkipUnchangedFiles="true"
     />
   </Target>
