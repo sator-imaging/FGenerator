@@ -34,8 +34,6 @@ jobs:
       - run: |
           OUTDIR=./Compiled
 
-          mkdir -p $OUTDIR
-
           dotnet run --project cli -c Release -- build \
             --unity --merge \
             --force --output $OUTDIR \
