@@ -117,6 +117,9 @@ namespace EnvObfuscator
         bool hasExplicitSeed = attributeSyntax.ArgumentList?.Arguments.Count > 0;
         int seedValueFromAttribute = 0;
 
+        // Determine if a seed was explicitly provided in the attribute's source code.
+        // If the seed argument is omitted (e.g., `[Obfuscate()]`), a random seed will be generated.
+        // If `[Obfuscate(0)]` is used, the seed will be explicitly set to 0.
         if (hasExplicitSeed && attributeData.ConstructorArguments.Length > 0)
         {
             var arg = attributeData.ConstructorArguments[0];
