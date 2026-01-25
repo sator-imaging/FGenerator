@@ -3,16 +3,16 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
   <!--
-    Referenced source generator is not copied to output on build.
+    FGenerator.dll is not copied to output folder on build.
     It causes error when merge option is enabled.
   -->
   <Target Name="CopyFGeneratorToOutput" AfterTargets="Build">
     <ItemGroup>
-      <__FGeneratorDll Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
+      <__FGeneratorDll Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
     </ItemGroup>
     <Copy
       SourceFiles="@(__FGeneratorDll)"
-      DestinationFiles="@(__FGeneratorDll->'$(OutputPath)%(Filename)%(Extension)')"
+      DestinationFolder="$(TargetDir)"
       SkipUnchangedFiles="true"
     />
   </Target>

@@ -4,6 +4,7 @@ obj
 /*
 !.github
 !cli
+!Compiled
 !EnvObfuscator
 !EnvObfuscator.Test
 !FinalEnumGenerator
