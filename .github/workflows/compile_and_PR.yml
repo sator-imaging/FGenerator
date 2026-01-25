@@ -8,8 +8,8 @@ on:
       - "FinalEnumGenerator/**"
   #pull_request:
   #  branches: [ "main" ]
-  release:
-    types: [ published ]
+  #release:
+  #  types: [ published ]
   workflow_call:
   workflow_dispatch:
 
