@@ -46,9 +46,9 @@ jobs:
           ### Git work ####
 
           if [ "${{ github.event_name }}" == "release" ]; then
-            REF="tag:${GITHUB_REF#refs/tags/}"
+            REF="${GITHUB_REF#refs/tags/}"
           else
-            REF="branch:${GITHUB_REF#refs/heads/}"
+            REF="$(date +%Y%m%d-%H%M)"
           fi
 
           TITLE="[bot] Compiled Generators ($REF)"
