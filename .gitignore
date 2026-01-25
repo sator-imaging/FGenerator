@@ -5,7 +5,9 @@ obj
 !.github
 !cli
 !EnvObfuscator
+!EnvObfuscator.Test
 !FinalEnumGenerator
+!FinalEnumGenerator.Test
 !sample
 !sandbox
 !sdk

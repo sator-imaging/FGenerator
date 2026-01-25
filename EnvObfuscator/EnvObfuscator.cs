@@ -1,3 +1,6 @@
+// Licensed under the Apache-2.0 License
+// https://github.com/sator-imaging/FGenerator
+
 #:project ../src
 #:property TargetFramework=netstandard2.0
 #:property IsRoslynComponent=true

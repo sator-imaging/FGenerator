@@ -29,13 +29,12 @@ jobs:
 
     - name: Test (release)
       run: |
-        dotnet clean          cli
         dotnet run  --project cli -c Release -- build \
           ${{ matrix.unity }} \
           ${{ matrix.merge }} \
           ${{ matrix.debug }} \
           --force --output  ./.z__merged_dll__ \
-          "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
+          "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs" "sample/*.cs"  # enquote to prevent expanding
 
         dnx -y FGenerator.Cli -- build \
           ${{ matrix.unity }} \
@@ -49,10 +48,25 @@ jobs:
           ${{ matrix.debug }} \
           "Unity/*.cs" -f -o ./.z__merged_dll__
 
-        dotnet clean         sandbox
-        dotnet run --project sandbox  -c Release \
+        ### Tests ###
+
+        dotnet build         EnvObfuscator.Test  -c Release
+        dotnet run --project EnvObfuscator.Test  -c Release  --no-build --verbosity quiet -p:WarningLevel=0 \
           -p:EmitCompilerGeneratedFiles=true \
-          -p:CompilerGeneratedFilesOutputPath="../.generated"  > $GITHUB_STEP_SUMMARY
+          -p:CompilerGeneratedFilesOutputPath="../.generated" \
+          --markdown >> $GITHUB_STEP_SUMMARY
+
+        dotnet build         FinalEnumGenerator.Test  -c Release
+        dotnet run --project FinalEnumGenerator.Test  -c Release  --no-build --verbosity quiet -p:WarningLevel=0 \
+          -p:EmitCompilerGeneratedFiles=true \
+          -p:CompilerGeneratedFilesOutputPath="../.generated" \
+          --markdown >> $GITHUB_STEP_SUMMARY
+
+        dotnet build         sandbox  -c Release
+        dotnet run --project sandbox  -c Release  --no-build --verbosity quiet -p:WarningLevel=0 \
+          -p:EmitCompilerGeneratedFiles=true \
+          -p:CompilerGeneratedFilesOutputPath="../.generated" \
+          --markdown >> $GITHUB_STEP_SUMMARY
 
     - name: Pathfinder
       run:

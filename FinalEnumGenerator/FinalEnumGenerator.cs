@@ -1,3 +1,6 @@
+// Licensed under the Apache-2.0 License
+// https://github.com/sator-imaging/FGenerator
+
 #:project ../src
 #:property TargetFramework=netstandard2.0
 #:property IsRoslynComponent=true
@@ -479,7 +482,7 @@ namespace FinalEnums
         sb.AppendLine();
 
         const int SwitchThreshold = 10;
-        string SW = members.Count >= SwitchThreshold ? "    " : "////";
+        string SW = members.Count >= SwitchThreshold ? "    " : "    ////";
 
         // TryParse(string?)
         sb.AppendLine($"        // {enumKindLabel}");
@@ -504,12 +507,12 @@ namespace FinalEnums
             sb.AppendLine($"                {SW}        break;");
         }
         sb.AppendLine($"                {SW}}}");
-        sb.AppendLine($"                }}");
         if (isFlagsEnum)
         {
             sb.AppendLine();
-            sb.AppendLine("                if (TryParseFlags(span, out result, comparison)) return true;");
+            sb.AppendLine("                    return TryParseFlags(span, out result, comparison);");
         }
+        sb.AppendLine($"                }}");
         sb.AppendLine("            }");
         sb.AppendLine("            result = default;");
         sb.AppendLine("            return false;");
@@ -526,27 +529,29 @@ namespace FinalEnums
         sb.AppendLine();
         sb.AppendLine($"                // won't gain the performance, kept for reference --> //if (utf8.Length <= {maxUtf8Length})");
         sb.AppendLine($"                {{");
-        sb.AppendLine($"                {SW}switch (utf8.Length)");
-        sb.AppendLine($"                {SW}{{");
+        // NOTE: TryParse(utf8) on Flags enum with ignoreCase requires length check (Contains helper exists but no EqualsIgnoreCase).
+        //       For simplicity, always use switch statement.
+        sb.AppendLine($"                    switch (utf8.Length)");
+        sb.AppendLine($"                    {{");
         var utf8Groups = members.GroupBy(m => m.Utf8Bytes.Length).OrderBy(x => x.Key);
         foreach (var group in utf8Groups)
         {
-            sb.AppendLine($"                {SW}    case {group.Key}:");
+            sb.AppendLine($"                        case {group.Key}:");
             foreach (var member in group)
             {
                 var tokenUtf8FieldName = $"FinalEnum__{hintName}__{member.FieldName}_utf8";
                 sb.AppendLine($"                            // \"{member.DisplayNameLiteral}\"");
-                sb.AppendLine($"                            if (utf8.SequenceEqual({tokenUtf8FieldName}) {(isFlagsEnum ? "/*" : string.Empty)}|| (ignoreCase && ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName})){(isFlagsEnum ? "*/" : string.Empty)}) {{ result = {fullyQualifiedEnumName}.{member.FieldName}; return true; }}");
+                sb.AppendLine($"                            if (ignoreCase ? ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName}) : utf8.SequenceEqual({tokenUtf8FieldName})) {{ result = {fullyQualifiedEnumName}.{member.FieldName}; return true; }}");
             }
-            sb.AppendLine($"                {SW}        break;");
+            sb.AppendLine($"                            break;");
         }
-        sb.AppendLine($"                {SW}}}");
-        sb.AppendLine("                }");
+        sb.AppendLine($"                    }}");
         if (isFlagsEnum)
         {
             sb.AppendLine();
-            sb.AppendLine("                if (TryParseFlags(utf8, out result, ignoreCase)) return true;");
+            sb.AppendLine("                    return TryParseFlags(utf8, out result, ignoreCase);");
         }
+        sb.AppendLine("                }");
         sb.AppendLine("            }");
         sb.AppendLine("            result = default;");
         sb.AppendLine("            return false;");
@@ -666,7 +671,7 @@ namespace FinalEnums
                 }
                 var tokenUtf8FieldName = $"FinalEnum__{hintName}__{member.FieldName}_utf8";
                 sb.AppendLine($"                // \"{member.DisplayName}\"");
-                sb.AppendLine($"                if (ContainsToken(utf8, {tokenUtf8FieldName}) || (ignoreCase && ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName})))");
+                sb.AppendLine($"                if (ignoreCase ? ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName}) : ContainsToken(utf8, {tokenUtf8FieldName}))");
                 sb.AppendLine("                {");
                 sb.AppendLine($"                    finalValue |= {(isUnsigned ? member.ValueUnsigned : member.ValueSigned)};");
                 sb.AppendLine($"                    anyFound = true;");
