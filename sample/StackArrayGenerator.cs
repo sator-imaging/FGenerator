@@ -11,6 +11,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System;
 
 namespace StackArrayGenerator
 {
@@ -127,8 +128,6 @@ namespace StackArrayGenerator
             var typeName = target.RawSymbol.ToNameString(localName: false, noGeneric: false, noNullable: false);
             var ctorTypeName = target.RawSymbol.ToNameString(localName: true, noGeneric: true, noNullable: true);
 
-            sb.AppendLine("#nullable enable");
-            sb.AppendLine();
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections;");
             sb.AppendLine("using System.Collections.Generic;");

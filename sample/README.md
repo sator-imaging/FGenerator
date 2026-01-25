@@ -33,8 +33,7 @@ Single-file source generators built with `FGeneratorBase`, plus a console app th
 - Attribute `[StackArray(length, typeof(T))]` is injected through `PostInitializationOutput`; hashing combines `Length` plus up to seven evenly spaced elements.
 - Typical use: declare `partial struct IntArray10` with `[StackArray(10, typeof(int))]` and access elements via the indexer or `AsSpan()`.
 
-## ▶️ SampleConsumer
-📂 [SampleConsumer/](SampleConsumer/)
-- Demonstrates `Container.Person<T>` using `[AutoNotify]`, plus the `[StackArray]`/`[StackList]` structs from [ValueCollectionGenerators.cs](SampleConsumer/ValueCollectionGenerators.cs).
-- Run the sample console app: `dotnet run --project SampleConsumer/SampleConsumer.csproj`
-- The project references the prebuilt analyzers from `../.z__merged_dll__`; adjust the analyzer references if you build the generators differently.
+## ▶️ Sample Usage
+📂 [../sandbox/](../sandbox/)
+- Demonstrates `Container.Person<T>` using `[AutoNotify]`, plus the `[StackArray]`/`[StackList]` structs from [ValueCollectionGenerators.cs](../sandbox/ValueCollectionGenerators.cs).
+- Run the sample console app: `dotnet run --project sandbox/FGenerator.Sandbox.csproj`

@@ -144,8 +144,6 @@ namespace StackListGenerator
             var elementTypeName = elementTypeSymbol.ToNameString(localName: false, noGeneric: false, noNullable: false);
             var typeName = target.RawSymbol.ToNameString(localName: false, noGeneric: false, noNullable: false);
 
-            sb.AppendLine("#nullable enable");
-            sb.AppendLine();
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections;");
             sb.AppendLine("using System.Collections.Generic;");

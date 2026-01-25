@@ -49,19 +49,18 @@ jobs:
           ${{ matrix.debug }} \
           "Unity/*.cs" -f -o ./.z__merged_dll__
 
-        #dotnet clean         sandbox
-        #dotnet run --project sandbox  -c Release \
-        #  -p:EmitCompilerGeneratedFiles=true \
-        #  -p:CompilerGeneratedFilesOutputPath="../.generated"
+        dotnet clean         sandbox
+        dotnet run --project sandbox  -c Release \
+          -p:EmitCompilerGeneratedFiles=true \
+          -p:CompilerGeneratedFilesOutputPath="../.generated"  > $GITHUB_STEP_SUMMARY
 
     - name: Pathfinder
       run:
         ls -al
 
     - name: Artifact
-      if: ${{ !matrix.unity && !matrix.merge && !matrix.debug }}
       uses: actions/upload-artifact@v4
       with:
-        name: generated-sources
+        name: generated-sources${{ matrix.unity }}${{ matrix.merge }}${{ matrix.debug }}
         path: ./.generated/**
         include-hidden-files: true

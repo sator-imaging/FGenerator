@@ -36,8 +36,6 @@ namespace FGDebugGenerator
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("#nullable enable");
-            sb.AppendLine();
             sb.AppendLine("using System.ComponentModel;");
             sb.AppendLine("using System.Runtime.CompilerServices;");
             sb.AppendLine();
