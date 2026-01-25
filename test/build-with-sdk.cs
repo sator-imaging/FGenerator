@@ -1,4 +1,5 @@
-#:sdk FGenerator.Sdk@1.4.0
+#:sdk FGenerator.Sdk@2.0.0
+//                   ~~~~~ Push to origin AFTER new nuget package is available
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
