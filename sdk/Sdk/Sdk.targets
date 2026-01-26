@@ -8,15 +8,14 @@
   -->
   <Target Name="CopyFGeneratorToOutput" AfterTargets="Build">
     <!-- Order is important; last found is priority; DO NOT merge property blocks!! -->
-    <PropertyGroup>
-      <_FGeneratorDll>$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll</_FGeneratorDll>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '%(ReferencePath.Filename)' == 'FGenerator' ">
-      <_FGeneratorDll>%(ReferencePath.FullPath)</_FGeneratorDll>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '%(ReferenceCopyLocalPaths.Filename)' == 'FGenerator' ">
-      <_FGeneratorDll>%(ReferenceCopyLocalPaths.FullPath)</_FGeneratorDll>
-    </PropertyGroup>
+    <ItemGroup>
+      <_FGenList Include="$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll" />
+      <_FGenList Include="@(ReferencePath)" Condition="'%(Filename)' == 'FGenerator'" />
+      <_FGenList Include="@(ReferenceCopyLocalPaths)" Condition="'%(Filename)' == 'FGenerator'" />
+    </ItemGroup>
+    <CreateProperty Value="%(_FGenList.FullPath)">
+      <Output TaskParameter="Value" PropertyName="_FGeneratorDll" />
+    </CreateProperty>
     <Error
       Condition=" '$(_FGeneratorDll)' == '' or !Exists('$(_FGeneratorDll)') "
       Text="FGenerator.dll not found at path: $(_FGeneratorDll)"
