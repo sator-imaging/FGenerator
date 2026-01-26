@@ -12,14 +12,17 @@
       <_FGeneratorCandidate Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
       <_FGeneratorCandidate Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
       <_FGeneratorCandidate Include="$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll" />
+      <_FGeneratorSelected Include="@(_FGeneratorCandidate->System.Linq.Enumerable.Take(1))" />
     </ItemGroup>
     <PropertyGroup>
-      <_FGeneratorDll>$([System.Linq.Enumerable]::FirstOrDefault(@(_FGeneratorCandidate)))</_FGeneratorDll>
+      <_FGeneratorDll>%(_FGeneratorSelected.Identity)</_FGeneratorDll>
     </PropertyGroup>
-    <Error Condition=" !Exists('$(_FGeneratorDll)') " Text="FGenerator.dll not found at path: $(_FGeneratorDll)" />
+    <Error Condition=" '$(_FGeneratorDll)' == '' or !Exists('$(_FGeneratorDll)') "
+           Text="FGenerator.dll not found at path: $(_FGeneratorDll)"
+    />
     <Copy SourceFiles="$(_FGeneratorDll)"
           DestinationFolder="$(TargetDir)"
-          SkipUnchangedFiles="true"
+          SkipUnchangedFiles="false"
     />
   </Target>
 
