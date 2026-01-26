@@ -9,9 +9,12 @@
   <Target Name="CopyFGeneratorToOutput" AfterTargets="Build">
     <!-- Order is important; first found is priority -->
     <ItemGroup>
-      <_FGeneratorDll Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
-      <_FGeneratorDll Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
-      <_FGeneratorDll Include="$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll" />
+      <_FGeneratorCandidate Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
+      <_FGeneratorCandidate Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
+      <_FGeneratorCandidate Include="$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll" />
+    </ItemGroup>
+    <ItemGroup>
+      <_FGeneratorDll Include="@(_FGeneratorCandidate->'%(FullPath)')" Condition=" '@(_FGeneratorDll)' == '' " />
     </ItemGroup>
     <Copy SourceFiles="$([System.String]::Copy('@(_FGeneratorDll)').Split(';')[0])"
           DestinationFolder="$(TargetDir)"
