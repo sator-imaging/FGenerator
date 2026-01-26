@@ -7,22 +7,24 @@
     It causes error when merge option is enabled.
   -->
   <Target Name="CopyFGeneratorToOutput" AfterTargets="Build">
-    <!-- Order is important; first found is priority -->
-    <ItemGroup>
-      <_FGeneratorCandidate Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
-      <_FGeneratorCandidate Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
-      <_FGeneratorCandidate Include="$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll" />
-      <_FGeneratorSelected Include="@(_FGeneratorCandidate->System.Linq.Enumerable.Take(1))" />
-    </ItemGroup>
+    <!-- Order is important; last found is priority; DO NOT merge property blocks!! -->
     <PropertyGroup>
-      <_FGeneratorDll>%(_FGeneratorSelected.Identity)</_FGeneratorDll>
+      <_FGeneratorDll>$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll</_FGeneratorDll>
     </PropertyGroup>
-    <Error Condition=" '$(_FGeneratorDll)' == '' or !Exists('$(_FGeneratorDll)') "
-           Text="FGenerator.dll not found at path: $(_FGeneratorDll)"
+    <PropertyGroup Condition=" '%(ReferencePath.Filename)' == 'FGenerator' ">
+      <_FGeneratorDll>%(ReferencePath.FullPath)</_FGeneratorDll>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '%(ReferenceCopyLocalPaths.Filename)' == 'FGenerator' ">
+      <_FGeneratorDll>%(ReferenceCopyLocalPaths.FullPath)</_FGeneratorDll>
+    </PropertyGroup>
+    <Error
+      Condition=" '$(_FGeneratorDll)' == '' or !Exists('$(_FGeneratorDll)') "
+      Text="FGenerator.dll not found at path: $(_FGeneratorDll)"
     />
-    <Copy SourceFiles="$(_FGeneratorDll)"
-          DestinationFolder="$(TargetDir)"
-          SkipUnchangedFiles="false"
+    <Copy
+      SourceFiles="$(_FGeneratorDll)"
+      DestinationFolder="$(TargetDir)"
+      SkipUnchangedFiles="false"
     />
   </Target>
 
