@@ -1,4 +1,4 @@
-name: "[push, release] Compile & PR"
+name: "[push.paths] Compile & PR"
 
 on:
   push:

@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGetPublishSettings">
-    <NuGetPublishVersion>2.0.10</NuGetPublishVersion>
+    <NuGetPublishVersion>2.0.11</NuGetPublishVersion>
     <NuGetPublishVersionSuffix></NuGetPublishVersionSuffix>
     <!-- relative path from .csproj files, without trailing slash -->
     <NuGetPublishProjectRootRelPath>..</NuGetPublishProjectRootRelPath>
@@ -21,7 +21,7 @@
     <NuGetPublishProduct>$(NuGetPublishTitle)</NuGetPublishProduct>
     <NuGetPublishOwner>Sator Imaging</NuGetPublishOwner>
     <NuGetPublishCompany>$(NuGetPublishOwner)</NuGetPublishCompany>
-    <NuGetPublishCopyright>(c) 2025 $(NuGetPublishOwner)</NuGetPublishCopyright>
+    <NuGetPublishCopyright>(c) 2025-2026 $(NuGetPublishOwner)</NuGetPublishCopyright>
     <NuGetPublishLicenseSPDX>Apache-2.0</NuGetPublishLicenseSPDX>
     <NuGetPublishDescription>Roslyn framework for developing source generator as a file-based app project.</NuGetPublishDescription>
     <NuGetPublishTags>Roslyn, source generator, file-based app</NuGetPublishTags>
