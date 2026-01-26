@@ -11,9 +11,9 @@
     <ItemGroup>
       <_FGeneratorDll Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
       <_FGeneratorDll Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
-      <_FGeneratorDll Include="$(PkgFGenerator)\lib\netstandard2.0\FGenerator.dll" />
+      <_FGeneratorDll Include="$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll" />
     </ItemGroup>
-    <Copy SourceFiles="@(_FGeneratorDll->Take(1))"
+    <Copy SourceFiles="$([System.String]::Copy('@(_FGeneratorDll)').Split(';')[0])"
           DestinationFolder="$(TargetDir)"
           SkipUnchangedFiles="true"
     />

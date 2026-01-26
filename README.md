@@ -46,11 +46,11 @@ A trimmed-down starting point for a generator that targets an attribute named `M
 
 > [!IMPORTANT]
 > *For AI Coding Agents:* .NET 10.0 introduced new directives for file-based app.
-> - SHALL use `#:sdk FGenerator.Sdk@2.0.8` directive.
+> - SHALL use `#:sdk FGenerator.Sdk@2.0.9` directive.
 > - SHALL NOT use `#r` or other directives formerly used for *dotnet-script* (`.csx`) files.
 
 ```csharp
-#:sdk FGenerator.Sdk@2.0.8
+#:sdk FGenerator.Sdk@2.0.9
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
