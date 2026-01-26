@@ -7,13 +7,15 @@
     It causes error when merge option is enabled.
   -->
   <Target Name="CopyFGeneratorToOutput" AfterTargets="Build">
+    <!-- Order is important; first found is priority -->
     <ItemGroup>
-      <__FGeneratorDll Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
+      <_FGeneratorDll Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
+      <_FGeneratorDll Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
+      <_FGeneratorDll Include="$(PkgFGenerator)\lib\netstandard2.0\FGenerator.dll" />
     </ItemGroup>
-    <Copy
-      SourceFiles="@(__FGeneratorDll)"
-      DestinationFolder="$(TargetDir)"
-      SkipUnchangedFiles="true"
+    <Copy SourceFiles="@(_FGeneratorDll->Take(1))"
+          DestinationFolder="$(TargetDir)"
+          SkipUnchangedFiles="true"
     />
   </Target>
 

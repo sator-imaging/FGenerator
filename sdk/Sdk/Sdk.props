@@ -5,9 +5,10 @@
   <!-- FGenerator -->
   <ItemGroup>
     <!--
-      no way to 'bake' target version automatically (this file is not preprocessed by msbuild on build)
+      No way to 'bake' target version automatically (this file is not preprocessed by msbuild on build)
+      * DO NOT remove GeneratePathProperty! Sdk.targets is depending on that!
     -->
-    <PackageReference Include="FGenerator" Version="2.0.7" />
+    <PackageReference Include="FGenerator" Version="2.0.8" GeneratePathProperty="true" />
   </ItemGroup>
 
   <!-- Minimal requirements for roslyn development -->
