@@ -271,10 +271,8 @@ namespace EnvObfuscator
         IRandomSource random = new SeededRandomSource(seed);
         ushort oddKey = CreateRandomUShort(random);
         ushort evenKey = CreateRandomUShort(random);
-        if (oddKey == 0 || evenKey == 0)
-        {
-            throw new ObfuscationKeyException("Obfuscation keys must be non-zero. Change the seed to generate different keys.");
-        }
+        ValidateObfuscationKeyOrThrow(oddKey);
+        ValidateObfuscationKeyOrThrow(evenKey);
 
         var doubled = new char[baseChars.Count * 2];
         for (int i = 0; i < baseChars.Count; i++)
@@ -320,6 +318,12 @@ namespace EnvObfuscator
 
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Runtime.CompilerServices;");
+        sb.AppendLine();
+        sb.Append("// seed: ");
+        sb.Append(FormatSeedBinary(seed));
+        sb.Append(" (");
+        sb.Append(seed.ToString(CultureInfo.InvariantCulture));
+        sb.AppendLine(")");
         sb.AppendLine();
 
         const string PropertyDocComment =
@@ -383,7 +387,9 @@ namespace EnvObfuscator
                 ushort key = isEven ? evenKey : oddKey;
                 ushort encoded = (ushort)(c ^ key);
                 ushort[] table = isEven ? ec : oc;
-                int index = random.NextBool() ? IndexOf(table, encoded) : LastIndexOf(table, encoded);
+                int index = random.NextBool()
+                    ? table.AsSpan().IndexOf(encoded)
+                    : table.AsSpan().LastIndexOf(encoded);
 
                 entryIndices[i] = index;
                 entryIsEven[i] = isEven;
@@ -553,7 +559,8 @@ namespace EnvObfuscator
         sb.Append(fieldName);
         sb.Append(" = 0x");
         sb.Append(key.ToString("X4", CultureInfo.InvariantCulture));
-        sb.AppendLine(";");
+        sb.Append(";  // ");
+        sb.AppendLine(FormatKeyByteBinary(key));
         sb.Append('}');
         AppendNamespaceClose(sb, namespaceName);
     }
@@ -599,7 +606,19 @@ namespace EnvObfuscator
 
     private static ushort CreateRandomUShort(IRandomSource random)
     {
-        return (ushort)random.NextInt(1, 0x10000);
+        byte hi = (byte)random.NextInt(1, 0x100);
+        byte lo = (byte)random.NextInt(1, 0x100);
+        ushort key = (ushort)((hi << 8) | lo);
+        key ^= (ushort)((key << 7) | (key >> 9));
+        return key;
+    }
+
+    private static void ValidateObfuscationKeyOrThrow(ushort key)
+    {
+        if ((key & 0x00FF) == 0 || (key & 0xFF00) == 0)
+        {
+            throw new ObfuscationKeyException("Obfuscation key bytes must be non-zero. Change the seed to generate different keys.");
+        }
     }
 
     private static void Shuffle(ushort[] array, IRandomSource random)
@@ -611,30 +630,6 @@ namespace EnvObfuscator
             array[i] = array[j];
             array[j] = tmp;
         }
-    }
-
-    private static int IndexOf(ushort[] array, ushort target)
-    {
-        for (int i = 0; i < array.Length; i++)
-        {
-            if (array[i] == target)
-            {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private static int LastIndexOf(ushort[] array, ushort target)
-    {
-        for (int i = array.Length - 1; i >= 0; i--)
-        {
-            if (array[i] == target)
-            {
-                return i;
-            }
-        }
-        return -1;
     }
 
     private static void AppendCharArray(StringBuilder sb, ushort[] values, ushort key, int indent)
@@ -673,6 +668,37 @@ namespace EnvObfuscator
             return "\\\\u" + ((int)c).ToString("X4", CultureInfo.InvariantCulture);
         }
         return c.ToString();
+    }
+
+    private static string FormatSeedBinary(int seed)
+    {
+        uint value = unchecked((uint)seed);
+        var sb = new StringBuilder(4 + 32 + 3);
+        sb.Append("0b_");
+        for (int i = 31; i >= 0; i--)
+        {
+            sb.Append(((value >> i) & 1u) == 0u ? '0' : '1');
+            if (i != 0 && (i % 8) == 0)
+            {
+                sb.Append('_');
+            }
+        }
+        return sb.ToString();
+    }
+
+    private static string FormatKeyByteBinary(ushort key)
+    {
+        var sb = new StringBuilder(20);
+        sb.Append("0b_");
+        for (int i = 15; i >= 0; i--)
+        {
+            sb.Append(((key >> i) & 1) == 0 ? '0' : '1');
+            if (i == 8)
+            {
+                sb.Append('_');
+            }
+        }
+        return sb.ToString();
     }
 
     private static bool TryGetIdentifier(string key, HashSet<string> usedNames, out string identifier)
