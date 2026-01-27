@@ -41,11 +41,9 @@ namespace EnvObfuscator
         /// <inheritdoc cref=""ObfuscateAttribute""/>
         /// <param name=""seed"">Seed for deterministic obfuscation output; omit the parameter to use a random seed. 0 is allowed and deterministic.</param>
         public ObfuscateAttribute(int seed = 0)
-        public ObfuscateAttribute(int seed = 0)
         {
             // The seed value is read by the source generator from the attribute's syntax tree.
             // This parameter exists only to capture the value at compile time.
-        }
         }
     }
 }
