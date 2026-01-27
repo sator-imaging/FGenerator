@@ -3,9 +3,9 @@
 ////       the same internal seed and causes compile error, as expected.
 ////       --> Deterministic build works as designed.
 ///* a=b */
-//[Obfuscate(310)] partial class altarage { }
+//[EnvObfuscator.Obfuscate(310)] partial class altarage { }
 ///* a=b */
-//[Obfuscate(310)] partial class zinke { }
+//[EnvObfuscator.Obfuscate(310)] partial class zinke { }
 
 namespace EnvObfuscator.Test
 {
@@ -58,6 +58,12 @@ namespace EnvObfuscator.Test
 
 
         //// TEST: ERROR
+
         //[Obfuscate] class NotPartial { }
+
+        ///* 1foo=bar */
+        //[Obfuscate] partial class InvalidKeyName { }
+
+        // TODO: Invalid obfuscation key error cannot be tested (likely never happens...?)
     }
 }
