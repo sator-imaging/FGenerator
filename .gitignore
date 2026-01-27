@@ -21,6 +21,6 @@ obj
 !FGenerator.slnx
 
 *.md
-!README.md
+!**/README.md
 !README.*.md
 !LICENSE.md

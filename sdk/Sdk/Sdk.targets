@@ -10,8 +10,8 @@
     <!-- Order is important; last found is priority; DO NOT merge property blocks!! -->
     <ItemGroup>
       <_FGenList Include="$(PkgFGenerator)/lib/netstandard2.0/FGenerator.dll" />
-      <_FGenList Include="@(ReferencePath)" Condition="'%(Filename)' == 'FGenerator'" />
-      <_FGenList Include="@(ReferenceCopyLocalPaths)" Condition="'%(Filename)' == 'FGenerator'" />
+      <_FGenList Include="@(ReferencePath)" Condition=" '%(Filename)' == 'FGenerator' " />
+      <_FGenList Include="@(ReferenceCopyLocalPaths)" Condition=" '%(Filename)' == 'FGenerator' " />
     </ItemGroup>
     <CreateProperty Value="%(_FGenList.FullPath)">
       <Output TaskParameter="Value" PropertyName="_FGeneratorDll" />
@@ -23,7 +23,7 @@
     <Copy
       SourceFiles="$(_FGeneratorDll)"
       DestinationFolder="$(TargetDir)"
-      SkipUnchangedFiles="false"
+      SkipUnchangedFiles="true"
     />
   </Target>
 
