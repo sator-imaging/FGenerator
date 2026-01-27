@@ -58,6 +58,12 @@ namespace EnvObfuscator.Test
 
 
         //// TEST: ERROR
+
         //[Obfuscate] class NotPartial { }
+
+        ///* 1foo=bar */
+        //[Obfuscate] partial class InvalidKeyName { }
+
+        // TODO: Invalid obfuscation key error cannot be tested (likely never happens...?)
     }
 }

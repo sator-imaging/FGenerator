@@ -1,7 +1,7 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-#:sdk FGenerator.Sdk@2.0.5
+#:sdk FGenerator.Sdk@2.0.14
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -17,7 +17,7 @@ using System.Text;
 #pragma warning disable SMA0026  // Enum Obfuscation
 
 /// <summary>
-/// Generates obfuscated ReadOnlyMemory&lt;char&gt; properties from a preceding multiline comment.
+/// Generates obfuscated properties from a preceding multiline comment.
 /// </summary>
 [Generator]
 public sealed class EnvObfuscator : FGeneratorBase
@@ -31,15 +31,18 @@ public sealed class EnvObfuscator : FGeneratorBase
 
 namespace EnvObfuscator
 {
+    /// <summary>
+    /// Apply to a partial class or struct to generate obfuscated properties from the preceding <c>/* ... */</c>
+    /// multiline <c>.env</c> format comment.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
     internal sealed class ObfuscateAttribute : Attribute
     {
+        /// <inheritdoc cref=""ObfuscateAttribute""/>
+        /// <param name=""seed"">Seed for deterministic obfuscation output; omit the parameter to use a random seed. 0 is allowed and deterministic.</param>
         public ObfuscateAttribute(int seed = 0)
         {
-            Seed = seed;
         }
-
-        public int Seed { get; }
     }
 }
 ";
@@ -48,110 +51,129 @@ namespace EnvObfuscator
     {
         diagnostic = null;
 
-        if (target.RawSymbol is not INamedTypeSymbol typeSymbol)
+        try
         {
-            diagnostic = new AnalyzeResult("001", "Invalid target", DiagnosticSeverity.Error, "Obfuscate can only be applied to named types.");
-            return null;
-        }
-
-        if (typeSymbol.TypeKind is not TypeKind.Class and not TypeKind.Struct)
-        {
-            diagnostic = new AnalyzeResult("002", "Invalid target", DiagnosticSeverity.Error, "Obfuscate can only be applied to classes, structs, or records.");
-            return null;
-        }
-
-        if (!target.IsPartial)
-        {
-            diagnostic = new AnalyzeResult("003", "Type must be partial", DiagnosticSeverity.Error, $"Type '{typeSymbol.Name}' must be declared as partial to use Obfuscate.");
-            return null;
-        }
-
-        var attributeData = target.RawAttributes.FirstOrDefault();
-        if (attributeData == null)
-        {
-            diagnostic = new AnalyzeResult("004", "Attribute missing", DiagnosticSeverity.Error, "Obfuscate attribute could not be resolved.");
-            return null;
-        }
-
-        var attributeSyntax = attributeData.ApplicationSyntaxReference?.GetSyntax() as AttributeSyntax;
-        if (attributeSyntax?.Parent is not AttributeListSyntax attributeList)
-        {
-            diagnostic = new AnalyzeResult("005", "Attribute syntax not found", DiagnosticSeverity.Error, "Unable to locate Obfuscate attribute syntax.");
-            return null;
-        }
-
-        if (!TryGetEnvComment(attributeList, out var envText, out var commentStatus))
-        {
-            if (commentStatus == EnvCommentStatus.NotMultilineComment)
+            if (target.RawSymbol is not INamedTypeSymbol typeSymbol)
             {
-                diagnostic = new AnalyzeResult("010", "Invalid env comment", DiagnosticSeverity.Warning, "The trivia immediately preceding [Obfuscate] must be a /* ... */ multiline comment.");
+                diagnostic = new AnalyzeResult("001", "Invalid target", DiagnosticSeverity.Error, "Obfuscate can only be applied to named types.");
+                return null;
             }
-            else
+
+            if (typeSymbol.TypeKind is not TypeKind.Class and not TypeKind.Struct)
             {
-                diagnostic = new AnalyzeResult("006", "Missing env comment", DiagnosticSeverity.Warning, "A /* ... */ multiline comment preceding [Obfuscate] is required.");
+                diagnostic = new AnalyzeResult("002", "Invalid target", DiagnosticSeverity.Error, "Obfuscate can only be applied to classes, structs, or records.");
+                return null;
             }
-            return null;
-        }
 
-        var entries = new List<EnvEntry>();
-        var invalidLines = new List<string>();
-
-        ParseEnv(envText, entries, invalidLines);
-
-        AnalyzeResult? warning = null;
-        if (entries.Count == 0)
-        {
-            warning = new AnalyzeResult("007", "No entries", DiagnosticSeverity.Warning, "No valid env entries were found in the preceding comment.");
-        }
-        else if (invalidLines.Count > 0)
-        {
-            var sample = invalidLines[0];
-            warning = new AnalyzeResult("008", "Invalid env lines", DiagnosticSeverity.Warning, $"Ignored {invalidLines.Count} invalid env line(s). First: '{sample}'.");
-        }
-
-        bool hasExplicitSeed = attributeSyntax.ArgumentList?.Arguments.Count > 0;
-        int seedValueFromAttribute = 0;
-
-        // Determine if a seed was explicitly provided in the attribute's source code.
-        // If the seed argument is omitted (e.g., `[Obfuscate()]`), a random seed will be generated.
-        // If `[Obfuscate(0)]` is used, the seed will be explicitly set to 0.
-        if (hasExplicitSeed && attributeData.ConstructorArguments.Length > 0)
-        {
-            var arg = attributeData.ConstructorArguments[0];
-            if (!arg.IsNull && arg.Value is int seedValue)
+            if (!target.IsPartial)
             {
-                seedValueFromAttribute = seedValue;
+                diagnostic = new AnalyzeResult("003", "Type must be partial", DiagnosticSeverity.Error, $"Type '{typeSymbol.Name}' must be declared as partial to use Obfuscate.");
+                return null;
             }
-        }
 
-        if (hasExplicitSeed)
-        {
-            foreach (var named in attributeData.NamedArguments)
+            var attributeData = target.RawAttributes.FirstOrDefault();
+            if (attributeData == null)
             {
-                if (string.Equals(named.Key, "seed", StringComparison.OrdinalIgnoreCase) && named.Value.Value is int seedValue)
+                diagnostic = new AnalyzeResult("004", "Attribute missing", DiagnosticSeverity.Error, "Obfuscate attribute could not be resolved.");
+                return null;
+            }
+
+            var attributeSyntax = attributeData.ApplicationSyntaxReference?.GetSyntax() as AttributeSyntax;
+            if (attributeSyntax?.Parent is not AttributeListSyntax attributeList)
+            {
+                diagnostic = new AnalyzeResult("005", "Attribute syntax not found", DiagnosticSeverity.Error, "Unable to locate Obfuscate attribute syntax.");
+                return null;
+            }
+
+            if (!TryGetEnvComment(attributeList, out var envText, out var commentStatus))
+            {
+                if (commentStatus == EnvCommentStatus.NotMultilineComment)
+                {
+                    diagnostic = new AnalyzeResult("010", "Invalid env comment", DiagnosticSeverity.Warning, "The trivia immediately preceding [Obfuscate] must be a /* ... */ multiline comment.");
+                }
+                else
+                {
+                    diagnostic = new AnalyzeResult("006", "Missing env comment", DiagnosticSeverity.Warning, "A /* ... */ multiline comment preceding [Obfuscate] is required.");
+                }
+                return null;
+            }
+
+            var entries = new List<EnvEntry>();
+            var invalidLines = new List<string>();
+
+            ParseEnv(envText, entries, invalidLines);
+
+            AnalyzeResult? warning = null;
+            if (entries.Count == 0)
+            {
+                warning = new AnalyzeResult("007", "No entries", DiagnosticSeverity.Warning, "No valid env entries were found in the preceding comment.");
+            }
+            else if (invalidLines.Count > 0)
+            {
+                var sample = invalidLines[0];
+                warning = new AnalyzeResult("008", "Invalid env lines", DiagnosticSeverity.Warning, $"Ignored {invalidLines.Count} invalid env line(s). First: '{sample}'.");
+            }
+
+            bool hasExplicitSeed = attributeSyntax.ArgumentList?.Arguments.Count > 0;
+            int seedValueFromAttribute = 0;
+
+            // Determine if a seed was explicitly provided in the attribute's source code.
+            // If the seed argument is omitted (e.g., `[Obfuscate()]`), a random seed will be generated.
+            // If `[Obfuscate(0)]` is used, the seed will be explicitly set to 0.
+            if (hasExplicitSeed && attributeData.ConstructorArguments.Length > 0)
+            {
+                var arg = attributeData.ConstructorArguments[0];
+                if (!arg.IsNull && arg.Value is int seedValue)
                 {
                     seedValueFromAttribute = seedValue;
-                    break;
                 }
             }
-        }
 
-        if (hasExplicitSeed && seedValueFromAttribute == 0 && warning == null)
+            if (hasExplicitSeed)
+            {
+                foreach (var named in attributeData.NamedArguments)
+                {
+                    if (string.Equals(named.Key, "seed", StringComparison.OrdinalIgnoreCase) && named.Value.Value is int seedValue)
+                    {
+                        seedValueFromAttribute = seedValue;
+                        break;
+                    }
+                }
+            }
+
+            if (hasExplicitSeed && seedValueFromAttribute == 0 && warning == null)
+            {
+                warning = new AnalyzeResult("009", "Seed is zero", DiagnosticSeverity.Warning, "Seed value 0 is valid but deterministic. To use a random seed, omit the seed argument.");
+            }
+
+            if (warning != null)
+            {
+                diagnostic = warning;
+            }
+
+            int seed = hasExplicitSeed
+                ? seedValueFromAttribute
+                : GenerateRandomSeed();
+            int effectiveSeed = MixSeed(seed ^ StableHash(target.ToAssemblyUniqueIdentifier()));
+
+            var source = GenerateSource(target, entries, effectiveSeed);
+            return new CodeGeneration(target.ToHintName(), source);
+        }
+        catch (EnvKeyValidationException ex)
         {
-            warning = new AnalyzeResult("009", "Seed is zero", DiagnosticSeverity.Warning, "Seed value 0 is valid but deterministic. To use a random seed, omit the seed argument.");
+            diagnostic = new AnalyzeResult("011", "Invalid env key", DiagnosticSeverity.Error, ex.Message);
+            return null;
         }
-
-        if (warning != null)
+        catch (ObfuscationKeyException ex)
         {
-            diagnostic = warning;
+            diagnostic = new AnalyzeResult("012", "Invalid obfuscation key", DiagnosticSeverity.Error, ex.Message);
+            return null;
         }
-
-        int seed = hasExplicitSeed
-            ? seedValueFromAttribute
-            : GenerateRandomSeed();
-        int effectiveSeed = MixSeed(seed ^ StableHash(target.ToAssemblyUniqueIdentifier()));
-        var source = GenerateSource(target, entries, effectiveSeed);
-        return new CodeGeneration(target.ToHintName(), source);
+        catch (Exception ex)
+        {
+            diagnostic = new AnalyzeResult("013", "Unhandled generator error", DiagnosticSeverity.Error, ex.Message);
+            return null;
+        }
     }
 
     private static bool TryGetEnvComment(AttributeListSyntax attributeList, out string envText, out EnvCommentStatus status)
@@ -233,6 +255,7 @@ namespace EnvObfuscator
                 invalidLines.Add(trimmed);
                 continue;
             }
+            ValidateKeyOrThrow(key);
 
             var value = trimmed.Substring(eqIndex + 1).Trim();
             entries.Add(new EnvEntry(key, value));
@@ -246,6 +269,10 @@ namespace EnvObfuscator
         IRandomSource random = new SeededRandomSource(seed);
         ushort oddKey = CreateRandomUShort(random);
         ushort evenKey = CreateRandomUShort(random);
+        if (oddKey == 0 || evenKey == 0)
+        {
+            throw new ObfuscationKeyException("Obfuscation keys must be non-zero. Change the seed to generate different keys.");
+        }
 
         var doubled = new char[baseChars.Count * 2];
         for (int i = 0; i < baseChars.Count; i++)
@@ -293,6 +320,11 @@ namespace EnvObfuscator
         sb.AppendLine("using System.Runtime.CompilerServices;");
         sb.AppendLine();
 
+        const string PropertyDocComment =
+@"        /// <summary>
+        /// Returns a freshly decoded clone each time; call <c>Span.Clear()</c> on the returned buffer to zero the decoded code when done.
+        /// </summary>";
+
         const string ValidateDocComment =
 @"        /// <summary>
         /// This method compares the contents from two buffers for equality in a way that doesn't leak timing information, making it ideal for use within cryptographic routines.
@@ -325,10 +357,11 @@ namespace EnvObfuscator
 
             if (entry.Value.Length == 0)
             {
-                sb.AppendLine($"        public static ReadOnlyMemory<char> {propertyName}");
+                sb.AppendLine(PropertyDocComment);
+                sb.AppendLine($"        public static Memory<char> {propertyName}");
                 sb.AppendLine("        {");
                 sb.AppendLine("            [MethodImpl(MethodImplOptions.NoInlining)]");
-                sb.AppendLine("            get => ReadOnlyMemory<char>.Empty;");
+                sb.AppendLine("            get => Memory<char>.Empty;");
                 sb.AppendLine("        }");
                 sb.AppendLine();
                 sb.AppendLine(ValidateDocComment);
@@ -354,7 +387,8 @@ namespace EnvObfuscator
                 entryIsEven[i] = isEven;
             }
 
-            sb.AppendLine($"        public static ReadOnlyMemory<char> {propertyName}");
+            sb.AppendLine(PropertyDocComment);
+            sb.AppendLine($"        public static Memory<char> {propertyName}");
             sb.AppendLine("        {");
             sb.AppendLine("            [MethodImpl(MethodImplOptions.NoInlining)]");
             sb.AppendLine("            get");
@@ -531,7 +565,7 @@ namespace EnvObfuscator
         sb.Append("    internal static readonly ushort[] ");
         sb.Append(fieldName);
         sb.Append(" = new ushort[]");
-        sb.Append(" // ");
+        sb.Append("  // ");
         sb.Append(values.Length);
         sb.AppendLine(" items");
         sb.AppendLine("    {");
@@ -611,7 +645,7 @@ namespace EnvObfuscator
             sb.Append("0x");
             sb.Append(((int)value).ToString("X4", CultureInfo.InvariantCulture));
             sb.Append(',');
-            sb.Append(" // [");
+            sb.Append("  // [");
             sb.Append(i);
             sb.Append("] ");
             sb.AppendLine(FormatCharForComment((char)(value ^ key)));
@@ -643,17 +677,19 @@ namespace EnvObfuscator
     {
         identifier = string.Empty;
 
+        ValidateKeyOrThrow(key);
+
         var builder = new StringBuilder(key.Length + 2);
         for (int i = 0; i < key.Length; i++)
         {
             var ch = key[i];
             if (i == 0)
             {
-                builder.Append(SyntaxFacts.IsIdentifierStartCharacter(ch) ? ch : '_');
+                builder.Append(ch);
             }
             else
             {
-                builder.Append(SyntaxFacts.IsIdentifierPartCharacter(ch) ? ch : '_');
+                builder.Append(ch);
             }
         }
 
@@ -665,24 +701,62 @@ namespace EnvObfuscator
 
         if (!SyntaxFacts.IsValidIdentifier(candidate))
         {
-            return false;
+            throw new EnvKeyValidationException($"Env key '{key}' is not a valid C# identifier.");
         }
 
         if (!usedNames.Add(candidate))
         {
-            int suffix = 1;
-            string unique;
-            do
-            {
-                unique = candidate + "_" + suffix;
-                suffix++;
-            } while (!usedNames.Add(unique));
-
-            candidate = unique;
+            throw new EnvKeyValidationException($"Env key '{key}' duplicates another generated identifier '{candidate}'.");
         }
 
         identifier = candidate;
         return true;
+    }
+
+    private static void ValidateKeyOrThrow(string key)
+    {
+        if (key.Length == 0)
+        {
+            throw new EnvKeyValidationException("Env key cannot be empty.");
+        }
+
+        for (int i = 0; i < key.Length; i++)
+        {
+            var ch = key[i];
+            if (i == 0)
+            {
+                if (ch == '@' || !SyntaxFacts.IsIdentifierStartCharacter(ch))
+                {
+                    throw new EnvKeyValidationException($"Env key '{key}' contains an invalid identifier start character '{ch}'.");
+                }
+            }
+            else
+            {
+                if (!SyntaxFacts.IsIdentifierPartCharacter(ch))
+                {
+                    throw new EnvKeyValidationException($"Env key '{key}' contains an invalid identifier character '{ch}'.");
+                }
+            }
+        }
+
+        if (!SyntaxFacts.IsValidIdentifier(key))
+        {
+            throw new EnvKeyValidationException($"Env key '{key}' is not a valid C# identifier.");
+        }
+    }
+
+    private sealed class EnvKeyValidationException : InvalidOperationException
+    {
+        public EnvKeyValidationException(string message) : base(message)
+        {
+        }
+    }
+
+    private sealed class ObfuscationKeyException : InvalidOperationException
+    {
+        public ObfuscationKeyException(string message) : base(message)
+        {
+        }
     }
 
     private readonly struct EnvEntry

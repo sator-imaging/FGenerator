@@ -2,7 +2,7 @@
 
 # EnvObfuscator
 
-Generates Obfuscated `ReadOnlyMemory<char>` Properties from `.env`
+Generates Obfuscated Properties from `.env` File Content
 
 </div>
 
@@ -10,7 +10,7 @@ Generates Obfuscated `ReadOnlyMemory<char>` Properties from `.env`
 
 
 - Reads the last `/* ... */` multiline comment in the attribute's leading trivia.
-- Generates `public static ReadOnlyMemory<char>` properties for each valid entry.
+- Generates `public static Memory<char>` properties for each valid entry.
 - Generates `Validate_<PropertyName>(ReadOnlySpan<char>)` for constant-time comparison.
 - Deterministic output via `seed` support.
 
@@ -22,6 +22,8 @@ Generates Obfuscated `ReadOnlyMemory<char>` Properties from `.env`
 
 
 # 🚀 Getting Started
+
+To avoid embedding "raw data" as an assembly metadata, `EnvObfuscator` uses preceding block comment as a source.
 
 ```cs
 using EnvObfuscator;
@@ -38,18 +40,23 @@ static partial class EnvSecrets
 }
 ```
 
-Use the generated properties:
+How to use the generated properties:
 
 ```cs
-var key = new string(EnvSecrets.API_KEY.Span);
-var url = new string(EnvSecrets.SERVICE_URL.Span);
-var secret = new string(EnvSecrets.SECRET.Span);
-var empty = new string(EnvSecrets.EMPTY.Span); // ""
+// Always returns a freshly decoded clone each time
+var apiKey = EnvSecrets.API_KEY;
+var cache = apiKey.ToString();
 
-// Validation (full-length compare to avoid timing differences)
+// Consuming decoded data...
+
+// Zeroing out the span — more for peace of mind than actual security
+apiKey.Span.Clear();
+cache = "";
+
+// Validation (no decoding, full-length compare to avoid timing differences)
 if (EnvSecrets.Validate_SECRET("PA$$WORD"))
 {
-    // ok
+    //...
 }
 ```
 
@@ -58,7 +65,9 @@ if (EnvSecrets.Validate_SECRET("PA$$WORD"))
 
 - Missing multiline comment yields a warning.
 - Invalid lines are ignored and reported (first invalid line is shown).
+- Invalid keys (non-identifiers, invalid characters, or duplicates) are errors.
 - Seed value `0` is allowed but warned (deterministic and predictable).
+- Obfuscation keys must be non-zero (error); change the seed to generate different keys.
 
 
 ## Known Limitations
@@ -78,10 +87,11 @@ if (EnvSecrets.Validate_SECRET("PA$$WORD"))
 
 - Each non-empty, non-`#` line is parsed as `KEY=VALUE` (split on the first `=`).
     - Keys/values are trimmed; values may contain `=` after the first.
-- Keys are normalized to valid identifiers (invalid characters become `_`).
-    - Keys that normalize to invalid identifiers (e.g., keywords) are skipped.
-    - Duplicate names are deconflicted with `_1`, `_2`, ...
+- Keys must already be valid C# identifiers.
+    - Invalid characters or keywords cause an error.
+    - Duplicate names cause an error.
 - `Validate_<PropertyName>(ReadOnlySpan<char>)` short-circuits only on length mismatch, then performs a full-length compare to avoid leaking timing information.
+- Clear decoded values with `Span.Clear()` after use to zero sensitive data.
 - Obfuscation details:
     - Builds a base character table from all values + a default extra set.
     - Duplicates the table, XOR-encodes with odd/even keys, then shuffles.
