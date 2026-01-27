@@ -176,7 +176,19 @@ return FUnit.Run(args, describe =>
             Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "A_phaXyz"u8));
             Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "a_phaXyZ"u8));
 
+            // Token end exceeds the source end
+            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("Abc,Def"u8, "Def_"u8));
             Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("Abc,Def"u8, "Def___"u8));
+
+            // Shorter tokens
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A"u8, "A"u8));
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A"u8, "a"u8));
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A,B,C"u8, "B"u8));
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A,B,C"u8, "b"u8));
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB"u8, "AB"u8));
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB"u8, "ab"u8));
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB,CD,EF"u8, "CD"u8));
+            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB,CD,EF"u8, "cd"u8));
         });
     });
 

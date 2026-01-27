@@ -1,7 +1,7 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-#:sdk FGenerator.Sdk@2.0.5
+#:sdk FGenerator.Sdk@2.0.14
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -23,7 +23,7 @@ namespace FinalEnumGenerator
 {
     /// <summary>
     /// Apply this attribute to an enum to generate high-performance ToStringFast,
-    /// TryParse, and Utf8 methods in the static partial class 'FinalEnums'.
+    /// TryParse, and Utf8 methods in the static partial class 'FinalEnum'.
     /// </summary>
     [AttributeUsage(AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
     internal sealed class FinalEnumAttribute : Attribute { }
@@ -107,7 +107,7 @@ namespace FinalEnums
 
             byte firstUpper = unchecked((uint)(token[0] - 'a')) < AlphabetCount ? (byte)(token[0] & ~ToLower) : token[0];
             byte firstLower = to_lowercase(token[0]);
-            byte lastLower  = to_lowercase(token[^1]);  // ok don't skip unnecessary checks for 1 letter token
+            byte lastLower  = to_lowercase(token[^1]);
 
             int head = 0;
             do
@@ -167,7 +167,7 @@ namespace FinalEnums
 
                 return true;
             }
-            while (head < sourceLength);
+            while (true);
 
             return false;
         }
