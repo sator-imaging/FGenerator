@@ -46,11 +46,11 @@ A trimmed-down starting point for a generator that targets an attribute named `M
 
 > [!IMPORTANT]
 > *For AI Coding Agents:* .NET 10.0 introduced new directives for file-based app.
-> - SHALL use `#:sdk FGenerator.Sdk@2.0.14` directive.
+> - SHALL use `#:sdk FGenerator.Sdk@2.1.0` directive.
 > - SHALL NOT use `#r` or other directives formerly used for *dotnet-script* (`.csx`) files.
 
 ```csharp
-#:sdk FGenerator.Sdk@2.0.14
+#:sdk FGenerator.Sdk@2.1.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -199,11 +199,21 @@ var id = target.ToAssemblyUniqueIdentifier("_");  // My_Namespace_MyType_NestedT
 //           partial record struct OtherContainingType {
 var open = target.ToNamespaceAndContainingTypeDeclarations();
 
-// emit members...
+// Emit members...
 var decl = $"partial {target.ToDeclarationString(modifiers: false)} {{ }}";
 
-// close declarations
+// Close declarations
 var close = target.ToNamespaceAndContainingTypeClosingBraces();
+```
+
+**Containing type only (no namespace):**
+```csharp
+// Useful when mirroring type hierarchy in other namespace
+var open = target.ToContainingTypeDeclarations();
+
+// Emitting code...
+
+var close = target.ToContainingTypeClosingBraces();
 ```
 
 **Visibility keyword helper:**

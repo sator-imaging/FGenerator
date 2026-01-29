@@ -20,6 +20,10 @@
       Condition=" '$(_FGeneratorDll)' == '' or !Exists('$(_FGeneratorDll)') "
       Text="FGenerator.dll not found at path: $(_FGeneratorDll)"
     />
+    <Message
+      Importance="High"
+      Text="Resolved FGenerator.dll: $(_FGeneratorDll)"
+    />
     <Copy
       SourceFiles="$(_FGeneratorDll)"
       DestinationFolder="$(TargetDir)"

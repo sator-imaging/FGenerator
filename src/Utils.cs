@@ -2,7 +2,6 @@
 // https://github.com/sator-imaging/FGenerator
 
 using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -94,6 +93,7 @@ namespace FGenerator
             return sb.ToString();
         }
 
+
         private static ImmutableStack<ISymbol> GetContainingTypes(ISymbol target)
         {
             var result = ImmutableStack<ISymbol>.Empty;
@@ -129,6 +129,8 @@ namespace FGenerator
         }
 
 
+        const string DeclarationOpenBrace = " {";
+
         /// <summary>
         /// Builds the namespace and containing type openings for the target (partial, nested/generic aware).
         /// </summary>
@@ -140,8 +142,6 @@ namespace FGenerator
         /// </summary>
         public static string ToNamespaceAndContainingTypeDeclarations(this ISymbol symbol, int indentSize = 4, char indentChar = ' ')
         {
-            const string OPEN = " {";
-
             var sb = new StringBuilder(capacity: 256);
 
             if (symbol is not ITypeSymbol typeSymbol)
@@ -149,36 +149,87 @@ namespace FGenerator
                 typeSymbol = symbol.ContainingType;
             }
 
-            var hasOpen = false;
-
+            var hasNamespace = false;
             if (!typeSymbol.ContainingNamespace.IsGlobalNamespace)
             {
                 sb.Append("namespace ");
                 sb.Append(typeSymbol.ContainingNamespace.ToDisplayString());
-                sb.Append(OPEN);
-                hasOpen = true;
+                sb.Append(DeclarationOpenBrace);
+
+                hasNamespace = true;
+                sb.AppendLine();
             }
 
-            foreach (var con in GetContainingTypes(typeSymbol))
+            var hasOpen = 0 < AppendContainingTypeDeclarations(sb, typeSymbol, indentSize, indentChar);
+
+            if (hasNamespace && !hasOpen)
             {
-                if (hasOpen)
+                while (sb.Length > 0)
                 {
-                    sb.AppendLine();
+                    if (sb[sb.Length - 1] is not '\n' and not '\r')
+                    {
+                        break;
+                    }
+                    sb.Length--;
                 }
-                sb.Append("partial ");
-                sb.Append(con.ToDeclarationString());
-                sb.Append(OPEN);
-                hasOpen = true;
             }
 
-            if (hasOpen && sb.Length >= OPEN.Length)
+            if (hasOpen && sb.Length >= DeclarationOpenBrace.Length)
             {
-                sb.Length -= OPEN.Length;
+                sb.Length -= DeclarationOpenBrace.Length;
                 sb.AppendLine();
                 sb.Append('{');
             }
 
             return sb.ToString();
+        }
+
+
+        /// <summary>
+        /// Builds containing type openings for the target (partial, nested/generic aware).
+        /// </summary>
+        public static string ToContainingTypeDeclarations(this Target target, int indentSize = 4, char indentChar = ' ')
+            => ToContainingTypeDeclarations(target.RawSymbol, indentSize, indentChar);
+
+        /// <summary>
+        /// Builds containing type openings for the symbol (partial, nested/generic aware).
+        /// </summary>
+        public static string ToContainingTypeDeclarations(this ISymbol symbol, int indentSize = 4, char indentChar = ' ')
+        {
+            var sb = new StringBuilder(capacity: 256);
+
+            if (symbol is not ITypeSymbol typeSymbol)
+            {
+                typeSymbol = symbol.ContainingType;
+            }
+
+            var hasOpen = 0 < AppendContainingTypeDeclarations(sb, typeSymbol, indentSize, indentChar);
+
+            if (hasOpen && sb.Length >= DeclarationOpenBrace.Length)
+            {
+                sb.Length -= DeclarationOpenBrace.Length;
+                sb.AppendLine();
+                sb.Append('{');
+            }
+
+            return sb.ToString();
+        }
+
+        private static int AppendContainingTypeDeclarations(StringBuilder sb, ITypeSymbol typeSymbol, int indentSize, char indentChar)
+        {
+            int count = 0;
+            foreach (var con in GetContainingTypes(typeSymbol))
+            {
+                if (count > 0)
+                {
+                    sb.AppendLine();
+                }
+                sb.Append("partial ");
+                sb.Append(con.ToDeclarationString());
+                sb.Append(DeclarationOpenBrace);
+                count++;
+            }
+            return count;
         }
 
 
@@ -195,10 +246,7 @@ namespace FGenerator
         {
             var sb = new StringBuilder(capacity: 16);
 
-            foreach (var _ in GetContainingTypes(symbol))
-            {
-                sb.AppendLine("}");
-            }
+            AppendContainingTypeClosingBraces(sb, symbol, indentSize, indentChar);
 
             if (!symbol.ContainingNamespace.IsGlobalNamespace)
             {
@@ -207,6 +255,37 @@ namespace FGenerator
 
             var result = sb.ToString().TrimEnd();
             return result;
+        }
+
+
+        /// <summary>
+        /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(Target, int, char)"/>.
+        /// </summary>
+        public static string ToContainingTypeClosingBraces(this Target target, int indentSize = 4, char indentChar = ' ')
+            => ToContainingTypeClosingBraces(target.RawSymbol, indentSize, indentChar);
+
+        /// <summary>
+        /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(ISymbol, int, char)"/>.
+        /// </summary>
+        public static string ToContainingTypeClosingBraces(this ISymbol symbol, int indentSize = 4, char indentChar = ' ')
+        {
+            var sb = new StringBuilder(capacity: 16);
+
+            AppendContainingTypeClosingBraces(sb, symbol, indentSize, indentChar);
+
+            var result = sb.ToString().TrimEnd();
+            return result;
+        }
+
+        private static int AppendContainingTypeClosingBraces(StringBuilder sb, ISymbol symbol, int indentSize, char indentChar)
+        {
+            int count = 0;
+            foreach (var _ in GetContainingTypes(symbol))
+            {
+                sb.AppendLine("}");
+                count++;
+            }
+            return count;
         }
 
 

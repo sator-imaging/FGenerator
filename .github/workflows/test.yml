@@ -34,7 +34,7 @@ jobs:
           ${{ matrix.merge }} \
           ${{ matrix.debug }} \
           --force --output  ./.z__merged_dll__ \
-          "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs" "sample/*.cs"  # enquote to prevent expanding
+          "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
 
         dnx -y FGenerator.Cli -- build \
           ${{ matrix.unity }} \
