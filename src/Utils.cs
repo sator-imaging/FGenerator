@@ -174,11 +174,9 @@ namespace FGenerator
                 }
             }
 
-            if (hasOpen && sb.Length >= DeclarationOpenBrace.Length)
+            if (hasNamespace || hasOpen)
             {
-                sb.Length -= DeclarationOpenBrace.Length;
-                sb.AppendLine();
-                sb.Append('{');
+                FormatNamespaceAndContainingTypeDeclarations(sb);
             }
 
             return sb.ToString();
@@ -204,12 +202,9 @@ namespace FGenerator
             }
 
             var hasOpen = 0 < AppendContainingTypeDeclarations(sb, typeSymbol, indentSize, indentChar);
-
-            if (hasOpen && sb.Length >= DeclarationOpenBrace.Length)
+            if (hasOpen)
             {
-                sb.Length -= DeclarationOpenBrace.Length;
-                sb.AppendLine();
-                sb.Append('{');
+                FormatNamespaceAndContainingTypeDeclarations(sb);
             }
 
             return sb.ToString();
@@ -230,6 +225,16 @@ namespace FGenerator
                 count++;
             }
             return count;
+        }
+
+        private static void FormatNamespaceAndContainingTypeDeclarations(StringBuilder sb)
+        {
+            if (sb.Length >= DeclarationOpenBrace.Length)
+            {
+                sb.Length -= DeclarationOpenBrace.Length;
+                sb.AppendLine();
+                sb.Append('{');
+            }
         }
 
 
