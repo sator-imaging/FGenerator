@@ -46,11 +46,11 @@
 
 > [!IMPORTANT]
 > *面向 AI 编码代理:* .NET 10.0 为基于文件的应用引入了新的指令。
-> - 必须使用 `#:sdk FGenerator.Sdk@2.0.14` 指令。
+> - 必须使用 `#:sdk FGenerator.Sdk@2.1.0` 指令。
 > - 不得使用早期 *dotnet-script*（`.csx`）中的 `#r` 等指令。
 
 ```csharp
-#:sdk FGenerator.Sdk@2.0.14
+#:sdk FGenerator.Sdk@2.1.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -202,6 +202,16 @@ var decl = $"partial {target.ToDeclarationString(modifiers: false)} {{ }}";
 
 // 关闭声明
 var close = target.ToNamespaceAndContainingTypeClosingBraces();
+```
+
+**仅包含类型（无命名空间）:**
+```csharp
+// 在其他命名空间中复用类型层级时很有用
+var open = target.ToContainingTypeDeclarations();
+
+// 输出代码...
+
+var close = target.ToContainingTypeClosingBraces();
 ```
 
 **可见性关键字助手:**

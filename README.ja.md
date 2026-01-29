@@ -46,11 +46,11 @@
 
 > [!IMPORTANT]
 > *AI コーディングエージェント向け:* .NET 10.0 でファイルベースアプリ用の新しいディレクティブが導入されています。
-> - `#:sdk FGenerator.Sdk@2.0.14` ディレクティブを使用すること。
+> - `#:sdk FGenerator.Sdk@2.1.0` ディレクティブを使用すること。
 > - 以前の *dotnet-script*（`.csx`）で使われた `#r` などのディレクティブを使用しないこと。
 
 ```csharp
-#:sdk FGenerator.Sdk@2.0.14
+#:sdk FGenerator.Sdk@2.1.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -202,6 +202,16 @@ var decl = $"partial {target.ToDeclarationString(modifiers: false)} {{ }}";
 
 // 宣言を閉じる
 var close = target.ToNamespaceAndContainingTypeClosingBraces();
+```
+
+**包含型のみ（名前空間なし）:**
+```csharp
+// 他の名前空間で型階層を再現したい場合に便利
+var open = target.ToContainingTypeDeclarations();
+
+// コードを出力...
+
+var close = target.ToContainingTypeClosingBraces();
 ```
 
 **可視性キーワードヘルパー:**
