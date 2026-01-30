@@ -98,11 +98,9 @@ namespace FGenerator
         {
             var result = ImmutableStack<INamedTypeSymbol>.Empty;
 
-            INamedTypeSymbol containing;
-            while ((containing = target.ContainingType) != null)
+            for (var current = target.ContainingType; current != null; current = current.ContainingType)
             {
-                result = result.Push(containing);
-                target = containing;
+                result = result.Push(current);
             }
 
             return result;
