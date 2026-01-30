@@ -47,7 +47,7 @@ namespace FGenerator
                 sb.Append(separator);
             }
 
-            foreach (var containing in GetContainingTypes(symbol))
+            foreach (var containing in GetContainingTypes(symbol, out _))
             {
                 AppendNameWithGenericTypeParameterCount(sb, containing);
                 sb.Append(separator);
@@ -94,15 +94,18 @@ namespace FGenerator
         }
 
 
-        internal static ImmutableStack<INamedTypeSymbol> GetContainingTypes(ISymbol target)
+        internal static ImmutableStack<INamedTypeSymbol> GetContainingTypes(ISymbol target, out int numberOfTypes)
         {
             var result = ImmutableStack<INamedTypeSymbol>.Empty;
 
+            int count = 0;
             for (var current = target.ContainingType; current != null; current = current.ContainingType)
             {
+                count++;
                 result = result.Push(current);
             }
 
+            numberOfTypes = count;
             return result;
         }
 
@@ -195,7 +198,7 @@ namespace FGenerator
             char indentChar
         )
         {
-            var containingTypes = GetContainingTypes(typeSymbol);
+            var containingTypes = GetContainingTypes(typeSymbol, out var numContainingTypes);
 
             int i = -1;
             foreach (var con in containingTypes)
@@ -221,7 +224,7 @@ namespace FGenerator
                 sb.Append('{');
             }
 
-            return i + 1;  // number of containing types
+            return numContainingTypes;
         }
 
 
@@ -271,13 +274,7 @@ namespace FGenerator
             int indentSize,
             char indentChar)
         {
-            var containingTypes = GetContainingTypes(symbol);
-
-            int numContainingTypes = 0;
-            foreach (var _ in containingTypes)
-            {
-                numContainingTypes++;
-            }
+            var containingTypes = GetContainingTypes(symbol, out var numContainingTypes);
 
             int indentLevel = numContainingTypes;
 

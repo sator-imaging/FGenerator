@@ -184,7 +184,7 @@ namespace FGenerator
         /// </summary>
         public ImmutableStack<INamedTypeSymbol> ContainingTypes
         {
-            get => Utils.GetContainingTypes(RawSymbol);
+            get => Utils.GetContainingTypes(RawSymbol, out _);
         }
 
         // IEquatable<T>
