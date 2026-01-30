@@ -1,4 +1,4 @@
-using FGDebugGenerator;
+using FGeneratorDebugger;
 using FGenerator.Sandbox;
 using FGenerator.Sandbox.StackArray;
 using FGenerator.Sandbox.StackList;
@@ -73,6 +73,15 @@ return FUnit.Run(args, describe =>
 [FGDebug]
 public partial record Debug<T> : IDisposable
 {
+    [FGDebug]
+    partial class Nested
+    {
+        [FGDebug]
+        partial class OneAnother
+        {
+        }
+    }
+
     void IDisposable.Dispose() => throw new NotImplementedException();
 
     private protected async Task __PrivateProtectedGenericAsyncMethod__<TValue>(T t, TValue? u)

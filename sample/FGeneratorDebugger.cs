@@ -9,19 +9,19 @@ using FGenerator;
 using Microsoft.CodeAnalysis;
 using System.Text;
 
-namespace FGDebugGenerator
+namespace FGeneratorDebugger
 {
     [Generator]
-    public class FGDebugGenerator : FGeneratorBase
+    public class FGeneratorDebugger : FGeneratorBase
     {
-        protected override string DiagnosticCategory => "FGDebugGenerator";
+        protected override string DiagnosticCategory => "FGeneratorDebugger";
         protected override string DiagnosticIdPrefix => "FGDEBUG";
 
         protected override string? TargetAttributeName => "FGDebugAttribute";
         protected override string? PostInitializationOutput =>
 @"using System;
 
-namespace FGDebugGenerator
+namespace FGeneratorDebugger
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     internal sealed class FGDebugAttribute : Attribute

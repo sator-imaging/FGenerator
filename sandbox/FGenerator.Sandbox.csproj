@@ -23,7 +23,7 @@
 
     <Analyzer Include="../.z__merged_dll__/FGenerator.dll" Condition=" Exists('../.z__merged_dll__/FGenerator.dll') " />
 
-    <Analyzer Include="../.z__merged_dll__/FGDebugGenerator.dll" />
+    <Analyzer Include="../.z__merged_dll__/FGeneratorDebugger.dll" />
     <Analyzer Include="../.z__merged_dll__/AutoNotifyGenerator.dll" />
     <Analyzer Include="../.z__merged_dll__/StackArrayGenerator.dll" />
     <Analyzer Include="../.z__merged_dll__/StackListGenerator.dll" />
@@ -41,7 +41,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="SatorImaging.StaticMemberAnalyzer" Version="2.0.1">
+    <PackageReference Include="SatorImaging.StaticMemberAnalyzer" Version="3.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
