@@ -129,17 +129,19 @@ namespace FGenerator
 
 
         const string DeclarationOpenBrace = " {";
+        const int IndentSize = 0;
+        const char IndentChar = ' ';
 
         /// <summary>
         /// Builds the namespace and containing type openings for the target (partial, nested/generic aware).
         /// </summary>
-        public static string ToNamespaceAndContainingTypeDeclarations(this Target target, int indentSize = 4, char indentChar = ' ')
+        public static string ToNamespaceAndContainingTypeDeclarations(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
             => ToNamespaceAndContainingTypeDeclarations(target.RawSymbol, indentSize, indentChar);
 
         /// <summary>
         /// Builds the namespace and containing type openings for the symbol (partial, nested/generic aware).
         /// </summary>
-        public static string ToNamespaceAndContainingTypeDeclarations(this ISymbol symbol, int indentSize = 4, char indentChar = ' ')
+        public static string ToNamespaceAndContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
         {
             var sb = new StringBuilder(capacity: 256);
 
@@ -153,30 +155,10 @@ namespace FGenerator
             {
                 sb.Append("namespace ");
                 sb.Append(typeSymbol.ContainingNamespace.ToDisplayString());
-                sb.Append(DeclarationOpenBrace);
-
                 hasNamespace = true;
-                sb.AppendLine();
             }
 
-            var hasOpen = 0 < AppendContainingTypeDeclarations(sb, typeSymbol, indentSize, indentChar);
-
-            if (hasNamespace && !hasOpen)
-            {
-                while (sb.Length > 0)
-                {
-                    if (sb[sb.Length - 1] is not '\n' and not '\r')
-                    {
-                        break;
-                    }
-                    sb.Length--;
-                }
-            }
-
-            if (hasNamespace || hasOpen)
-            {
-                FormatNamespaceAndContainingTypeDeclarations(sb);
-            }
+            AppendContainingTypeDeclarations(sb, typeSymbol, hasNamespace, indentSize, indentChar);
 
             return sb.ToString();
         }
@@ -185,13 +167,13 @@ namespace FGenerator
         /// <summary>
         /// Builds containing type openings for the target (partial, nested/generic aware).
         /// </summary>
-        public static string ToContainingTypeDeclarations(this Target target, int indentSize = 4, char indentChar = ' ')
+        public static string ToContainingTypeDeclarations(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
             => ToContainingTypeDeclarations(target.RawSymbol, indentSize, indentChar);
 
         /// <summary>
         /// Builds containing type openings for the symbol (partial, nested/generic aware).
         /// </summary>
-        public static string ToContainingTypeDeclarations(this ISymbol symbol, int indentSize = 4, char indentChar = ' ')
+        public static string ToContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
         {
             var sb = new StringBuilder(capacity: 256);
 
@@ -200,64 +182,65 @@ namespace FGenerator
                 typeSymbol = symbol.ContainingType;
             }
 
-            var hasOpen = 0 < AppendContainingTypeDeclarations(sb, typeSymbol, indentSize, indentChar);
-            if (hasOpen)
-            {
-                FormatNamespaceAndContainingTypeDeclarations(sb);
-            }
+            AppendContainingTypeDeclarations(sb, typeSymbol, addNamespaceOpenBrace: false, indentSize, indentChar);
 
             return sb.ToString();
         }
 
-        private static int AppendContainingTypeDeclarations(StringBuilder sb, ITypeSymbol typeSymbol, int indentSize, char indentChar)
+        private static int AppendContainingTypeDeclarations(
+            StringBuilder sb,
+            ITypeSymbol typeSymbol,
+            bool addNamespaceOpenBrace,
+            int indentSize,
+            char indentChar
+        )
         {
-            int count = 0;
-            foreach (var con in GetContainingTypes(typeSymbol))
+            var containingTypes = GetContainingTypes(typeSymbol);
+
+            int i = -1;
+            foreach (var con in containingTypes)
             {
-                if (count > 0)
+                i++;
+                if (i != 0 || addNamespaceOpenBrace)
                 {
-                    sb.AppendLine();
+                    sb.AppendLine(DeclarationOpenBrace);
                 }
+
+                if (indentSize > 0)
+                {
+                    sb.Append(indentChar, indentSize * (1 + i));
+                }
+
                 sb.Append("partial ");
                 sb.Append(con.ToDeclarationString());
-                sb.Append(DeclarationOpenBrace);
-                count++;
             }
-            return count;
-        }
 
-        private static void FormatNamespaceAndContainingTypeDeclarations(StringBuilder sb)
-        {
-            if (sb.Length >= DeclarationOpenBrace.Length)
+            if (!containingTypes.IsEmpty || addNamespaceOpenBrace)
             {
-                sb.Length -= DeclarationOpenBrace.Length;
                 sb.AppendLine();
                 sb.Append('{');
             }
+
+            return i + 1;  // number of containing types
         }
 
 
         /// <summary>
         /// Builds closing braces for namespace/containing types opened by <see cref="ToNamespaceAndContainingTypeDeclarations(Target, int, char)"/>.
         /// </summary>
-        public static string ToNamespaceAndContainingTypeClosingBraces(this Target target, int indentSize = 4, char indentChar = ' ')
+        public static string ToNamespaceAndContainingTypeClosingBraces(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
             => ToNamespaceAndContainingTypeClosingBraces(target.RawSymbol, indentSize, indentChar);
 
         /// <summary>
         /// Builds closing braces for namespace/containing types opened by <see cref="ToNamespaceAndContainingTypeDeclarations(ISymbol, int, char)"/>.
         /// </summary>
-        public static string ToNamespaceAndContainingTypeClosingBraces(this ISymbol symbol, int indentSize = 4, char indentChar = ' ')
+        public static string ToNamespaceAndContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
         {
             var sb = new StringBuilder(capacity: 16);
 
-            AppendContainingTypeClosingBraces(sb, symbol, indentSize, indentChar);
+            AppendContainingTypeClosingBraces(sb, symbol, !symbol.ContainingNamespace.IsGlobalNamespace, indentSize, indentChar);
 
-            if (!symbol.ContainingNamespace.IsGlobalNamespace)
-            {
-                sb.AppendLine("}");
-            }
-
-            var result = sb.ToString().TrimEnd();
+            var result = sb.ToString();
             return result;
         }
 
@@ -265,31 +248,67 @@ namespace FGenerator
         /// <summary>
         /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(Target, int, char)"/>.
         /// </summary>
-        public static string ToContainingTypeClosingBraces(this Target target, int indentSize = 4, char indentChar = ' ')
+        public static string ToContainingTypeClosingBraces(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
             => ToContainingTypeClosingBraces(target.RawSymbol, indentSize, indentChar);
 
         /// <summary>
         /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(ISymbol, int, char)"/>.
         /// </summary>
-        public static string ToContainingTypeClosingBraces(this ISymbol symbol, int indentSize = 4, char indentChar = ' ')
+        public static string ToContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
         {
             var sb = new StringBuilder(capacity: 16);
 
-            AppendContainingTypeClosingBraces(sb, symbol, indentSize, indentChar);
+            AppendContainingTypeClosingBraces(sb, symbol, addNamespaceCloseBrace: false, indentSize, indentChar);
 
-            var result = sb.ToString().TrimEnd();
+            var result = sb.ToString();
             return result;
         }
 
-        private static int AppendContainingTypeClosingBraces(StringBuilder sb, ISymbol symbol, int indentSize, char indentChar)
+        private static int AppendContainingTypeClosingBraces(
+            StringBuilder sb,
+            ISymbol symbol,
+            bool addNamespaceCloseBrace,
+            int indentSize,
+            char indentChar)
         {
-            int count = 0;
-            foreach (var _ in GetContainingTypes(symbol))
+            var containingTypes = GetContainingTypes(symbol);
+
+            int numContainingTypes = 0;
+            foreach (var _ in containingTypes)
             {
-                sb.AppendLine("}");
-                count++;
+                numContainingTypes++;
             }
-            return count;
+
+            int indentLevel = numContainingTypes;
+
+            int i = -1;
+            foreach (var _ in containingTypes)
+            {
+                i++;
+                if (i != 0)
+                {
+                    sb.AppendLine();
+                }
+
+                if (indentSize > 0)
+                {
+                    sb.Append(indentChar, indentSize * indentLevel);
+                    indentLevel--;
+                }
+
+                sb.Append('}');
+            }
+
+            if (addNamespaceCloseBrace)
+            {
+                if (numContainingTypes != 0)
+                {
+                    sb.AppendLine();
+                }
+                sb.Append('}');
+            }
+
+            return numContainingTypes;
         }
 
 
