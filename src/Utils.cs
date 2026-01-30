@@ -94,14 +94,13 @@ namespace FGenerator
         }
 
 
-        private static ImmutableStack<ISymbol> GetContainingTypes(ISymbol target)
+        internal static ImmutableStack<INamedTypeSymbol> GetContainingTypes(ISymbol target)
         {
-            var result = ImmutableStack<ISymbol>.Empty;
+            var result = ImmutableStack<INamedTypeSymbol>.Empty;
 
-            ISymbol containing = target;
-            while ((containing = containing.ContainingType) != null)
+            for (var current = target.ContainingType; current != null; current = current.ContainingType)
             {
-                result = result.Push(containing);
+                result = result.Push(current);
             }
 
             return result;

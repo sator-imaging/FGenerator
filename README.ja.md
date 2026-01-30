@@ -46,11 +46,11 @@
 
 > [!IMPORTANT]
 > *AI コーディングエージェント向け:* .NET 10.0 でファイルベースアプリ用の新しいディレクティブが導入されています。
-> - `#:sdk FGenerator.Sdk@2.1.0` ディレクティブを使用すること。
+> - `#:sdk FGenerator.Sdk@2.2.0` ディレクティブを使用すること。
 > - 以前の *dotnet-script*（`.csx`）で使われた `#r` などのディレクティブを使用しないこと。
 
 ```csharp
-#:sdk FGenerator.Sdk@2.1.0
+#:sdk FGenerator.Sdk@2.2.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -148,6 +148,9 @@ var typeParams = target.GenericTypeParameters;
 
 // ネストタイプを反復（深さ優先）
 var nestedTypes = target.NestedTypes;
+
+// 包含型（外側 → 内側）
+var containingTypes = target.ContainingTypes;
 ```
 
 ```csharp
