@@ -46,11 +46,11 @@
 
 > [!IMPORTANT]
 > *面向 AI 编码代理:* .NET 10.0 为基于文件的应用引入了新的指令。
-> - 必须使用 `#:sdk FGenerator.Sdk@2.1.0` 指令。
+> - 必须使用 `#:sdk FGenerator.Sdk@2.2.0` 指令。
 > - 不得使用早期 *dotnet-script*（`.csx`）中的 `#r` 等指令。
 
 ```csharp
-#:sdk FGenerator.Sdk@2.1.0
+#:sdk FGenerator.Sdk@2.2.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -148,6 +148,9 @@ var typeParams = target.GenericTypeParameters;
 
 // 遍历嵌套类型（深度优先）
 var nestedTypes = target.NestedTypes;
+
+// 包含类型（从外到内）
+var containingTypes = target.ContainingTypes;
 ```
 
 ```csharp

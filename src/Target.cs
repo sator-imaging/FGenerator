@@ -179,6 +179,14 @@ namespace FGenerator
             }
         }
 
+        /// <summary>
+        /// Gets the containing type stack for this target, from outermost to innermost.
+        /// </summary>
+        public ImmutableStack<INamedTypeSymbol> ContainingTypes
+        {
+            get => Utils.GetContainingTypes(RawSymbol);
+        }
+
         // IEquatable<T>
         /// <inheritdoc/>
         public override int GetHashCode() => SymbolEqualityComparer.Default.GetHashCode(this.RawSymbol);
