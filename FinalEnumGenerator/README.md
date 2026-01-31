@@ -91,7 +91,7 @@ if (MyEnum.IsDefined(100))
 - `TryParse` supports both `string` and `ReadOnlySpan<byte>`.
     - `string` path accepts a `StringComparison` and always trims input.
     - UTF-8 path can optionally ignore whitespace separators.
-- The generated members live in `FinalEnums.<Namespace>.<EnumName>` and reuse shared helpers in `FinalEnums.FinalEnumUtility` (throw helper, boundary-aware `ContainsToken`).
+- The generated members live in `FinalEnums.<Namespace>.<ContainingTypes>.<EnumName>` and reuse shared helpers in `FinalEnums.FinalEnumUtility` (throw helper, boundary-aware `ContainsToken`).
 - `[Flags]` parsing:
     - Delimiter-aware token matching succeeds when at least one known token is present; unknown tokens are ignored rather than rejected.
     - Commas are rejected for `[Flags]` display names to keep parsing unambiguous.

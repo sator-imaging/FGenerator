@@ -292,6 +292,7 @@ namespace FinalEnums
     {
         var isFlagsEnum = enumSymbol.GetAttributes().Any(attr => attr.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
         var underlyingType = enumSymbol.EnumUnderlyingType;
+        var containingTypes = target.ContainingTypes;
 
         var isUnsigned = IsUnsignedEnum(underlyingType);
 
@@ -358,18 +359,18 @@ namespace FinalEnums
 
         sb.Append($"namespace FinalEnums");
 
-        // if (!containingTypes.IsEmpty)
-        // {
-        //     foreach (var ct in containingTypes)
-        //     {
-        //         sb.AppendLine(" {");
-        //         sb.Append($"namespace {ct.Name}");  // Extension method cannot be declared in nested class
-        //     }
-        // }
         if (!enumSymbol.ContainingNamespace.IsGlobalNamespace)
         {
             sb.AppendLine(" {");
             sb.Append($"namespace {enumSymbol.ContainingNamespace.ToDisplayString()}");
+        }
+        if (!containingTypes.IsEmpty)
+        {
+            foreach (var ct in containingTypes)
+            {
+                sb.AppendLine(" {");
+                sb.Append($"namespace {ct.Name}");  // Extension method cannot be declared in nested class
+            }
         }
 
         sb.AppendLine();
@@ -703,13 +704,13 @@ namespace FinalEnums
 
         sb.AppendLine("    }");
 
-        // if (!containingTypes.IsEmpty)
-        // {
-        //     foreach (var _ in containingTypes)
-        //     {
-        //         sb.AppendLine("}");
-        //     }
-        // }
+        if (!containingTypes.IsEmpty)
+        {
+            foreach (var _ in containingTypes)
+            {
+                sb.AppendLine("}");
+            }
+        }
         if (!enumSymbol.ContainingNamespace.IsGlobalNamespace)
         {
             sb.AppendLine("}");

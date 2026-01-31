@@ -1,5 +1,6 @@
 using FinalEnums;
 using FinalEnums.FinalEnumGenerator.Test;
+using FinalEnums.FinalEnumGenerator.Test.EnumContainer.Nest;
 using System;
 using System.Text;
 using Test = FinalEnumGenerator.Test;
