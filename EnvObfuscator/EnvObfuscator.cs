@@ -290,7 +290,11 @@ namespace EnvObfuscator
         string ecField = CreateHexName(nameRandom);
 
         ushort oddKey = CreateRandomUShortNonZero(random);
-        ushort evenKey = CreateRandomUShortNonZero(random);
+        ushort evenKey;
+        do
+        {
+            evenKey = CreateRandomUShortNonZero(random);
+        } while (evenKey == oddKey);
 
         var ocBytes = BuildByteTableFromBaseChars(baseChars, oddKey, random, out var ocByteSources);
         var ecBytes = BuildByteTableFromBaseChars(baseChars, evenKey, random, out var ecByteSources);
