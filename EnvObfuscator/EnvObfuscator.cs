@@ -1,7 +1,7 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-#:sdk FGenerator.Sdk@2.0.14
+#:sdk FGenerator.Sdk@2.2.2
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -229,7 +229,7 @@ namespace EnvObfuscator
 
     private static void ParseEnv(string envText, List<EnvEntry> entries, List<string> invalidLines)
     {
-        using var reader = new System.IO.StringReader(envText);
+        using var reader = new StringReader(envText);
         string? line;
         while ((line = reader.ReadLine()) != null)
         {
@@ -257,7 +257,7 @@ namespace EnvObfuscator
                 invalidLines.Add(trimmed);
                 continue;
             }
-            ValidateKeyOrThrow(key);
+            ValidateEnvKeyOrThrow(key);
 
             var value = trimmed.Substring(eqIndex + 1).Trim();
             entries.Add(new EnvEntry(key, value));
@@ -269,32 +269,10 @@ namespace EnvObfuscator
         var baseChars = BuildBaseChars(entries);
 
         IRandomSource random = new SeededRandomSource(seed);
-        ushort oddKey = CreateRandomUShort(random);
-        ushort evenKey = CreateRandomUShort(random);
-        ValidateObfuscationKeyOrThrow(oddKey);
-        ValidateObfuscationKeyOrThrow(evenKey);
+        int actualSeed = random.Seed;
 
-        var doubled = new char[baseChars.Count * 2];
-        for (int i = 0; i < baseChars.Count; i++)
-        {
-            doubled[i] = baseChars[i];
-            doubled[i + baseChars.Count] = baseChars[i];
-        }
-
-        var oc = new ushort[doubled.Length];
-        var ec = new ushort[doubled.Length];
-        for (int i = 0; i < doubled.Length; i++)
-        {
-            oc[i] = (ushort)(doubled[i] ^ oddKey);
-            ec[i] = (ushort)(doubled[i] ^ evenKey);
-        }
-
-        Shuffle(oc, random);
-        Shuffle(ec, random);
-
-        var usedPropertyNames = new HashSet<string>(StringComparer.Ordinal);
-        var sb = new StringBuilder(1024 + (entries.Count * 256));
-
+        // Ensure obfuscated names are produced immediately after random instantiation to avoid
+        // accidental reuse of identical internal seeds across types (compile error as a result).
         var nameRandom = new SeededRandomSource(seed ^ unchecked(0x6D2B79F5));
         string oddKeyNamespace = CreateHexName(nameRandom);
         string evenKeyNamespace = CreateHexName(nameRandom);
@@ -311,20 +289,35 @@ namespace EnvObfuscator
         string ocField = CreateHexName(nameRandom);
         string ecField = CreateHexName(nameRandom);
 
+        ushort oddKey = CreateRandomUShortNonZero(random);
+        ushort evenKey = CreateRandomUShortNonZero(random);
+
+        var ocBytes = BuildByteTableFromBaseChars(baseChars, oddKey, random, out var ocByteSources);
+        var ecBytes = BuildByteTableFromBaseChars(baseChars, evenKey, random, out var ecByteSources);
+        var obChars = BuildObfuscatedChars(baseChars, oddKey, evenKey, ocBytes, ecBytes);
+
+        var usedPropertyNames = new HashSet<string>(StringComparer.Ordinal);
+        var sb = new StringBuilder(1024 + (entries.Count * 256));
+
         string oddKeyRef = BuildNamespacePrefix(oddKeyNamespace) + oddKeyClass + "." + oddKeyField;
         string evenKeyRef = BuildNamespacePrefix(evenKeyNamespace) + evenKeyClass + "." + evenKeyField;
         string ocRef = BuildNamespacePrefix(ocNamespace) + ocClass + "." + ocField;
         string ecRef = BuildNamespacePrefix(ecNamespace) + ecClass + "." + ecField;
 
-        sb.AppendLine("using System;");
-        sb.AppendLine("using System.Runtime.CompilerServices;");
         sb.AppendLine();
         sb.Append("// seed: ");
-        sb.Append(FormatSeedBinary(seed));
+        AppendSeedBinary(sb, actualSeed);
         sb.Append(" (");
-        sb.Append(seed.ToString(CultureInfo.InvariantCulture));
+        sb.Append(actualSeed.ToString(CultureInfo.InvariantCulture));
         sb.AppendLine(")");
         sb.AppendLine();
+        AppendKeyClass(sb, oddKeyNamespace, oddKeyClass, oddKeyField, oddKey);
+        sb.AppendLine();
+        AppendKeyClass(sb, evenKeyNamespace, evenKeyClass, evenKeyField, evenKey);
+        sb.AppendLine();
+        AppendByteArrayClass(sb, ocNamespace, ocClass, ocField, ocBytes, ocByteSources);
+        sb.AppendLine();
+        AppendByteArrayClass(sb, ecNamespace, ecClass, ecField, ecBytes, ecByteSources);
 
         const string PropertyDocComment =
 @"        /// <summary>
@@ -340,19 +333,14 @@ namespace EnvObfuscator
         /// Fixed-time behavior is guaranteed in all other cases, including when left and right reference the same address.
         /// </remarks>";
 
-        AppendKeyClass(sb, oddKeyNamespace, oddKeyClass, oddKeyField, oddKey);
-        sb.AppendLine();
-        AppendKeyClass(sb, evenKeyNamespace, evenKeyClass, evenKeyField, evenKey);
-        sb.AppendLine();
-        AppendArrayClass(sb, ocNamespace, ocClass, ocField, oc, oddKey);
-        sb.AppendLine();
-        AppendArrayClass(sb, ecNamespace, ecClass, ecField, ec, evenKey);
-        sb.AppendLine();
+        var helperSb = new StringBuilder(1024 + (entries.Count * 256));
+        var targetSb = new StringBuilder(1024 + (entries.Count * 256));
 
-        sb.AppendLine(target.ToNamespaceAndContainingTypeDeclarations());
-        sb.Append("    partial ");
-        sb.AppendLine(target.ToDeclarationString(modifiers: false));
-        sb.AppendLine("    {");
+        targetSb.AppendLine();
+        targetSb.AppendLine(target.ToNamespaceAndContainingTypeDeclarations());
+        targetSb.Append("    partial ");
+        targetSb.AppendLine(target.ToDeclarationString(modifiers: false));
+        targetSb.AppendLine("    {");
 
         foreach (var entry in entries)
         {
@@ -363,133 +351,251 @@ namespace EnvObfuscator
 
             if (entry.Value.Length == 0)
             {
-                sb.AppendLine(PropertyDocComment);
-                sb.AppendLine($"        public static Memory<char> {propertyName}");
-                sb.AppendLine("        {");
-                sb.AppendLine("            [MethodImpl(MethodImplOptions.NoInlining)]");
-                sb.AppendLine("            get => Memory<char>.Empty;");
-                sb.AppendLine("        }");
-                sb.AppendLine();
-                sb.AppendLine(ValidateDocComment);
-                sb.AppendLine("        [MethodImpl(MethodImplOptions.NoInlining)]");
-                sb.AppendLine($"        public static bool Validate_{propertyName}(ReadOnlySpan<char> value) => value.Length == 0;");
-                sb.AppendLine();
+                targetSb.AppendLine(PropertyDocComment);
+                targetSb.AppendLine($"        public static global::System.Memory<char> {propertyName}");
+                targetSb.AppendLine("        {");
+                targetSb.AppendLine("            [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
+                targetSb.AppendLine("            get => global::System.Memory<char>.Empty;");
+                targetSb.AppendLine("        }");
+                targetSb.AppendLine();
+                targetSb.AppendLine(ValidateDocComment);
+                targetSb.AppendLine("        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
+                targetSb.AppendLine($"        public static bool Validate_{propertyName}(global::System.ReadOnlySpan<char> value) => value.Length == 0;");
+                targetSb.AppendLine();
                 continue;
             }
 
             int entryLength = entry.Value.Length;
             var entryIndices = new int[entryLength];
-            var entryIsEven = new bool[entryLength];
             for (int i = 0; i < entryLength; i++)
             {
                 char c = entry.Value[i];
-                bool isEven = random.NextBool(); // was: (i % 2) == 0
-                ushort key = isEven ? evenKey : oddKey;
-                ushort encoded = (ushort)(c ^ key);
-                ushort[] table = isEven ? ec : oc;
-                int index = random.NextBool()
-                    ? table.AsSpan().IndexOf(encoded)
-                    : table.AsSpan().LastIndexOf(encoded);
-
+                int index = baseChars.IndexOf(c);
                 entryIndices[i] = index;
-                entryIsEven[i] = isEven;
             }
 
-            sb.AppendLine(PropertyDocComment);
-            sb.AppendLine($"        public static Memory<char> {propertyName}");
-            sb.AppendLine("        {");
-            sb.AppendLine("            [MethodImpl(MethodImplOptions.NoInlining)]");
-            sb.AppendLine("            get");
-            sb.AppendLine("            {");
-            sb.AppendLine("                var oc = " + ocRef + ";");
-            sb.AppendLine("                var ec = " + ecRef + ";");
-            sb.AppendLine("                var ok = " + oddKeyRef + ";");
-            sb.AppendLine("                var ek = " + evenKeyRef + ";");
-            sb.AppendLine("                return new char[]");
-            sb.AppendLine("                {");
+            string decodeRef = AppendDecodeHelper(helperSb, nameRandom, oddKeyRef, evenKeyRef);
+            string helperGetNamespace = CreateHexName(nameRandom);
+            string helperGetClass = CreateHexName(nameRandom);
+            string helperGetMethod = CreateHexName(nameRandom);
+            string helperValidateNamespace = CreateHexName(nameRandom);
+            string helperValidateClass = CreateHexName(nameRandom);
+            string helperValidateMethod = CreateHexName(nameRandom);
+            string wrapperGetNamespace = CreateHexName(nameRandom);
+            string wrapperGetClass = CreateHexName(nameRandom);
+            string wrapperGetDelegate = CreateHexName(nameRandom);
+            string wrapperGetField = CreateHexName(nameRandom);
+            string wrapperValidateNamespace = CreateHexName(nameRandom);
+            string wrapperValidateClass = CreateHexName(nameRandom);
+            string wrapperValidateDelegate = CreateHexName(nameRandom);
+            string wrapperValidateField = CreateHexName(nameRandom);
+
+            helperSb.AppendLine();
+            helperSb.Append("// ");
+            helperSb.AppendLine(propertyName);
+            helperSb.Append("namespace ");
+            helperSb.Append(helperGetNamespace);
+            helperSb.Append(" { sealed class ");
+            helperSb.Append(helperGetClass);
+            helperSb.AppendLine(" {");
+            helperSb.Append("    internal static global::System.Memory<char> ");
+            helperSb.Append(helperGetMethod);
+            helperSb.AppendLine("()");
+            helperSb.AppendLine("    {");
+            helperSb.AppendLine("        var ocb = (byte[])" + ocRef + ";");
+            helperSb.AppendLine("        var ecb = (byte[])" + ecRef + ";");
+            helperSb.AppendLine("        // Bounds-check elimination hint: pre-touch last index.");
+            helperSb.Append("        _ = ocb[");
+            helperSb.Append(ocBytes.Length - 1);
+            helperSb.AppendLine("];");
+            helperSb.Append("        _ = ecb[");
+            helperSb.Append(ecBytes.Length - 1);
+            helperSb.AppendLine("];");
+            helperSb.AppendLine("        var ok = " + oddKeyRef + ";");
+            helperSb.AppendLine("        var ek = " + evenKeyRef + ";");
+            helperSb.Append("        var d = ");
+            helperSb.Append(decodeRef);
+            helperSb.AppendLine(";");
+            helperSb.AppendLine("        return new char[]");
+            helperSb.AppendLine("        {");
 
             for (int i = 0; i < entryLength; i++)
             {
                 char c = entry.Value[i];
-                bool isEven = entryIsEven[i];
                 int index = entryIndices[i];
 
-                sb.Append("                    /* ");
-                sb.Append(FormatCharForComment(c));
-                sb.Append(" */ ");
-                if (isEven)
-                {
-                    sb.Append("(char)(");
-                    sb.Append("ec");
-                    sb.Append('[');
-                }
-                else
-                {
-                    sb.Append("(char)(");
-                    sb.Append("oc");
-                    sb.Append('[');
-                }
-                sb.Append(index);
-                sb.Append("] ^ ");
-                sb.Append(isEven ? "ek" : "ok");
-                sb.Append("),");
-                sb.AppendLine();
+                var obChar = obChars[index];
+                bool lowerIsEven = random.NextBool();
+                bool upperIsEven = random.NextBool();
+                bool lowerUseLast = random.NextBool();
+                bool upperUseLast = random.NextBool();
+                helperSb.Append("            /* ");
+                helperSb.Append(FormatCharForComment(c));
+                helperSb.Append(" */ ");
+                int lowerIndex = lowerIsEven
+                    ? (lowerUseLast ? obChar.EvenLowerLastIndex : obChar.EvenLowerFirstIndex)
+                    : (lowerUseLast ? obChar.OddLowerLastIndex : obChar.OddLowerFirstIndex);
+                int upperIndex = upperIsEven
+                    ? (upperUseLast ? obChar.EvenUpperLastIndex : obChar.EvenUpperFirstIndex)
+                    : (upperUseLast ? obChar.OddUpperLastIndex : obChar.OddUpperFirstIndex);
+                helperSb.Append(BuildDecodeCallExpression(
+                    "d",
+                    isAscii: obChar.IsAscii,
+                    lowerIsEven: lowerIsEven,
+                    upperIsEven: upperIsEven,
+                    lowerIndex: lowerIndex,
+                    upperIndex: upperIndex));
+                helperSb.Append(',');
+                helperSb.AppendLine();
             }
 
-            sb.AppendLine("                };");
-            sb.AppendLine("            }");
-            sb.AppendLine("        }");
-            sb.AppendLine();
-            sb.AppendLine(ValidateDocComment);
-            sb.AppendLine("        [MethodImpl(MethodImplOptions.NoInlining)]");
-            sb.AppendLine($"        public static bool Validate_{propertyName}(ReadOnlySpan<char> value)");
-            sb.AppendLine("        {");
-            sb.AppendLine("            if (value.Length != " + entryLength + ")");
-            sb.AppendLine("            {");
-            sb.AppendLine("                return false;");
-            sb.AppendLine("            }");
-            sb.AppendLine("            var oc = " + ocRef + ";");
-            sb.AppendLine("            var ec = " + ecRef + ";");
-            sb.AppendLine("            var ok = " + oddKeyRef + ";");
-            sb.AppendLine("            var ek = " + evenKeyRef + ";");
-            sb.AppendLine("            int diff = 0;");
+            helperSb.AppendLine("        };");
+            helperSb.AppendLine("    }");
+            helperSb.AppendLine("}}");
+
+            string helperGetRef = BuildNamespacePrefix(helperGetNamespace) + helperGetClass;
+            string helperValidateRef = BuildNamespacePrefix(helperValidateNamespace) + helperValidateClass;
+
+            helperSb.Append("namespace ");
+            helperSb.Append(wrapperGetNamespace);
+            helperSb.Append(" { sealed class ");
+            helperSb.Append(wrapperGetClass);
+            helperSb.AppendLine(" {");
+            helperSb.Append("    internal delegate global::System.Memory<char> ");
+            helperSb.Append(wrapperGetDelegate);
+            helperSb.AppendLine("();");
+            helperSb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
+            helperSb.AppendLine();
+            helperSb.Append("    internal static object ");
+            helperSb.Append(wrapperGetField);
+            helperSb.AppendLine(";");
+            helperSb.Append("    static ");
+            helperSb.Append(wrapperGetClass);
+            helperSb.AppendLine("()");
+            helperSb.AppendLine("    {");
+            helperSb.Append("        ");
+            helperSb.Append(wrapperGetField);
+            helperSb.Append(" = (");
+            helperSb.Append(wrapperGetDelegate);
+            helperSb.Append(")");
+            helperSb.Append(helperGetRef);
+            helperSb.Append('.');
+            helperSb.Append(helperGetMethod);
+            helperSb.AppendLine(";");
+            helperSb.AppendLine("    }");
+            helperSb.AppendLine("}}");
+
+            helperSb.Append("namespace ");
+            helperSb.Append(helperValidateNamespace);
+            helperSb.Append(" { sealed class ");
+            helperSb.Append(helperValidateClass);
+            helperSb.AppendLine(" {");
+            helperSb.Append("    internal static bool ");
+            helperSb.Append(helperValidateMethod);
+            helperSb.AppendLine("(global::System.ReadOnlySpan<char> value)");
+            helperSb.AppendLine("    {");
+            helperSb.AppendLine("        if (value.Length != " + entryLength + ")");
+            helperSb.AppendLine("        {");
+            helperSb.AppendLine("            return false;");
+            helperSb.AppendLine("        }");
+            helperSb.AppendLine("        var ocb = (byte[])" + ocRef + ";");
+            helperSb.AppendLine("        var ecb = (byte[])" + ecRef + ";");
+            helperSb.AppendLine("        // Bounds-check elimination hint: pre-touch last index.");
+            helperSb.Append("        _ = ocb[");
+            helperSb.Append(ocBytes.Length - 1);
+            helperSb.AppendLine("];");
+            helperSb.Append("        _ = ecb[");
+            helperSb.Append(ecBytes.Length - 1);
+            helperSb.AppendLine("];");
+            helperSb.AppendLine("        var ok = " + oddKeyRef + ";");
+            helperSb.AppendLine("        var ek = " + evenKeyRef + ";");
+            helperSb.Append("        var d = ");
+            helperSb.Append(decodeRef);
+            helperSb.AppendLine(";");
+            helperSb.AppendLine("        int diff = 0;");
             for (int i = 0; i < entryLength; i++)
             {
-                sb.Append("            /* ");
-                sb.Append(FormatCharForComment(entry.Value[i]));
-                sb.Append(" */ ");
-                if (entryIsEven[i])
-                {
-                    sb.Append("diff |= (char)(");
-                    sb.Append("ec");
-                    sb.Append('[');
-                    sb.Append(entryIndices[i]);
-                    sb.Append("] ^ ");
-                    sb.Append("ek");
-                    sb.Append(") ^ value[");
-                    sb.Append(i);
-                    sb.AppendLine("];");
-                }
-                else
-                {
-                    sb.Append("diff |= (char)(");
-                    sb.Append("oc");
-                    sb.Append('[');
-                    sb.Append(entryIndices[i]);
-                    sb.Append("] ^ ");
-                    sb.Append("ok");
-                    sb.Append(") ^ value[");
-                    sb.Append(i);
-                    sb.AppendLine("];");
-                }
+                helperSb.Append("        /* ");
+                helperSb.Append(FormatCharForComment(entry.Value[i]));
+                helperSb.Append(" */ ");
+                int index = entryIndices[i];
+                var obChar = obChars[index];
+                bool lowerIsEven = random.NextBool();
+                bool upperIsEven = random.NextBool();
+                bool lowerUseLast = random.NextBool();
+                bool upperUseLast = random.NextBool();
+                helperSb.Append("diff |= ");
+                int lowerIndex = lowerIsEven
+                    ? (lowerUseLast ? obChar.EvenLowerLastIndex : obChar.EvenLowerFirstIndex)
+                    : (lowerUseLast ? obChar.OddLowerLastIndex : obChar.OddLowerFirstIndex);
+                int upperIndex = upperIsEven
+                    ? (upperUseLast ? obChar.EvenUpperLastIndex : obChar.EvenUpperFirstIndex)
+                    : (upperUseLast ? obChar.OddUpperLastIndex : obChar.OddUpperFirstIndex);
+                helperSb.Append(BuildDecodeCallExpression(
+                    "d",
+                    isAscii: obChar.IsAscii,
+                    lowerIsEven: lowerIsEven,
+                    upperIsEven: upperIsEven,
+                    lowerIndex: lowerIndex,
+                    upperIndex: upperIndex));
+                helperSb.Append(" ^ value[");
+                helperSb.Append(i);
+                helperSb.AppendLine("];");
             }
-            sb.AppendLine("            return diff == 0;");
-            sb.AppendLine("        }");
-            sb.AppendLine();
+            helperSb.AppendLine("        return diff == 0;");
+            helperSb.AppendLine("    }");
+            helperSb.AppendLine("}}");
+
+            helperSb.Append("namespace ");
+            helperSb.Append(wrapperValidateNamespace);
+            helperSb.Append(" { sealed class ");
+            helperSb.Append(wrapperValidateClass);
+            helperSb.AppendLine(" {");
+            helperSb.Append("    internal delegate bool ");
+            helperSb.Append(wrapperValidateDelegate);
+            helperSb.AppendLine("(global::System.ReadOnlySpan<char> value);");
+            helperSb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
+            helperSb.AppendLine();
+            helperSb.Append("    internal static object ");
+            helperSb.Append(wrapperValidateField);
+            helperSb.AppendLine(";");
+            helperSb.Append("    static ");
+            helperSb.Append(wrapperValidateClass);
+            helperSb.AppendLine("()");
+            helperSb.AppendLine("    {");
+            helperSb.Append("        ");
+            helperSb.Append(wrapperValidateField);
+            helperSb.Append(" = (");
+            helperSb.Append(wrapperValidateDelegate);
+            helperSb.Append(")");
+            helperSb.Append(helperValidateRef);
+            helperSb.Append('.');
+            helperSb.Append(helperValidateMethod);
+            helperSb.AppendLine(";");
+            helperSb.AppendLine("    }");
+            helperSb.AppendLine("}}");
+
+            string helperGetWrapperRef = BuildNamespacePrefix(wrapperGetNamespace) + wrapperGetClass;
+            string helperValidateWrapperRef = BuildNamespacePrefix(wrapperValidateNamespace) + wrapperValidateClass;
+
+            targetSb.AppendLine(PropertyDocComment);
+            targetSb.AppendLine($"        public static global::System.Memory<char> {propertyName}");
+            targetSb.AppendLine("        {");
+            targetSb.AppendLine("            [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
+            targetSb.AppendLine($"            get => (({helperGetWrapperRef}.{wrapperGetDelegate}){helperGetWrapperRef}.{wrapperGetField})();");
+            targetSb.AppendLine("        }");
+            targetSb.AppendLine();
+            targetSb.AppendLine(ValidateDocComment);
+            targetSb.AppendLine("        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
+            targetSb.AppendLine($"        public static bool Validate_{propertyName}(global::System.ReadOnlySpan<char> value) => (({helperValidateWrapperRef}.{wrapperValidateDelegate}){helperValidateWrapperRef}.{wrapperValidateField})(value);");
+            targetSb.AppendLine();
         }
 
-        sb.AppendLine("    }");
-        sb.AppendLine(target.ToNamespaceAndContainingTypeClosingBraces());
+        targetSb.AppendLine("    }");
+        targetSb.AppendLine(target.ToNamespaceAndContainingTypeClosingBraces());
+
+        sb.Append(helperSb);
+        sb.Append(targetSb);
 
         return sb.ToString();
     }
@@ -522,13 +628,117 @@ namespace EnvObfuscator
         return list;
     }
 
-    private static string BuildNamespacePrefix(string? namespaceName)
+    private static string BuildNamespacePrefix(string namespaceName)
     {
-        if (string.IsNullOrWhiteSpace(namespaceName))
-        {
-            return string.Empty;
-        }
         return "global::" + namespaceName + ".";
+    }
+
+    private static string AppendDecodeHelper(StringBuilder sb, IRandomSource nameRandom, string oddKeyRef, string evenKeyRef)
+    {
+        string decodeNamespace = CreateHexName(nameRandom);
+        string decodeClass = CreateHexName(nameRandom);
+        string decodeMethod = CreateHexName(nameRandom);
+        string decodeArgFlags = CreateHexName(nameRandom);
+        string decodeArgLowerByte = CreateHexName(nameRandom);
+        string decodeArgUpperByte = CreateHexName(nameRandom);
+        string decodeWrapperNamespace = CreateHexName(nameRandom);
+        string decodeWrapperClass = CreateHexName(nameRandom);
+        string decodeWrapperDelegate = CreateHexName(nameRandom);
+        string decodeWrapperField = CreateHexName(nameRandom);
+
+        sb.AppendLine();
+        sb.AppendLine("// Decode a single character using preselected flags and byte indices.");
+        sb.Append("namespace ");
+        sb.Append(decodeNamespace);
+        sb.Append(" { sealed class ");
+        sb.Append(decodeClass);
+        sb.AppendLine(" {");
+        sb.AppendLine("    [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]");
+        sb.Append("    internal static char ");
+        sb.Append(decodeMethod);
+        sb.Append("(byte ");
+        sb.Append(decodeArgFlags);
+        sb.Append(", byte ");
+        sb.Append(decodeArgLowerByte);
+        sb.Append(", byte ");
+        sb.Append(decodeArgUpperByte);
+        sb.AppendLine(")");
+        sb.AppendLine("    {");
+        sb.Append("        var ok = ");
+        sb.Append(oddKeyRef);
+        sb.AppendLine(";");
+        sb.Append("        var ek = ");
+        sb.Append(evenKeyRef);
+        sb.AppendLine(";");
+        sb.Append("        var ");
+        sb.Append(decodeArgFlags);
+        sb.Append("LowerKey = (");
+        sb.Append(decodeArgFlags);
+        sb.Append(" & 0x2) != 0 ? ek : ok;");
+        sb.AppendLine();
+        sb.Append("        var ");
+        sb.Append(decodeArgFlags);
+        sb.Append("UpperKey = (");
+        sb.Append(decodeArgFlags);
+        sb.Append(" & 0x4) != 0 ? ek : ok;");
+        sb.AppendLine();
+        sb.Append("        if ((");
+        sb.Append(decodeArgFlags);
+        sb.Append(" & 0x1) != 0)");
+        sb.AppendLine();
+        sb.AppendLine("        {");
+        sb.Append("            return (char)((ushort)(");
+        sb.Append(decodeArgLowerByte);
+        sb.Append(" ^ (");
+        sb.Append(decodeArgFlags);
+        sb.Append("LowerKey");
+        sb.AppendLine(" & 0xFF)));");
+        sb.AppendLine("        }");
+        sb.Append("        return (char)((ushort)(((ushort)(");
+        sb.Append(decodeArgUpperByte);
+        sb.Append(" ^ (");
+        sb.Append(decodeArgFlags);
+        sb.Append("UpperKey");
+        sb.Append(" >> 8)) << 8) | (ushort)(");
+        sb.Append(decodeArgLowerByte);
+        sb.Append(" ^ (");
+        sb.Append(decodeArgFlags);
+        sb.Append("LowerKey");
+        sb.AppendLine(" & 0xFF))));");
+        sb.AppendLine("    }");
+        sb.AppendLine("}}");
+
+        string decodeRef = BuildNamespacePrefix(decodeNamespace) + decodeClass + "." + decodeMethod;
+
+        sb.Append("namespace ");
+        sb.Append(decodeWrapperNamespace);
+        sb.Append(" { sealed class ");
+        sb.Append(decodeWrapperClass);
+        sb.AppendLine(" {");
+        sb.Append("    internal delegate char ");
+        sb.Append(decodeWrapperDelegate);
+        sb.AppendLine("(byte flags, byte lower, byte upper);");
+        sb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
+        sb.AppendLine();
+        sb.Append("    internal static object ");
+        sb.Append(decodeWrapperField);
+        sb.AppendLine(";");
+        sb.Append("    static ");
+        sb.Append(decodeWrapperClass);
+        sb.AppendLine("()");
+        sb.AppendLine("    {");
+        sb.Append("        ");
+        sb.Append(decodeWrapperField);
+        sb.Append(" = (");
+        sb.Append(decodeWrapperDelegate);
+        sb.Append(")");
+        sb.Append(decodeRef);
+        sb.AppendLine(";");
+        sb.AppendLine("    }");
+        sb.AppendLine("}}");
+
+        string decodeWrapperRef = BuildNamespacePrefix(decodeWrapperNamespace) + decodeWrapperClass;
+        return "((" + decodeWrapperRef + "." + decodeWrapperDelegate + ")" + decodeWrapperRef + "." + decodeWrapperField + ")";
     }
 
     private static string CreateHexName(IRandomSource random)
@@ -549,103 +759,198 @@ namespace EnvObfuscator
         return sb.ToString();
     }
 
-    private static void AppendKeyClass(StringBuilder sb, string? namespaceName, string className, string fieldName, ushort key)
+    private static void AppendKeyClass(StringBuilder sb, string namespaceName, string className, string fieldName, ushort key)
     {
         AppendNamespaceOpen(sb, namespaceName);
         sb.Append("sealed class ");
         sb.Append(className);
         sb.AppendLine(" {");
-        sb.Append("    internal static readonly ushort ");
+        sb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
+        sb.AppendLine();
+        sb.Append("    internal static ushort ");
         sb.Append(fieldName);
         sb.Append(" = 0x");
         sb.Append(key.ToString("X4", CultureInfo.InvariantCulture));
         sb.Append(";  // ");
-        sb.AppendLine(FormatKeyByteBinary(key));
+        AppendKeyByteBinary(sb, key);
+        sb.AppendLine();
         sb.Append('}');
-        AppendNamespaceClose(sb, namespaceName);
+        AppendNamespaceClose(sb);
     }
 
-    private static void AppendArrayClass(StringBuilder sb, string? namespaceName, string className, string fieldName, ushort[] values, ushort key)
+    private static void AppendByteArrayClass(StringBuilder sb, string namespaceName, string className, string fieldName, byte[] values, ByteSource[] sources)
     {
         AppendNamespaceOpen(sb, namespaceName);
         sb.Append("sealed class ");
         sb.Append(className);
         sb.AppendLine(" {");
-        sb.Append("    internal static readonly ushort[] ");
+        sb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
+        sb.AppendLine();
+        sb.Append("    internal static object ");
         sb.Append(fieldName);
-        sb.Append(" = new ushort[]");
+        sb.Append(" = new byte[]");
         sb.Append("  // ");
         sb.Append(values.Length);
         sb.AppendLine(" items");
         sb.AppendLine("    {");
-        AppendCharArray(sb, values, key, 8);
+        AppendByteArray(sb, values, sources, 8);
         sb.AppendLine("    };");
         sb.Append('}');
-        AppendNamespaceClose(sb, namespaceName);
+        AppendNamespaceClose(sb);
     }
 
-    private static void AppendNamespaceOpen(StringBuilder sb, string? namespaceName)
+    private static void AppendNamespaceOpen(StringBuilder sb, string namespaceName)
     {
-        if (string.IsNullOrWhiteSpace(namespaceName))
-        {
-            return;
-        }
         sb.Append("namespace ");
         sb.Append(namespaceName);
         sb.Append(" { ");
     }
 
-    private static void AppendNamespaceClose(StringBuilder sb, string? namespaceName)
+    private static void AppendNamespaceClose(StringBuilder sb)
     {
-        if (string.IsNullOrWhiteSpace(namespaceName))
-        {
-            return;
-        }
         sb.AppendLine("}");
     }
 
-    private static ushort CreateRandomUShort(IRandomSource random)
+    private static ushort CreateRandomUShortNonZero(IRandomSource random)
     {
-        byte hi = (byte)random.NextInt(1, 0x100);
-        byte lo = (byte)random.NextInt(1, 0x100);
-        ushort key = (ushort)((hi << 8) | lo);
-        key ^= (ushort)((key << 7) | (key >> 9));
-        return key;
-    }
-
-    private static void ValidateObfuscationKeyOrThrow(ushort key)
-    {
-        if ((key & 0x00FF) == 0 || (key & 0xFF00) == 0)
+        while (true)
         {
-            throw new ObfuscationKeyException("Obfuscation key bytes must be non-zero. Change the seed to generate different keys.");
+            byte hi = (byte)random.NextInt(1, 0x100);
+            byte lo = (byte)random.NextInt(1, 0x100);
+            ushort key = (ushort)((hi << 8) | lo);
+            key ^= (ushort)((key << 7) | (key >> 9));
+            if ((byte)(key & 0xFF) is not 0x00 and not 0xFF
+                && (byte)(key >> 8) is not 0x00 and not 0xFF
+                && HasValidHammingWeight((byte)(key & 0xFF))
+                && HasValidHammingWeight((byte)(key >> 8)))
+            {
+                return key;
+            }
         }
     }
 
-    private static void Shuffle(ushort[] array, IRandomSource random)
+    private static bool HasValidHammingWeight(byte value)
     {
-        for (int i = array.Length - 1; i > 0; i--)
+        if (value <= 0b_111)
+        {
+            return false;
+        }
+
+        int count = 0;
+        while (value != 0)
+        {
+            count++;
+            value &= (byte)(value - 1);
+        }
+
+        return count is >= 3 and <= 5;
+    }
+
+    private static void Shuffle(List<ByteSource> list, IRandomSource random)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
         {
             int j = random.NextInt(i + 1);
-            var tmp = array[i];
-            array[i] = array[j];
-            array[j] = tmp;
+            var tmp = list[i];
+            list[i] = list[j];
+            list[j] = tmp;
         }
     }
 
-    private static void AppendCharArray(StringBuilder sb, ushort[] values, ushort key, int indent)
+    private static ObfuscatedChar[] BuildObfuscatedChars(List<char> baseChars, ushort oddKey, ushort evenKey, byte[] ocBytes, byte[] ecBytes)
+    {
+        var result = new ObfuscatedChar[baseChars.Count];
+        for (int i = 0; i < baseChars.Count; i++)
+        {
+            result[i] = new ObfuscatedChar(baseChars[i], oddKey, evenKey, ocBytes, ecBytes);
+        }
+        return result;
+    }
+
+    private static byte[] BuildByteTableFromBaseChars(List<char> baseChars, ushort key, IRandomSource random, out ByteSource[] sources)
+    {
+        var distinct = new List<ByteSource>(baseChars.Count * 2);
+        var seen = new HashSet<byte>();
+        for (int i = 0; i < baseChars.Count; i++)
+        {
+            char original = baseChars[i];
+            char encoded = (char)(original ^ key);
+            byte lower = (byte)(encoded & 0xFF);
+            byte upper = (byte)(encoded >> 8);
+
+            if (seen.Add(lower))
+            {
+                distinct.Add(new ByteSource(lower, original, isUpper: false));
+            }
+            if (original >= 0x80 && seen.Add(upper))
+            {
+                distinct.Add(new ByteSource(upper, original, isUpper: true));
+            }
+        }
+
+        int originalCount = distinct.Count;
+        for (int i = 0; i < originalCount; i++)
+        {
+            distinct.Add(distinct[i]);
+        }
+
+        Shuffle(distinct, random);
+        sources = distinct.ToArray();
+
+        var bytes = new byte[sources.Length];
+        for (int i = 0; i < sources.Length; i++)
+        {
+            bytes[i] = sources[i].Value;
+        }
+        return bytes;
+    }
+
+    private static int IndexOfByte(byte[] bytes, byte value)
+    {
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            if (bytes[i] == value)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int LastIndexOfByte(byte[] bytes, byte value)
+    {
+        for (int i = bytes.Length - 1; i >= 0; i--)
+        {
+            if (bytes[i] == value)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+    private static void AppendByteArray(StringBuilder sb, byte[] values, ByteSource[] sources, int indent)
     {
         var indentText = new string(' ', indent);
         for (int i = 0; i < values.Length; i++)
         {
-            ushort value = values[i];
             sb.Append(indentText);
             sb.Append("0x");
-            sb.Append(((int)value).ToString("X4", CultureInfo.InvariantCulture));
+            sb.Append(values[i].ToString("X2", CultureInfo.InvariantCulture));
             sb.Append(',');
-            sb.Append("  // [");
+            var source = sources[i];
+            sb.Append("  // ");
+            AppendByteBinary(sb, values[i]);
+            sb.Append(" [");
             sb.Append(i);
             sb.Append("] ");
-            sb.AppendLine(FormatCharForComment((char)(value ^ key)));
+            sb.Append(source.IsUpper ? "upper" : "lower");
+            sb.Append(" of '");
+            sb.Append(FormatCharForComment(source.Original));
+            sb.Append("' -> ");
+            AppendEncodedByteComment(sb, values[i]);
+            sb.AppendLine();
         }
     }
 
@@ -670,10 +975,52 @@ namespace EnvObfuscator
         return c.ToString();
     }
 
-    private static string FormatSeedBinary(int seed)
+    private static string BuildDecodeCallExpression(string decodeMethodRef, bool isAscii, bool lowerIsEven, bool upperIsEven, int lowerIndex, int upperIndex)
+    {
+        string lowerBytesRef = lowerIsEven ? "ecb" : "ocb";
+        string upperBytesRef = upperIsEven ? "ecb" : "ocb";
+        string lowerByteExpr = lowerBytesRef + "[" + lowerIndex + "]";
+        string upperByteExpr = isAscii ? "0" : (upperBytesRef + "[" + upperIndex + "]");
+        byte flags = (byte)((isAscii ? 0x1 : 0x0)
+            | (lowerIsEven ? 0x2 : 0x0)
+            | (upperIsEven ? 0x4 : 0x0));
+
+        return decodeMethodRef
+            + "("
+            + "0x"
+            + flags.ToString("X2", CultureInfo.InvariantCulture)
+            + ", "
+            + lowerByteExpr
+            + ", "
+            + upperByteExpr
+            + ")";
+    }
+
+    private static void AppendEncodedByteComment(StringBuilder sb, byte value)
+    {
+        if (value is < 0x20 or >= 0x7F)  // 0x7F = DEL
+        {
+            sb.Append("unspeakable");
+            return;
+        }
+
+        sb.Append('\'');
+        sb.Append((char)value);
+        sb.Append('\'');
+    }
+
+    private static void AppendByteBinary(StringBuilder sb, byte value)
+    {
+        sb.Append("0b_");
+        for (int i = 7; i >= 0; i--)
+        {
+            sb.Append(((value >> i) & 1) == 0 ? '0' : '1');
+        }
+    }
+
+    private static void AppendSeedBinary(StringBuilder sb, int seed)
     {
         uint value = unchecked((uint)seed);
-        var sb = new StringBuilder(4 + 32 + 3);
         sb.Append("0b_");
         for (int i = 31; i >= 0; i--)
         {
@@ -683,12 +1030,10 @@ namespace EnvObfuscator
                 sb.Append('_');
             }
         }
-        return sb.ToString();
     }
 
-    private static string FormatKeyByteBinary(ushort key)
+    private static void AppendKeyByteBinary(StringBuilder sb, ushort key)
     {
-        var sb = new StringBuilder(20);
         sb.Append("0b_");
         for (int i = 15; i >= 0; i--)
         {
@@ -698,14 +1043,13 @@ namespace EnvObfuscator
                 sb.Append('_');
             }
         }
-        return sb.ToString();
     }
 
     private static bool TryGetIdentifier(string key, HashSet<string> usedNames, out string identifier)
     {
         identifier = string.Empty;
 
-        ValidateKeyOrThrow(key);
+        ValidateEnvKeyOrThrow(key);
 
         var builder = new StringBuilder(key.Length + 2);
         for (int i = 0; i < key.Length; i++)
@@ -741,7 +1085,7 @@ namespace EnvObfuscator
         return true;
     }
 
-    private static void ValidateKeyOrThrow(string key)
+    private static void ValidateEnvKeyOrThrow(string key)
     {
         if (key.Length == 0)
         {
@@ -787,6 +1131,69 @@ namespace EnvObfuscator
         }
     }
 
+    private sealed class ObfuscatedChar
+    {
+        public bool IsAscii;
+        public char Original;
+        public int OddLowerFirstIndex;
+        public int OddLowerLastIndex;
+        public int OddUpperFirstIndex;
+        public int OddUpperLastIndex;
+        public int EvenLowerFirstIndex;
+        public int EvenLowerLastIndex;
+        public int EvenUpperFirstIndex;
+        public int EvenUpperLastIndex;
+        public byte[] OcBytes;
+        public byte[] EcBytes;
+
+        public ObfuscatedChar(char original, ushort oddKey, ushort evenKey, byte[] ocBytes, byte[] ecBytes)
+        {
+            Original = original;
+            IsAscii = original < 0x80;
+            OcBytes = ocBytes;
+            EcBytes = ecBytes;
+
+            byte oddLower = (byte)((original ^ oddKey) & 0xFF);
+            byte oddUpper = (byte)(((ushort)(original ^ oddKey)) >> 8);
+            byte evenLower = (byte)((original ^ evenKey) & 0xFF);
+            byte evenUpper = (byte)(((ushort)(original ^ evenKey)) >> 8);
+
+            OddLowerFirstIndex = IndexOfByte(ocBytes, oddLower);
+            OddLowerLastIndex = LastIndexOfByte(ocBytes, oddLower);
+            EvenLowerFirstIndex = IndexOfByte(ecBytes, evenLower);
+            EvenLowerLastIndex = LastIndexOfByte(ecBytes, evenLower);
+
+            if (IsAscii)
+            {
+                OddUpperFirstIndex = -1;
+                OddUpperLastIndex = -1;
+                EvenUpperFirstIndex = -1;
+                EvenUpperLastIndex = -1;
+            }
+            else
+            {
+                OddUpperFirstIndex = IndexOfByte(ocBytes, oddUpper);
+                OddUpperLastIndex = LastIndexOfByte(ocBytes, oddUpper);
+                EvenUpperFirstIndex = IndexOfByte(ecBytes, evenUpper);
+                EvenUpperLastIndex = LastIndexOfByte(ecBytes, evenUpper);
+            }
+        }
+    }
+
+    private readonly struct ByteSource
+    {
+        public ByteSource(byte value, char original, bool isUpper)
+        {
+            Value = value;
+            Original = original;
+            IsUpper = isUpper;
+        }
+
+        public byte Value { get; }
+        public char Original { get; }
+        public bool IsUpper { get; }
+    }
+
     private readonly struct EnvEntry
     {
         public EnvEntry(string key, string value)
@@ -804,6 +1211,7 @@ namespace EnvObfuscator
         int NextInt(int maxExclusive);
         int NextInt(int minInclusive, int maxExclusive);
         bool NextBool();
+        int Seed { get; }
     }
 
     private sealed class SeededRandomSource : IRandomSource
@@ -812,13 +1220,15 @@ namespace EnvObfuscator
 
         public SeededRandomSource(int seed)
         {
-            _random = new Random(MixSeed(seed));
+            Seed = MixSeed(seed);
+            _random = new Random(Seed);
             _random.Next(); // one spin-up
         }
 
         public int NextInt(int maxExclusive) => _random.Next(maxExclusive);
         public int NextInt(int minInclusive, int maxExclusive) => _random.Next(minInclusive, maxExclusive);
         public bool NextBool() => _random.Next(2) == 0;
+        public int Seed { get; }
     }
 
     private static int GenerateRandomSeed()
