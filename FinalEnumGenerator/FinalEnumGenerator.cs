@@ -1,7 +1,7 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-#:sdk FGenerator.Sdk@2.0.14
+#:sdk FGenerator.Sdk@2.2.2
 
 using FGenerator;
 using Microsoft.CodeAnalysis;
@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Text;
 
 [Generator]
-public class FinalEnumGenerator : FGeneratorBase
+public sealed class FinalEnumGenerator : FGeneratorBase
 {
     protected override string DiagnosticCategory => "FinalEnumGenerator";
     protected override string DiagnosticIdPrefix => "FINALENUM";
@@ -23,7 +23,7 @@ namespace FinalEnumGenerator
 {
     /// <summary>
     /// Apply this attribute to an enum to generate high-performance ToStringFast,
-    /// TryParse, and Utf8 methods in the static partial class 'FinalEnum'.
+    /// TryParse, and Utf8 methods in the static partial class <c>FinalEnums.&lt;TargetTypeName&gt;</c>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
     internal sealed class FinalEnumAttribute : Attribute { }
@@ -32,13 +32,12 @@ namespace FinalEnumGenerator
 namespace FinalEnums
 {
     /// <summary>
-    /// Contains generated methods for enums marked with [FinalEnum].
-    /// This class is partial and will be populated by the FinalEnumGenerator.
+    /// Shared helpers used by FinalEnumGenerator-generated code.
     /// </summary>
-    public static partial class FinalEnum
+    internal static class FinalEnumUtility
     {
-        private static T ThrowArgumentOutOfRange<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
-        private static ReadOnlyMemory<T> ThrowArgumentOutOfRangeRoMemory<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
+        internal static T ThrowArgumentOutOfRange<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
+        internal static ReadOnlyMemory<T> ThrowArgumentOutOfRangeRoMemory<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
 
         /// <summary>
         /// Shared helper used by generated code for boundary-aware token checks on strings.
@@ -312,7 +311,6 @@ namespace FinalEnums
 #pragma warning restore IDE0072
 
         var fullyQualifiedEnumName = enumSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var hintName = target.ToAssemblyUniqueIdentifier();
 
         var members = enumSymbol.GetMembers()
             .OfType<IFieldSymbol>()
@@ -357,9 +355,27 @@ namespace FinalEnums
         sb.AppendLine("using System.Buffers;");
         sb.AppendLine("using System.Collections.Generic;");
         sb.AppendLine();
-        sb.AppendLine("namespace FinalEnums");
+
+        sb.Append($"namespace FinalEnums");
+
+        // if (!containingTypes.IsEmpty)
+        // {
+        //     foreach (var ct in containingTypes)
+        //     {
+        //         sb.AppendLine(" {");
+        //         sb.Append($"namespace {ct.Name}");  // Extension method cannot be declared in nested class
+        //     }
+        // }
+        if (!enumSymbol.ContainingNamespace.IsGlobalNamespace)
+        {
+            sb.AppendLine(" {");
+            sb.Append($"namespace {enumSymbol.ContainingNamespace.ToDisplayString()}");
+        }
+
+        sb.AppendLine();
         sb.AppendLine("{");
-        sb.AppendLine("    public static partial class FinalEnum");
+
+        sb.AppendLine($"    public static partial class {enumSymbol.Name}");
         sb.AppendLine("    {");
 
         // UTF-8 byte arrays
@@ -367,13 +383,13 @@ namespace FinalEnums
         {
             var byteString = string.Join(", ", member.Utf8Bytes.Select(b => $"0x{b:X2}"));
             sb.AppendLine($"        // \"{member.DisplayNameLiteral}\"");
-            sb.AppendLine($"        private static readonly byte[] FinalEnum__{hintName}__{member.FieldName}_utf8 = new byte[] {{ {byteString} }};");
+            sb.AppendLine($"        private static readonly byte[] {member.FieldName}_utf8 = new byte[] {{ {byteString} }};");
         }
         sb.AppendLine();
 
         // GetNames, GetValues, GetNamesUtf8, IsDefined
         sb.AppendLine($"        // {enumKindLabel}");
-        sb.AppendLine($"        public static string[] GetNames(this {fullyQualifiedEnumName} _) => new string[] {{");
+        sb.AppendLine($"        public static string[] GetNames() => new string[] {{");
         for (int i = 0; i < members.Count; i++)
         {
             var member = members[i];
@@ -383,7 +399,7 @@ namespace FinalEnums
         sb.AppendLine("        };");
         sb.AppendLine();
         sb.AppendLine($"        // {enumKindLabel}");
-        sb.AppendLine($"        public static {fullyQualifiedEnumName}[] GetValues(this {fullyQualifiedEnumName} _) => new {fullyQualifiedEnumName}[] {{");
+        sb.AppendLine($"        public static {fullyQualifiedEnumName}[] GetValues() => new {fullyQualifiedEnumName}[] {{");
         for (int i = 0; i < members.Count; i++)
         {
             var member = members[i];
@@ -393,17 +409,17 @@ namespace FinalEnums
         sb.AppendLine("        };");
         sb.AppendLine();
         sb.AppendLine($"        // {enumKindLabel}");
-        sb.AppendLine($"        public static ReadOnlyMemory<byte>[] GetNamesUtf8(this {fullyQualifiedEnumName} _) => new ReadOnlyMemory<byte>[] {{");
+        sb.AppendLine($"        public static ReadOnlyMemory<byte>[] GetNamesUtf8() => new ReadOnlyMemory<byte>[] {{");
         for (int i = 0; i < members.Count; i++)
         {
             var member = members[i];
             var suffix = i == members.Count - 1 ? string.Empty : ",";
-            sb.AppendLine($"            FinalEnum__{hintName}__{member.FieldName}_utf8{suffix}");
+            sb.AppendLine($"            {member.FieldName}_utf8{suffix}");
         }
         sb.AppendLine("        };");
         sb.AppendLine();
         sb.AppendLine($"        // {enumKindLabel}");
-        sb.AppendLine($"        public static bool IsDefined(this {fullyQualifiedEnumName} _, {finalValueTypeName} value)");
+        sb.AppendLine($"        public static bool IsDefined({finalValueTypeName} value)");
         sb.AppendLine("        {");
         {
             if (isFlagsEnum)
@@ -444,7 +460,7 @@ namespace FinalEnums
         }
         else
         {
-            sb.AppendLine("                _ => throwOnUnknown ? ThrowArgumentOutOfRange<string>(nameof(value)) : string.Empty,");
+            sb.AppendLine("                _ => throwOnUnknown ? FinalEnumUtility.ThrowArgumentOutOfRange<string>(nameof(value)) : string.Empty,");
         }
         sb.AppendLine("            };");
         sb.AppendLine("        }");
@@ -459,7 +475,7 @@ namespace FinalEnums
         foreach (var member in members)
         {
             sb.AppendLine($"                // \"{member.DisplayNameLiteral}\"");
-            sb.AppendLine($"                {fullyQualifiedEnumName}.{member.FieldName} => FinalEnum__{hintName}__{member.FieldName}_utf8,");
+            sb.AppendLine($"                {fullyQualifiedEnumName}.{member.FieldName} => {member.FieldName}_utf8,");
         }
         if (isFlagsEnum)
         {
@@ -467,7 +483,7 @@ namespace FinalEnums
         }
         else
         {
-            sb.AppendLine("                _ => throwOnUnknown ? ThrowArgumentOutOfRangeRoMemory<byte>(nameof(value)) : ReadOnlyMemory<byte>.Empty,");
+            sb.AppendLine("                _ => throwOnUnknown ? FinalEnumUtility.ThrowArgumentOutOfRangeRoMemory<byte>(nameof(value)) : ReadOnlyMemory<byte>.Empty,");
         }
         sb.AppendLine("            };");
         sb.AppendLine("        }");
@@ -517,7 +533,7 @@ namespace FinalEnums
         sb.AppendLine("        {");
         sb.AppendLine($"            if (utf8.Length >= {minUtf8Length})");
         sb.AppendLine("            {");
-        sb.AppendLine("                if (ignoreWhiteSpace) utf8 = TrimWhiteSpaces(utf8);");
+        sb.AppendLine("                if (ignoreWhiteSpace) utf8 = FinalEnumUtility.TrimWhiteSpaces(utf8);");
         sb.AppendLine();
         sb.AppendLine($"                // won't gain the performance, kept for reference --> //if (utf8.Length <= {maxUtf8Length})");
         sb.AppendLine($"                {{");
@@ -531,9 +547,9 @@ namespace FinalEnums
             sb.AppendLine($"                        case {group.Key}:");
             foreach (var member in group)
             {
-                var tokenUtf8FieldName = $"FinalEnum__{hintName}__{member.FieldName}_utf8";
+                var tokenUtf8FieldName = $"{member.FieldName}_utf8";
                 sb.AppendLine($"                            // \"{member.DisplayNameLiteral}\"");
-                sb.AppendLine($"                            if (ignoreCase ? ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName}) : utf8.SequenceEqual({tokenUtf8FieldName})) {{ result = {fullyQualifiedEnumName}.{member.FieldName}; return true; }}");
+                sb.AppendLine($"                            if (ignoreCase ? FinalEnumUtility.ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName}) : utf8.SequenceEqual({tokenUtf8FieldName})) {{ result = {fullyQualifiedEnumName}.{member.FieldName}; return true; }}");
             }
             sb.AppendLine($"                            break;");
         }
@@ -578,7 +594,7 @@ namespace FinalEnums
             }
             sb.AppendLine();
             sb.AppendLine("            if (any && remaining == 0) return sb.ToString();");
-            sb.AppendLine("            return throwOnUnknown ? ThrowArgumentOutOfRange<string>(nameof(value)) : string.Empty;");
+            sb.AppendLine("            return throwOnUnknown ? FinalEnumUtility.ThrowArgumentOutOfRange<string>(nameof(value)) : string.Empty;");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine($"        // {enumKindLabel}");
@@ -595,7 +611,7 @@ namespace FinalEnums
                 {
                     continue;
                 }
-                var tokenUtf8FieldName = $"FinalEnum__{hintName}__{member.FieldName}_utf8";
+                var tokenUtf8FieldName = $"{member.FieldName}_utf8";
                 sb.AppendLine($"            if ((numericValue & ({finalValueTypeName}){(isUnsigned ? member.ValueUnsigned : member.ValueSigned)}) != 0)");
                 sb.AppendLine("            {");
                 sb.AppendLine("                if (any)");
@@ -610,7 +626,7 @@ namespace FinalEnums
             }
             sb.AppendLine();
             sb.AppendLine("            if (any && remaining == 0) return bytes.ToArray();");
-            sb.AppendLine("            return throwOnUnknown ? ThrowArgumentOutOfRangeRoMemory<byte>(nameof(value)) : ReadOnlyMemory<byte>.Empty;");
+            sb.AppendLine("            return throwOnUnknown ? FinalEnumUtility.ThrowArgumentOutOfRangeRoMemory<byte>(nameof(value)) : ReadOnlyMemory<byte>.Empty;");
             sb.AppendLine("        }");
             sb.AppendLine();
 
@@ -630,7 +646,7 @@ namespace FinalEnums
                 {
                     continue;
                 }
-                sb.AppendLine($"                if (ContainsToken(s, \"{member.DisplayNameLiteral}\", comparison))");
+                sb.AppendLine($"                if (FinalEnumUtility.ContainsToken(s, \"{member.DisplayNameLiteral}\", comparison))");
                 sb.AppendLine("                {");
                 sb.AppendLine($"                    finalValue |= {(isUnsigned ? member.ValueUnsigned : member.ValueSigned)};");
                 sb.AppendLine($"                    anyFound = true;");
@@ -665,9 +681,9 @@ namespace FinalEnums
                 {
                     continue;
                 }
-                var tokenUtf8FieldName = $"FinalEnum__{hintName}__{member.FieldName}_utf8";
+                var tokenUtf8FieldName = $"{member.FieldName}_utf8";
                 sb.AppendLine($"                // \"{member.DisplayName}\"");
-                sb.AppendLine($"                if (ignoreCase ? ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName}) : ContainsToken(utf8, {tokenUtf8FieldName}))");
+                sb.AppendLine($"                if (ignoreCase ? FinalEnumUtility.ContainsTokenIgnoreCase(utf8, {tokenUtf8FieldName}) : FinalEnumUtility.ContainsToken(utf8, {tokenUtf8FieldName}))");
                 sb.AppendLine("                {");
                 sb.AppendLine($"                    finalValue |= {(isUnsigned ? member.ValueUnsigned : member.ValueSigned)};");
                 sb.AppendLine($"                    anyFound = true;");
@@ -686,6 +702,19 @@ namespace FinalEnums
         }
 
         sb.AppendLine("    }");
+
+        // if (!containingTypes.IsEmpty)
+        // {
+        //     foreach (var _ in containingTypes)
+        //     {
+        //         sb.AppendLine("}");
+        //     }
+        // }
+        if (!enumSymbol.ContainingNamespace.IsGlobalNamespace)
+        {
+            sb.AppendLine("}");
+        }
+
         sb.AppendLine("}");
 
         return sb.ToString();

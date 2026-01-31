@@ -57,22 +57,21 @@ Here shows how to use the generated extensions.
 ```cs
 using FinalEnums;
 
-if (FinalEnum.TryParse("日本語", out var value))
+if (MyEnum.TryParse("日本語", out var value))
 {
     var text = value.ToStringFast();
     var utf8 = value.ToStringUtf8();
 }
 
-// Getting all entries looks a little bit weird
-// --> for type safety, '.Flag1' or other entry is required as a receiver
-var allNames = MyEnum.Flag1.GetNames();    // GetNames/Values always allocates array
-var allValues = MyEnum.Flag1.GetValues();
+// GetNames/Values always allocates array
+var allNames = MyEnum.GetNames();
+var allValues = MyEnum.GetValues();
 
 // Utf8 byte arrays are cached internally but array of ReadOnlyMemory allocates
-var allUtf8Arrays = MyEnum.Flag1.GetNamesUtf8();
+var allUtf8Arrays = MyEnum.GetNamesUtf8();
 
 // Check by underlying primitive
-if (MyEnum.Flag1.IsDefined(100))
+if (MyEnum.IsDefined(100))
 {
     // accepts `long` or `ulong` depending on the Enum shape
 }
@@ -92,7 +91,7 @@ if (MyEnum.Flag1.IsDefined(100))
 - `TryParse` supports both `string` and `ReadOnlySpan<byte>`.
     - `string` path accepts a `StringComparison` and always trims input.
     - UTF-8 path can optionally ignore whitespace separators.
-- The generated members live in `public static class FinalEnums.FinalEnum` and reuse shared helpers (throw helper, boundary-aware `ContainsToken`).
+- The generated members live in `FinalEnums.<Namespace>.<EnumName>` and reuse shared helpers in `FinalEnums.FinalEnumUtility` (throw helper, boundary-aware `ContainsToken`).
 - `[Flags]` parsing:
     - Delimiter-aware token matching succeeds when at least one known token is present; unknown tokens are ignored rather than rejected.
     - Commas are rejected for `[Flags]` display names to keep parsing unambiguous.

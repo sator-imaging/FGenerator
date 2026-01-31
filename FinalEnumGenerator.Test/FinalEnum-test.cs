@@ -1,7 +1,8 @@
-using FinalEnumGenerator.Test;
 using FinalEnums;
+using FinalEnums.FinalEnumGenerator.Test;
 using System;
 using System.Text;
+using Test = FinalEnumGenerator.Test;
 
 #pragma warning disable SMA0024  // Enum to String
 #pragma warning disable CA1050   // Declare types in namespaces
@@ -24,59 +25,59 @@ return FUnit.Run(args, describe =>
     {
         it("ToStringFast returns display text", () =>
         {
-            Must.BeEqual("Seven", EnumContainer.Nest.DeepNestedEnumType.Seven.ToStringFast());
+            Must.BeEqual("Seven", Test.EnumContainer.Nest.DeepNestedEnumType.Seven.ToStringFast());
         });
 
         it("TryParse(string) succeeds/fails as expected", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("Eight", out EnumContainer.Nest.DeepNestedEnumType parsed));
-            Must.BeEqual(EnumContainer.Nest.DeepNestedEnumType.Eight, parsed);
-            Must.BeTrue(!FinalEnum.TryParse("Value_Not_Found", out parsed));
-            Must.BeTrue(!FinalEnum.TryParse(string.Empty, out parsed));
-            Must.BeTrue(!FinalEnum.TryParse("  ", out parsed));
-            Must.BeTrue(!FinalEnum.TryParse((string?)null, out parsed));
+            Must.BeTrue(DeepNestedEnumType.TryParse("Eight", out Test.EnumContainer.Nest.DeepNestedEnumType parsed));
+            Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Eight, parsed);
+            Must.BeTrue(!DeepNestedEnumType.TryParse("Value_Not_Found", out parsed));
+            Must.BeTrue(!DeepNestedEnumType.TryParse(string.Empty, out parsed));
+            Must.BeTrue(!DeepNestedEnumType.TryParse("  ", out parsed));
+            Must.BeTrue(!DeepNestedEnumType.TryParse((string?)null, out parsed));
         });
 
         it("TryParse honors comparison and whitespace", () =>
         {
-            Must.BeTrue(!FinalEnum.TryParse("seven", out EnumContainer.Nest.DeepNestedEnumType parsed, StringComparison.Ordinal));
-            Must.BeTrue(FinalEnum.TryParse("  Seven  ", out parsed, StringComparison.OrdinalIgnoreCase));
-            Must.BeEqual(EnumContainer.Nest.DeepNestedEnumType.Seven, parsed);
+            Must.BeTrue(!DeepNestedEnumType.TryParse("seven", out Test.EnumContainer.Nest.DeepNestedEnumType parsed, StringComparison.Ordinal));
+            Must.BeTrue(DeepNestedEnumType.TryParse("  Seven  ", out parsed, StringComparison.OrdinalIgnoreCase));
+            Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Seven, parsed);
         });
 
         it("TryParse(utf8) parses Twelve", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("Twelve"u8, out EnumContainer.Nest.DeepNestedEnumType parsed));
-            Must.BeEqual(EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
+            Must.BeTrue(DeepNestedEnumType.TryParse("Twelve"u8, out Test.EnumContainer.Nest.DeepNestedEnumType parsed));
+            Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
         });
 
         it("TryParse(utf8) with ignoring letter casing", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("twelve"u8, out EnumContainer.Nest.DeepNestedEnumType parsed, ignoreCase: true));
-            Must.BeEqual(EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
+            Must.BeTrue(DeepNestedEnumType.TryParse("twelve"u8, out Test.EnumContainer.Nest.DeepNestedEnumType parsed, ignoreCase: true));
+            Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
 
-            Must.BeTrue(FinalEnum.TryParse("TWELVE"u8, out parsed, ignoreCase: true));
-            Must.BeEqual(EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
+            Must.BeTrue(DeepNestedEnumType.TryParse("TWELVE"u8, out parsed, ignoreCase: true));
+            Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
 
-            Must.BeTrue(FinalEnum.TryParse("   TWELVE   "u8, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
-            Must.BeEqual(EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
+            Must.BeTrue(DeepNestedEnumType.TryParse("   TWELVE   "u8, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
+            Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
 
-            Must.BeTrue(!FinalEnum.TryParse("t"u8, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
+            Must.BeTrue(!DeepNestedEnumType.TryParse("t"u8, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
         });
 
         it("TryParse(utf8) can ignore surrounding whitespace when requested", () =>
         {
             var padded = "  Eleven  "u8;
-            Must.BeTrue(!FinalEnum.TryParse(padded, out EnumContainer.Nest.DeepNestedEnumType parsed));
-            Must.BeTrue(FinalEnum.TryParse(padded, out parsed, ignoreWhiteSpace: true));
-            Must.BeEqual(EnumContainer.Nest.DeepNestedEnumType.Eleven, parsed);
+            Must.BeTrue(!DeepNestedEnumType.TryParse(padded, out Test.EnumContainer.Nest.DeepNestedEnumType parsed));
+            Must.BeTrue(DeepNestedEnumType.TryParse(padded, out parsed, ignoreWhiteSpace: true));
+            Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Eleven, parsed);
 
-            Must.BeTrue(!FinalEnum.TryParse("     "u8, out parsed, ignoreWhiteSpace: true));
+            Must.BeTrue(!DeepNestedEnumType.TryParse("     "u8, out parsed, ignoreWhiteSpace: true));
         });
 
         it("ToStringUtf8 returns display text", () =>
         {
-            var utf8 = EnumContainer.Nest.DeepNestedEnumType.Seven.ToStringUtf8();
+            var utf8 = Test.EnumContainer.Nest.DeepNestedEnumType.Seven.ToStringUtf8();
             Must.BeEqual("Seven", Encoding.UTF8.GetString(utf8.Span));
         });
 
@@ -89,23 +90,23 @@ return FUnit.Run(args, describe =>
             };
             var expectedValues = new[]
             {
-                EnumContainer.Nest.DeepNestedEnumType.One,
-                EnumContainer.Nest.DeepNestedEnumType.Two,
-                EnumContainer.Nest.DeepNestedEnumType.Three,
-                EnumContainer.Nest.DeepNestedEnumType.Four,
-                EnumContainer.Nest.DeepNestedEnumType.Five,
-                EnumContainer.Nest.DeepNestedEnumType.Six,
-                EnumContainer.Nest.DeepNestedEnumType.Seven,
-                EnumContainer.Nest.DeepNestedEnumType.Eight,
-                EnumContainer.Nest.DeepNestedEnumType.Nine,
-                EnumContainer.Nest.DeepNestedEnumType.Ten,
-                EnumContainer.Nest.DeepNestedEnumType.Eleven,
-                EnumContainer.Nest.DeepNestedEnumType.Twelve,
+                Test.EnumContainer.Nest.DeepNestedEnumType.One,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Two,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Three,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Four,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Five,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Six,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Seven,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Eight,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Nine,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Ten,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Eleven,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Twelve,
             };
 
-            var names = EnumContainer.Nest.DeepNestedEnumType.One.GetNames();
-            var values = EnumContainer.Nest.DeepNestedEnumType.One.GetValues();
-            var utf8 = EnumContainer.Nest.DeepNestedEnumType.One.GetNamesUtf8();
+            var names = DeepNestedEnumType.GetNames();
+            var values = DeepNestedEnumType.GetValues();
+            var utf8 = DeepNestedEnumType.GetNamesUtf8();
             var utf8Text = new string[utf8.Length];
             for (int i = 0; i < utf8.Length; i++)
             {
@@ -119,15 +120,15 @@ return FUnit.Run(args, describe =>
 
         it("IsDefined matches declared numeric values", () =>
         {
-            Must.BeTrue(EnumContainer.Nest.DeepNestedEnumType.One.IsDefined(0));
-            Must.BeTrue(EnumContainer.Nest.DeepNestedEnumType.Seven.IsDefined(6));
-            Must.BeTrue(EnumContainer.Nest.DeepNestedEnumType.Twelve.IsDefined(11));
-            Must.BeTrue(!EnumContainer.Nest.DeepNestedEnumType.One.IsDefined(99));
+            Must.BeTrue(DeepNestedEnumType.IsDefined(0));
+            Must.BeTrue(DeepNestedEnumType.IsDefined(6));
+            Must.BeTrue(DeepNestedEnumType.IsDefined(11));
+            Must.BeTrue(!DeepNestedEnumType.IsDefined(99));
         });
 
         it("ToStringFast/Utf8 return empty or throw for unknown non-flags", () =>
         {
-            var unknown = (EnumContainer.Nest.DeepNestedEnumType)123;
+            var unknown = (Test.EnumContainer.Nest.DeepNestedEnumType)123;
             Must.BeEqual(string.Empty, unknown.ToStringFast());
             Must.BeEqual(0, unknown.ToStringUtf8().Length);
 
@@ -154,41 +155,41 @@ return FUnit.Run(args, describe =>
 
         it("ContainsTokenIgnoreCase", () =>
         {
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "AlphaXyz"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "alphaXYZ"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "AlphaXyz"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "alphaXYZ"u8));
 
             // ContainsTokenIgnoreCase logic tests
             // --> checks start and end char first, and then checks inbetween chars
             //     so need to verify the inbetween chars are taken into account
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "Az"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "aZ"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "A_z"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "a_Z"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "Az"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "aZ"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "A_z"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "a_Z"u8));
             // start and end match, same length
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "A______z"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "a______Z"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "A______z"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "a______Z"u8));
 
             // Inbetween extraction tests
             // --> Algorithm: checks first char and word boundary, then last char and word boundary,
             //                finally compares inbetween portiion of token.
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "AlphaX_z"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "alphaX_Z"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "A_phaXyz"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "a_phaXyZ"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "AlphaX_z"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "alphaX_Z"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "A_phaXyz"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("AlphaXyz,Foo"u8, "a_phaXyZ"u8));
 
             // Token end exceeds the source end
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("Abc,Def"u8, "Def_"u8));
-            Must.BeTrue(!FinalEnum.ContainsTokenIgnoreCase("Abc,Def"u8, "Def___"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("Abc,Def"u8, "Def_"u8));
+            Must.BeTrue(!FinalEnumUtility.ContainsTokenIgnoreCase("Abc,Def"u8, "Def___"u8));
 
             // Shorter tokens
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A"u8, "A"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A"u8, "a"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A,B,C"u8, "B"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("A,B,C"u8, "b"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB"u8, "AB"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB"u8, "ab"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB,CD,EF"u8, "CD"u8));
-            Must.BeTrue(FinalEnum.ContainsTokenIgnoreCase("AB,CD,EF"u8, "cd"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("A"u8, "A"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("A"u8, "a"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("A,B,C"u8, "B"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("A,B,C"u8, "b"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("AB"u8, "AB"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("AB"u8, "ab"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("AB,CD,EF"u8, "CD"u8));
+            Must.BeTrue(FinalEnumUtility.ContainsTokenIgnoreCase("AB,CD,EF"u8, "cd"u8));
         });
     });
 
@@ -196,46 +197,46 @@ return FUnit.Run(args, describe =>
     {
         it("ToStringFast and TryParse for flags", () =>
         {
-            Must.BeEqual("日本語", MyTestFlagsType.Flag1.ToStringFast());
-            Must.BeTrue(FinalEnum.TryParse("日本語, Flag4", out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4, parsed);
+            Must.BeEqual("日本語", Test.MyTestFlagsType.Flag1.ToStringFast());
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語, Flag4", out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4, parsed);
         });
 
         it("TryParse trims and parses combined flags", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("   Flag2,  ひらがな \"français\" カタカナ   ", out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag2 | MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("   Flag2,  ひらがな \"français\" カタカナ   ", out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
         });
 
         it("TryParse(utf8) parses combined flags", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("日本語, Flag4"u8, out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語, Flag4"u8, out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4, parsed);
         });
 
         it("TryParse handles single custom name", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("日本語", out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語", out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1, parsed);
         });
 
         it("ToStringFast handles combined flags", () =>
         {
-            var combined = MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4;
+            var combined = Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4;
             var text = combined.ToStringFast();
             Must.BeEqual("日本語, Flag4", text);
         });
 
         it("ToStringUtf8 handles combined flags", () =>
         {
-            var combined = MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4;
+            var combined = Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4;
             var utf8 = combined.ToStringUtf8();
             Must.BeEqual("日本語, Flag4", Encoding.UTF8.GetString(utf8.Span));
         });
 
         it("ToStringFast returns empty for unknown flags unless throwing", () =>
         {
-            var unknown = (MyTestFlagsType)int.MinValue;
+            var unknown = (Test.MyTestFlagsType)int.MinValue;
             Must.BeEqual(string.Empty, unknown.ToStringFast());
 
             try
@@ -251,7 +252,7 @@ return FUnit.Run(args, describe =>
 
         it("ToStringUtf8 returns empty for unknown flags unless throwing", () =>
         {
-            var unknown = (MyTestFlagsType)int.MinValue;
+            var unknown = (Test.MyTestFlagsType)int.MinValue;
             var utf8 = unknown.ToStringUtf8();
             Must.BeEqual(0, utf8.Length);
 
@@ -268,115 +269,115 @@ return FUnit.Run(args, describe =>
 
         it("IsDefined only accepts single defined flags", () =>
         {
-            Must.BeTrue(MyTestFlagsType.Flag1.IsDefined(1));
-            Must.BeTrue(MyTestFlagsType.Flag1.IsDefined(3));
-            Must.BeTrue(MyTestFlagsType.Flag4.IsDefined(8));
+            Must.BeTrue(MyTestFlagsType.IsDefined(1));
+            Must.BeTrue(MyTestFlagsType.IsDefined(3));
+            Must.BeTrue(MyTestFlagsType.IsDefined(8));
 
-            Must.BeTrue(MyTestFlagsType.Flag1.IsDefined(0));
-            Must.BeTrue(!FlagsNoZero.Alpha.IsDefined(0));
+            Must.BeTrue(MyTestFlagsType.IsDefined(0));
+            Must.BeTrue(!FlagsNoZero.IsDefined(0));
 
-            Must.BeTrue(FlagsNoZero.Alpha.IsDefined(1));
-            Must.BeTrue(FlagsNoZero.Alpha.IsDefined(3));
+            Must.BeTrue(FlagsNoZero.IsDefined(1));
+            Must.BeTrue(FlagsNoZero.IsDefined(3));
 
-            Must.BeTrue(!MyTestFlagsType.Flag1.IsDefined(int.MaxValue));  // OK: unknown
+            Must.BeTrue(!MyTestFlagsType.IsDefined(int.MaxValue));  // OK: unknown
         });
 
         it("IsDefined uses correct numeric width for unsigned/signed enums", () =>
         {
-            Must.BeTrue(UnderlyingValueUInt.Expect_Unsigned_Int64.IsDefined(0UL));
-            Must.BeTrue(!UnderlyingValueUInt.Expect_Unsigned_Int64.IsDefined(1UL));
-            Must.BeTrue(UnderlyingValueShort.Expect_Int64.IsDefined(0));
-            Must.BeTrue(!UnderlyingValueShort.Expect_Int64.IsDefined(1));
+            Must.BeTrue(UnderlyingValueUInt.IsDefined(0UL));
+            Must.BeTrue(!UnderlyingValueUInt.IsDefined(1UL));
+            Must.BeTrue(UnderlyingValueShort.IsDefined(0));
+            Must.BeTrue(!UnderlyingValueShort.IsDefined(1));
         });
 
         it("TryParse rejects missing delimiters or substrings for flags", () =>
         {
-            Must.BeTrue(!FinalEnum.TryParse("Flag1 Flag4", out MyTestFlagsType parsed));
-            Must.BeTrue(!FinalEnum.TryParse("Flag14", out parsed));
+            Must.BeTrue(!MyTestFlagsType.TryParse("Flag1 Flag4", out Test.MyTestFlagsType parsed));
+            Must.BeTrue(!MyTestFlagsType.TryParse("Flag14", out parsed));
 
-            Must.BeTrue(!FinalEnum.TryParse("Flag1 Flag4"u8, out parsed));
+            Must.BeTrue(!MyTestFlagsType.TryParse("Flag1 Flag4"u8, out parsed));
         });
 
         it("TryParse accepts comma-only separated flags", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("日本語,Flag4", out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語,Flag4", out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4, parsed);
         });
 
         it("TryParse handles casing, trailing commas, and duplicate tokens", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("日本語,flag4", out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語,flag4", out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4, parsed);
 
-            Must.BeTrue(FinalEnum.TryParse("日本語,", out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語,", out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1, parsed);
 
-            Must.BeTrue(FinalEnum.TryParse(",日本語", out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(",日本語", out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1, parsed);
 
-            Must.BeTrue(FinalEnum.TryParse("日本語,日本語", out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語,日本語", out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1, parsed);
         });
 
         it("TryParse accepts comma+space variations for flags", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("日本語, Flag4", out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語, Flag4", out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4, parsed);
 
-            Must.BeTrue(FinalEnum.TryParse("日本語 ,Flag4", out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語 ,Flag4", out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4, parsed);
 
-            Must.BeTrue(FinalEnum.TryParse("日本語 , Flag4", out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag1 | MyTestFlagsType.Flag4, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("日本語 , Flag4", out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag1 | Test.MyTestFlagsType.Flag4, parsed);
         });
 
         it("TryParse(utf8) accepts comma-only separated flags", () =>
         {
-            Must.BeTrue(FinalEnum.TryParse("Flag2,ひらがな \"français\" カタカナ"u8, out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag2 | MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse("Flag2,ひらがな \"français\" カタカナ"u8, out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
         });
 
         it("TryParse(utf8) handles casing, trailing commas, and duplicate tokens", () =>
         {
             var mixedCase = "flag2,ひらがな \"français\" カタカナ"u8;
-            Must.BeTrue(FinalEnum.TryParse(mixedCase, out MyTestFlagsType parsed, ignoreCase: true));
-            Must.BeEqual(MyTestFlagsType.Flag2 | MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(mixedCase, out Test.MyTestFlagsType parsed, ignoreCase: true));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
 
             var trailing = "Flag2,"u8;
-            Must.BeTrue(FinalEnum.TryParse(trailing, out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag2, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(trailing, out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2, parsed);
 
             var leading = ",ひらがな \"français\" カタカナ"u8;
-            Must.BeTrue(FinalEnum.TryParse(leading, out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(leading, out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag3, parsed);
 
             var dupes = "Flag2,Flag2"u8;
-            Must.BeTrue(FinalEnum.TryParse(dupes, out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag2, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(dupes, out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2, parsed);
         });
 
         it("TryParse(utf8) accepts comma+space variations for flags", () =>
         {
             var spacedUtf8 = "Flag2, ひらがな \"français\" カタカナ"u8;
-            Must.BeTrue(FinalEnum.TryParse(spacedUtf8, out MyTestFlagsType parsed));
-            Must.BeEqual(MyTestFlagsType.Flag2 | MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(spacedUtf8, out Test.MyTestFlagsType parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
 
             var frontSpacedUtf8 = "Flag2 ,ひらがな \"français\" カタカナ"u8;
-            Must.BeTrue(FinalEnum.TryParse(frontSpacedUtf8, out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag2 | MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(frontSpacedUtf8, out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
 
             var bothSpacedUtf8 = "Flag2 , ひらがな \"français\" カタカナ"u8;
-            Must.BeTrue(FinalEnum.TryParse(bothSpacedUtf8, out parsed));
-            Must.BeEqual(MyTestFlagsType.Flag2 | MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(bothSpacedUtf8, out parsed));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
 
             var UPPER_SPACE = "  , FLAG2    ,  ひらがな \"français\" カタカナ  , FLAG2  ,,,  ,"u8;
-            Must.BeTrue(FinalEnum.TryParse(UPPER_SPACE, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
-            Must.BeEqual(MyTestFlagsType.Flag2 | MyTestFlagsType.Flag3, parsed);
+            Must.BeTrue(MyTestFlagsType.TryParse(UPPER_SPACE, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
+            Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
         });
 
         it("ToStringFastFlags throws on mixed known/unknown when requested", () =>
         {
-            var value = (MyTestFlagsType)((int)MyTestFlagsType.Flag1 | int.MinValue);
+            var value = (Test.MyTestFlagsType)((int)Test.MyTestFlagsType.Flag1 | int.MinValue);
             Must.BeEqual(string.Empty, value.ToStringFast());
 
             try
@@ -392,7 +393,7 @@ return FUnit.Run(args, describe =>
 
         it("ToStringUtf8Flags throws on mixed known/unknown when requested", () =>
         {
-            var value = (MyTestFlagsType)((int)MyTestFlagsType.Flag1 | int.MinValue);
+            var value = (Test.MyTestFlagsType)((int)Test.MyTestFlagsType.Flag1 | int.MinValue);
             Must.BeEqual(0, value.ToStringUtf8().Length);
 
             try
