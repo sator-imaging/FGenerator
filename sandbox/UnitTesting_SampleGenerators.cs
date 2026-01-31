@@ -74,7 +74,7 @@ return FUnit.Run(args, describe =>
 public partial record Debug<T> : IDisposable
 {
     [FGDebug]
-    partial class Nested
+    sealed partial class Nested
     {
         [FGDebug]
         partial class OneAnother

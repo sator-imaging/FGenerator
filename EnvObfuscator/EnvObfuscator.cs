@@ -831,7 +831,7 @@ namespace EnvObfuscator
 
     private static bool HasValidHammingWeight(byte value)
     {
-        if (value <= 0b_111)
+        if (value <= 0b_1111)
         {
             return false;
         }
