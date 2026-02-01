@@ -14,6 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  id-token: write  # enable GitHub OIDC token issuance for this job
   contents: write
   pull-requests: write
 env:
@@ -27,10 +28,6 @@ jobs:
     #    configuration: [Debug, Release]
 
     runs-on: ubuntu-latest   # tip: runs-on can use ${{ matrix.<name> }}
-
-    permissions:
-      id-token: write  # enable GitHub OIDC token issuance for this job
-      contents: read   # required for private repo
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5      # v4.3.1
