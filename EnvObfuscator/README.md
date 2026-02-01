@@ -4,15 +4,16 @@
 
 Generates Obfuscated Properties from `.env` File Content
 
+[![nuget](https://img.shields.io/nuget/vpre/EnvObfuscator)](https://www.nuget.org/packages/EnvObfuscator)
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator/6.1-envobfuscator)
+
 </div>
 
 &nbsp;
 
 
-- Reads the last `/* ... */` multiline comment in the attribute's leading trivia.
-- Generates `public static Memory<char>` properties for each valid entry.
+- Generates `public static Memory<char>` properties for each `.env` entry.
 - Generates `Validate_<PropertyName>(ReadOnlySpan<char>)` for constant-time comparison.
-- Deterministic output via `seed` support.
 
 
 &nbsp;
@@ -34,7 +35,7 @@ SERVICE_URL=https://example.com
 SECRET=PA$$WORD
 EMPTY=
 */
-[Obfuscate(seed: 12345)]
+[Obfuscate(seed: 12345)]  // Omit the argument to use random seed
 static partial class EnvSecrets
 {
 }

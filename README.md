@@ -5,10 +5,13 @@
 **Building C# Source Generator as a File-based App**
 
 [![nuget](https://img.shields.io/nuget/vpre/FGenerator)](https://www.nuget.org/packages/FGenerator)
-[![Cli](https://img.shields.io/nuget/vpre/FGenerator.Cli?label=Cli)](https://www.nuget.org/packages/FGenerator.Cli)
-[![Sdk](https://img.shields.io/nuget/vpre/FGenerator.Sdk?label=Sdk)](https://www.nuget.org/packages/FGenerator.Sdk)
+[![CLI](https://img.shields.io/nuget/vpre/FGenerator.Cli?label=CLI)](https://www.nuget.org/packages/FGenerator.Cli)
+[![SDK](https://img.shields.io/nuget/vpre/FGenerator.Sdk?label=SDK)](https://www.nuget.org/packages/FGenerator.Sdk)
 &nbsp;
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
+<br/>
+[![EnvObfuscator](https://img.shields.io/nuget/vpre/EnvObfuscator?label=EnvObfuscator)](https://github.com/sator-imaging/FGenerator/tree/main/EnvObfuscator)
+[![FinalEnumGenerator](https://img.shields.io/nuget/vpre/FinalEnumGenerator?label=FinalEnumGenerator)](https://github.com/sator-imaging/FGenerator/tree/main/FinalEnumGenerator)
 
 [<kbd>🇺🇸 English</kbd>](./README.md)
 &nbsp;

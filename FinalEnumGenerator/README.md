@@ -4,6 +4,9 @@
 
 Generates High-Performance `string` and `UTF-8` Extensions for Enums
 
+[![nuget](https://img.shields.io/nuget/vpre/FinalEnumGenerator)](https://www.nuget.org/packages/FinalEnumGenerator)
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator/6.2-finalenumgenerator)
+
 </div>
 
 &nbsp;
