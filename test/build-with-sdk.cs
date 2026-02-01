@@ -1,4 +1,4 @@
-#:sdk FGenerator.Sdk@2.2.2
+#:sdk FGenerator.Sdk@2.2.3
 //                   ~~~~~ Push to origin AFTER new nuget package is available
 
 using FGenerator;
