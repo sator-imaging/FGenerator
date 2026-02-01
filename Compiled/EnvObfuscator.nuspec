@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <authors>Sator Imaging</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    <licenseUrl>https://licenses.nuget.org/Apache-2.0</licenseUrl>
+    <icon>icon-128px.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://x.com/sator_imaging</projectUrl>
+    <releaseNotes>https://github.com/sator-imaging/FGenerator</releaseNotes>
+    <copyright>(c) 2025-2026 Sator Imaging</copyright>
+    <repository type="git" url="https://github.com/sator-imaging/FGenerator" />
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Microsoft.CodeAnalysis.CSharp" version="4.0.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <description>Generates Obfuscated Properties from `.env` File Content</description>
+    <tags>Obfuscate, Properties, env, File</tags>
+    <id>EnvObfuscator</id>
+    <title>EnvObfuscator</title>
+    <version>2.2.2</version>
+  </metadata>
+  <files>
+    <file src="EnvObfuscator.dll" target="analyzers/dotnet/cs" />
+    <file src="../EnvObfuscator/README.md" target="" />
+    <file src="../icon-128px.png" target="" />
+  </files>
+</package>
