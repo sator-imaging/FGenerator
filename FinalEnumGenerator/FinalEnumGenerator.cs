@@ -293,6 +293,8 @@ namespace FinalEnums
         var isFlagsEnum = enumSymbol.GetAttributes().Any(attr => attr.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
         var underlyingType = enumSymbol.EnumUnderlyingType;
         var containingTypes = target.ContainingTypes;
+        // Accessibility keyword including trailing space, e.g., "public "
+        var visibility = target.ToVisibilityString();
 
         var isUnsigned = IsUnsignedEnum(underlyingType);
 
@@ -376,7 +378,7 @@ namespace FinalEnums
         sb.AppendLine();
         sb.AppendLine("{");
 
-        sb.AppendLine($"    public static partial class {enumSymbol.Name}");
+        sb.AppendLine($"    {visibility}static partial class {enumSymbol.Name}");
         sb.AppendLine("    {");
 
         // UTF-8 byte arrays
