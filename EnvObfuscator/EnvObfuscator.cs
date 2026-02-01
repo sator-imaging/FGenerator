@@ -269,7 +269,6 @@ namespace EnvObfuscator
         var baseChars = BuildBaseChars(entries);
 
         IRandomSource random = new SeededRandomSource(seed);
-        int actualSeed = random.Seed;
 
         // Ensure obfuscated names are produced immediately after random instantiation to avoid
         // accidental reuse of identical internal seeds across types (compile error as a result).
@@ -294,7 +293,8 @@ namespace EnvObfuscator
         do
         {
             evenKey = CreateRandomUShortNonZero(random);
-        } while (evenKey == oddKey);
+        }
+        while ((evenKey & 0xFF00) == (oddKey & 0xFF00) || (evenKey & 0xFF) == (oddKey & 0xFF));
 
         var ocBytes = BuildByteTableFromBaseChars(baseChars, oddKey, random, out var ocByteSources);
         var ecBytes = BuildByteTableFromBaseChars(baseChars, evenKey, random, out var ecByteSources);
@@ -308,7 +308,7 @@ namespace EnvObfuscator
         string ocRef = BuildNamespacePrefix(ocNamespace) + ocClass + "." + ocField;
         string ecRef = BuildNamespacePrefix(ecNamespace) + ecClass + "." + ecField;
 
-        sb.AppendLine();
+        int actualSeed = random.Seed;
         sb.Append("// seed: ");
         AppendSeedBinary(sb, actualSeed);
         sb.Append(" (");
@@ -378,7 +378,7 @@ namespace EnvObfuscator
                 entryIndices[i] = index;
             }
 
-            string decodeRef = AppendDecodeHelper(helperSb, nameRandom, oddKeyRef, evenKeyRef);
+            string decodeRef = AppendDecodeHelper(helperSb, nameRandom);
             string helperGetNamespace = CreateHexName(nameRandom);
             string helperGetClass = CreateHexName(nameRandom);
             string helperGetMethod = CreateHexName(nameRandom);
@@ -387,12 +387,16 @@ namespace EnvObfuscator
             string helperValidateMethod = CreateHexName(nameRandom);
             string wrapperGetNamespace = CreateHexName(nameRandom);
             string wrapperGetClass = CreateHexName(nameRandom);
-            string wrapperGetDelegate = CreateHexName(nameRandom);
             string wrapperGetField = CreateHexName(nameRandom);
             string wrapperValidateNamespace = CreateHexName(nameRandom);
             string wrapperValidateClass = CreateHexName(nameRandom);
-            string wrapperValidateDelegate = CreateHexName(nameRandom);
             string wrapperValidateField = CreateHexName(nameRandom);
+            string getDelegateNamespace = CreateHexName(nameRandom);
+            string getDelegateClass = CreateHexName(nameRandom);
+            string getDelegateType = CreateHexName(nameRandom);
+            string validateDelegateNamespace = CreateHexName(nameRandom);
+            string validateDelegateClass = CreateHexName(nameRandom);
+            string validateDelegateType = CreateHexName(nameRandom);
 
             helperSb.AppendLine();
             helperSb.Append("// ");
@@ -402,6 +406,7 @@ namespace EnvObfuscator
             helperSb.Append(" { sealed class ");
             helperSb.Append(helperGetClass);
             helperSb.AppendLine(" {");
+            helperSb.AppendLine("    [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]");
             helperSb.Append("    internal static global::System.Memory<char> ");
             helperSb.Append(helperGetMethod);
             helperSb.AppendLine("()");
@@ -415,8 +420,9 @@ namespace EnvObfuscator
             helperSb.Append("        _ = ecb[");
             helperSb.Append(ecBytes.Length - 1);
             helperSb.AppendLine("];");
-            helperSb.AppendLine("        var ok = " + oddKeyRef + ";");
-            helperSb.AppendLine("        var ek = " + evenKeyRef + ";");
+            helperSb.AppendLine("        var ok = (ushort)" + oddKeyRef + ";");
+            helperSb.AppendLine("        var ek = (ushort)" + evenKeyRef + ";");
+            helperSb.AppendLine("        uint kk = unchecked((uint)((ok << 16) | ek));");
             helperSb.Append("        var d = ");
             helperSb.Append(decodeRef);
             helperSb.AppendLine(";");
@@ -461,13 +467,20 @@ namespace EnvObfuscator
             string helperValidateRef = BuildNamespacePrefix(helperValidateNamespace) + helperValidateClass;
 
             helperSb.Append("namespace ");
+            helperSb.Append(getDelegateNamespace);
+            helperSb.Append(" { sealed class ");
+            helperSb.Append(getDelegateClass);
+            helperSb.AppendLine(" {");
+            helperSb.Append("    internal delegate global::System.Memory<char> ");
+            helperSb.Append(getDelegateType);
+            helperSb.AppendLine("();");
+            helperSb.AppendLine("}}");
+
+            helperSb.Append("namespace ");
             helperSb.Append(wrapperGetNamespace);
             helperSb.Append(" { sealed class ");
             helperSb.Append(wrapperGetClass);
             helperSb.AppendLine(" {");
-            helperSb.Append("    internal delegate global::System.Memory<char> ");
-            helperSb.Append(wrapperGetDelegate);
-            helperSb.AppendLine("();");
             helperSb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
             helperSb.AppendLine();
             helperSb.Append("    internal static object ");
@@ -480,11 +493,15 @@ namespace EnvObfuscator
             helperSb.Append("        ");
             helperSb.Append(wrapperGetField);
             helperSb.Append(" = (");
-            helperSb.Append(wrapperGetDelegate);
-            helperSb.Append(")");
+            helperSb.Append(BuildNamespacePrefix(getDelegateNamespace));
+            helperSb.Append(getDelegateClass);
+            helperSb.Append('.');
+            helperSb.Append(getDelegateType);
+            helperSb.Append(")(() => ");
             helperSb.Append(helperGetRef);
             helperSb.Append('.');
             helperSb.Append(helperGetMethod);
+            helperSb.Append("())");
             helperSb.AppendLine(";");
             helperSb.AppendLine("    }");
             helperSb.AppendLine("}}");
@@ -494,6 +511,7 @@ namespace EnvObfuscator
             helperSb.Append(" { sealed class ");
             helperSb.Append(helperValidateClass);
             helperSb.AppendLine(" {");
+            helperSb.AppendLine("    [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]");
             helperSb.Append("    internal static bool ");
             helperSb.Append(helperValidateMethod);
             helperSb.AppendLine("(global::System.ReadOnlySpan<char> value)");
@@ -511,8 +529,9 @@ namespace EnvObfuscator
             helperSb.Append("        _ = ecb[");
             helperSb.Append(ecBytes.Length - 1);
             helperSb.AppendLine("];");
-            helperSb.AppendLine("        var ok = " + oddKeyRef + ";");
-            helperSb.AppendLine("        var ek = " + evenKeyRef + ";");
+            helperSb.AppendLine("        var ok = (ushort)" + oddKeyRef + ";");
+            helperSb.AppendLine("        var ek = (ushort)" + evenKeyRef + ";");
+            helperSb.AppendLine("        uint kk = unchecked((uint)((ok << 16) | ek));");
             helperSb.Append("        var d = ");
             helperSb.Append(decodeRef);
             helperSb.AppendLine(";");
@@ -551,13 +570,21 @@ namespace EnvObfuscator
             helperSb.AppendLine("}}");
 
             helperSb.Append("namespace ");
+            helperSb.Append(validateDelegateNamespace);
+            helperSb.Append(" { sealed class ");
+            helperSb.Append(validateDelegateClass);
+            helperSb.AppendLine(" {");
+            // Parameter: the ReadOnlySpan<char> value to validate.
+            helperSb.Append("    internal delegate bool ");
+            helperSb.Append(validateDelegateType);
+            helperSb.AppendLine("(global::System.ReadOnlySpan<char> value);");
+            helperSb.AppendLine("}}");
+
+            helperSb.Append("namespace ");
             helperSb.Append(wrapperValidateNamespace);
             helperSb.Append(" { sealed class ");
             helperSb.Append(wrapperValidateClass);
             helperSb.AppendLine(" {");
-            helperSb.Append("    internal delegate bool ");
-            helperSb.Append(wrapperValidateDelegate);
-            helperSb.AppendLine("(global::System.ReadOnlySpan<char> value);");
             helperSb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
             helperSb.AppendLine();
             helperSb.Append("    internal static object ");
@@ -570,28 +597,34 @@ namespace EnvObfuscator
             helperSb.Append("        ");
             helperSb.Append(wrapperValidateField);
             helperSb.Append(" = (");
-            helperSb.Append(wrapperValidateDelegate);
-            helperSb.Append(")");
+            helperSb.Append(BuildNamespacePrefix(validateDelegateNamespace));
+            helperSb.Append(validateDelegateClass);
+            helperSb.Append('.');
+            helperSb.Append(validateDelegateType);
+            helperSb.Append(")((_) => ");
             helperSb.Append(helperValidateRef);
             helperSb.Append('.');
             helperSb.Append(helperValidateMethod);
+            helperSb.Append("(_))");
             helperSb.AppendLine(";");
             helperSb.AppendLine("    }");
             helperSb.AppendLine("}}");
 
             string helperGetWrapperRef = BuildNamespacePrefix(wrapperGetNamespace) + wrapperGetClass;
             string helperValidateWrapperRef = BuildNamespacePrefix(wrapperValidateNamespace) + wrapperValidateClass;
+            string helperGetDelegateRef = BuildNamespacePrefix(getDelegateNamespace) + getDelegateClass + "." + getDelegateType;
+            string helperValidateDelegateRef = BuildNamespacePrefix(validateDelegateNamespace) + validateDelegateClass + "." + validateDelegateType;
 
             targetSb.AppendLine(PropertyDocComment);
             targetSb.AppendLine($"        public static global::System.Memory<char> {propertyName}");
             targetSb.AppendLine("        {");
             targetSb.AppendLine("            [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
-            targetSb.AppendLine($"            get => (({helperGetWrapperRef}.{wrapperGetDelegate}){helperGetWrapperRef}.{wrapperGetField})();");
+            targetSb.AppendLine($"            get => (({helperGetDelegateRef}){helperGetWrapperRef}.{wrapperGetField})();");
             targetSb.AppendLine("        }");
             targetSb.AppendLine();
             targetSb.AppendLine(ValidateDocComment);
             targetSb.AppendLine("        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
-            targetSb.AppendLine($"        public static bool Validate_{propertyName}(global::System.ReadOnlySpan<char> value) => (({helperValidateWrapperRef}.{wrapperValidateDelegate}){helperValidateWrapperRef}.{wrapperValidateField})(value);");
+            targetSb.AppendLine($"        public static bool Validate_{propertyName}(global::System.ReadOnlySpan<char> value) => (({helperValidateDelegateRef}){helperValidateWrapperRef}.{wrapperValidateField})(value);");
             targetSb.AppendLine();
         }
 
@@ -637,18 +670,20 @@ namespace EnvObfuscator
         return "global::" + namespaceName + ".";
     }
 
-    private static string AppendDecodeHelper(StringBuilder sb, IRandomSource nameRandom, string oddKeyRef, string evenKeyRef)
+    private static string AppendDecodeHelper(StringBuilder sb, IRandomSource nameRandom)
     {
         string decodeNamespace = CreateHexName(nameRandom);
         string decodeClass = CreateHexName(nameRandom);
         string decodeMethod = CreateHexName(nameRandom);
         string decodeArgFlags = CreateHexName(nameRandom);
-        string decodeArgLowerByte = CreateHexName(nameRandom);
-        string decodeArgUpperByte = CreateHexName(nameRandom);
+        string decodeArgBytes = CreateHexName(nameRandom);
+        string decodeArgKeys = CreateHexName(nameRandom);
         string decodeWrapperNamespace = CreateHexName(nameRandom);
         string decodeWrapperClass = CreateHexName(nameRandom);
-        string decodeWrapperDelegate = CreateHexName(nameRandom);
         string decodeWrapperField = CreateHexName(nameRandom);
+        string decodeDelegateNamespace = CreateHexName(nameRandom);
+        string decodeDelegateClass = CreateHexName(nameRandom);
+        string decodeDelegateType = CreateHexName(nameRandom);
 
         sb.AppendLine();
         sb.AppendLine("// Decode a single character using preselected flags and byte indices.");
@@ -662,18 +697,28 @@ namespace EnvObfuscator
         sb.Append(decodeMethod);
         sb.Append("(byte ");
         sb.Append(decodeArgFlags);
-        sb.Append(", byte ");
-        sb.Append(decodeArgLowerByte);
-        sb.Append(", byte ");
-        sb.Append(decodeArgUpperByte);
+        sb.Append(", ushort ");
+        sb.Append(decodeArgBytes);
+        sb.Append(", uint ");
+        sb.Append(decodeArgKeys);
         sb.AppendLine(")");
         sb.AppendLine("    {");
-        sb.Append("        var ok = ");
-        sb.Append(oddKeyRef);
-        sb.AppendLine(";");
-        sb.Append("        var ek = ");
-        sb.Append(evenKeyRef);
-        sb.AppendLine(";");
+        sb.Append("        var ok = (ushort)(");
+        sb.Append(decodeArgKeys);
+        sb.Append(" >> 16);");
+        sb.AppendLine();
+        sb.Append("        var ek = (ushort)(");
+        sb.Append(decodeArgKeys);
+        sb.Append(" & 0xFFFF);");
+        sb.AppendLine();
+        sb.Append("        var lb = (byte)(");
+        sb.Append(decodeArgBytes);
+        sb.Append(" & 0xFF);");
+        sb.AppendLine();
+        sb.Append("        var ub = (byte)(");
+        sb.Append(decodeArgBytes);
+        sb.Append(" >> 8);");
+        sb.AppendLine();
         sb.Append("        var ");
         sb.Append(decodeArgFlags);
         sb.Append("LowerKey = (");
@@ -692,19 +737,19 @@ namespace EnvObfuscator
         sb.AppendLine();
         sb.AppendLine("        {");
         sb.Append("            return (char)((ushort)(");
-        sb.Append(decodeArgLowerByte);
+        sb.Append("lb");
         sb.Append(" ^ (");
         sb.Append(decodeArgFlags);
         sb.Append("LowerKey");
         sb.AppendLine(" & 0xFF)));");
         sb.AppendLine("        }");
         sb.Append("        return (char)((ushort)(((ushort)(");
-        sb.Append(decodeArgUpperByte);
+        sb.Append("ub");
         sb.Append(" ^ (");
         sb.Append(decodeArgFlags);
         sb.Append("UpperKey");
         sb.Append(" >> 8)) << 8) | (ushort)(");
-        sb.Append(decodeArgLowerByte);
+        sb.Append("lb");
         sb.Append(" ^ (");
         sb.Append(decodeArgFlags);
         sb.Append("LowerKey");
@@ -715,13 +760,21 @@ namespace EnvObfuscator
         string decodeRef = BuildNamespacePrefix(decodeNamespace) + decodeClass + "." + decodeMethod;
 
         sb.Append("namespace ");
+        sb.Append(decodeDelegateNamespace);
+        sb.Append(" { sealed class ");
+        sb.Append(decodeDelegateClass);
+        sb.AppendLine(" {");
+        // Parameters: flags, packed bytes, packed keys.
+        sb.Append("    internal delegate char ");
+        sb.Append(decodeDelegateType);
+        sb.AppendLine("(byte value, ushort n, uint m);");
+        sb.AppendLine("}}");
+
+        sb.Append("namespace ");
         sb.Append(decodeWrapperNamespace);
         sb.Append(" { sealed class ");
         sb.Append(decodeWrapperClass);
         sb.AppendLine(" {");
-        sb.Append("    internal delegate char ");
-        sb.Append(decodeWrapperDelegate);
-        sb.AppendLine("(byte flags, byte lower, byte upper);");
         sb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
         sb.AppendLine();
         sb.Append("    internal static object ");
@@ -734,15 +787,20 @@ namespace EnvObfuscator
         sb.Append("        ");
         sb.Append(decodeWrapperField);
         sb.Append(" = (");
-        sb.Append(decodeWrapperDelegate);
-        sb.Append(")");
+        sb.Append(BuildNamespacePrefix(decodeDelegateNamespace));
+        sb.Append(decodeDelegateClass);
+        sb.Append('.');
+        sb.Append(decodeDelegateType);
+        sb.Append(")((i, _, j) => ");
         sb.Append(decodeRef);
+        sb.Append("(i, _, j))");
         sb.AppendLine(";");
         sb.AppendLine("    }");
         sb.AppendLine("}}");
 
         string decodeWrapperRef = BuildNamespacePrefix(decodeWrapperNamespace) + decodeWrapperClass;
-        return "((" + decodeWrapperRef + "." + decodeWrapperDelegate + ")" + decodeWrapperRef + "." + decodeWrapperField + ")";
+        string decodeDelegateRef = BuildNamespacePrefix(decodeDelegateNamespace) + decodeDelegateClass + "." + decodeDelegateType;
+        return "((" + decodeDelegateRef + ")" + decodeWrapperRef + "." + decodeWrapperField + ")";
     }
 
     private static string CreateHexName(IRandomSource random)
@@ -771,9 +829,9 @@ namespace EnvObfuscator
         sb.AppendLine(" {");
         sb.Append("    // Intentionally non-readonly to avoid aggressive inlining/const-prop assumptions.");
         sb.AppendLine();
-        sb.Append("    internal static ushort ");
+        sb.Append("    internal static object ");
         sb.Append(fieldName);
-        sb.Append(" = 0x");
+        sb.Append(" = (ushort)0x");
         sb.Append(key.ToString("X4", CultureInfo.InvariantCulture));
         sb.Append(";  // ");
         AppendKeyByteBinary(sb, key);
@@ -822,11 +880,9 @@ namespace EnvObfuscator
             byte hi = (byte)random.NextInt(1, 0x100);
             byte lo = (byte)random.NextInt(1, 0x100);
             ushort key = (ushort)((hi << 8) | lo);
-            key ^= (ushort)((key << 7) | (key >> 9));
-            if ((byte)(key & 0xFF) is not 0x00 and not 0xFF
-                && (byte)(key >> 8) is not 0x00 and not 0xFF
-                && HasValidHammingWeight((byte)(key & 0xFF))
-                && HasValidHammingWeight((byte)(key >> 8)))
+            key ^= unchecked((ushort)((key << 7) | (key >> 9)));
+            if (HasValidHammingWeight((byte)(key & 0xFF))
+             && HasValidHammingWeight((byte)(key >> 8)))
             {
                 return key;
             }
@@ -835,7 +891,7 @@ namespace EnvObfuscator
 
     private static bool HasValidHammingWeight(byte value)
     {
-        if (value <= 0b_1111)
+        if (value is <= 0b_1111 and not 0xFF)
         {
             return false;
         }
@@ -988,15 +1044,18 @@ namespace EnvObfuscator
         byte flags = (byte)((isAscii ? 0x1 : 0x0)
             | (lowerIsEven ? 0x2 : 0x0)
             | (upperIsEven ? 0x4 : 0x0));
+        string bytesArg = isAscii
+            ? "((ushort)(" + lowerByteExpr + "))"
+            : "((ushort)(" + lowerByteExpr + " | (" + upperByteExpr + " << 8)))";
 
         return decodeMethodRef
             + "("
             + "0x"
             + flags.ToString("X2", CultureInfo.InvariantCulture)
             + ", "
-            + lowerByteExpr
+            + bytesArg
             + ", "
-            + upperByteExpr
+            + "kk"
             + ")";
     }
 
@@ -1259,19 +1318,22 @@ namespace EnvObfuscator
             value = BitConverter.ToUInt32(buffer, 0);
         } while (value >= limit);
 
-        return (int)(minInclusive + (value % range));
+        return unchecked((int)(minInclusive + (value % range)));
     }
 
     private static int MixSeed(int seed)
     {
-        uint x = (uint)seed;
-        x += 0x9E3779B9u;
-        x ^= x >> 16;
-        x *= 0x85EBCA6Bu;
-        x ^= x >> 13;
-        x *= 0xC2B2AE35u;
-        x ^= x >> 16;
-        return (int)x;
+        unchecked
+        {
+            uint x = (uint)seed;
+            x += 0x9E3779B9u;
+            x ^= x >> 16;
+            x *= 0x85EBCA6Bu;
+            x ^= x >> 13;
+            x *= 0xC2B2AE35u;
+            x ^= x >> 16;
+            return (int)x;
+        }
     }
 
     private static int StableHash(string value)
