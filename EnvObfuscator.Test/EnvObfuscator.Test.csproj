@@ -9,6 +9,10 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
   <ItemGroup>
     <Analyzer Include="../.z__merged_dll__/FGenerator.dll" Condition=" Exists('../.z__merged_dll__/FGenerator.dll') " />
     <Analyzer Include="../.z__merged_dll__/EnvObfuscator.dll" />

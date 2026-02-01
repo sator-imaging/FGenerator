@@ -9,6 +9,10 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- Reference the generator project -->
     <!-- OutputItemType="Analyzer" makes it work as a source generator -->
