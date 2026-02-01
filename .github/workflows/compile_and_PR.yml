@@ -86,12 +86,12 @@ jobs:
 
       - name: Pack (.nuspec + dll)
         run: |
-          nuget pack Compiled/EnvObfuscator.nuspec      -o nuget-pack
-          nuget pack Compiled/FinalEnumGenerator.nuspec -o nuget-pack
+          dotnet pack Compiled/EnvObfuscator.nuspec      -o nuget-pack
+          dotnet pack Compiled/FinalEnumGenerator.nuspec -o nuget-pack
 
       - name: Push to NuGet
         run: |
-          nuget push "nuget-pack/*.nupkg" \
+          dotnet nuget push "nuget-pack/*.nupkg" \
             -k ${{ steps.login.outputs.NUGET_API_KEY }}  \
             -s https://api.nuget.org/v3/index.json \
             --timeout 60
