@@ -94,6 +94,5 @@ jobs:
           dotnet nuget push "nuget-pack/*.nupkg" \
             -k ${{ steps.login.outputs.NUGET_API_KEY }}  \
             -s https://api.nuget.org/v3/index.json \
-            --timeout 60
-            -SkipDuplicate \
-            || true
+            --timeout 60 \
+            --skip-duplicate
