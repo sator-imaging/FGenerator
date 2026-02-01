@@ -30,6 +30,7 @@ To avoid embedding "raw data" as an assembly metadata, `EnvObfuscator` uses prec
 using EnvObfuscator;
 
 /*
+# 👇 Copy & paste .env file content
 API_KEY=abc123
 SERVICE_URL=https://example.com
 SECRET=PA$$WORD
