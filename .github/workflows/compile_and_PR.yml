@@ -4,8 +4,8 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - "EnvObfuscator/**"
-      - "FinalEnumGenerator/**"
+      - "EnvObfuscator/**/*.cs"
+      - "FinalEnumGenerator/**/*.cs"
   #pull_request:
   #  branches: [ "main" ]
   #release:
