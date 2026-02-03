@@ -12,8 +12,9 @@ Generates Obfuscated Properties from `.env` File Content
 &nbsp;
 
 
-- Generates `public static Memory<char>` properties for each `.env` entry.
-- Generates `Validate_<PropertyName>(ReadOnlySpan<char>)` for constant-time comparison.
+- `public static Memory<char>` properties for each `.env` entry.
+- `Validate_<PropertyName>(ReadOnlySpan<char>)` for constant-time comparison.
+- Ability to generate GUID-named chaff classes.
 
 
 &nbsp;
@@ -43,8 +44,8 @@ static partial class EnvSecrets
 ```
 
 
-> [!NOTE]
-> The properties and methods are contained within a dedicated class called `<TargetClass>Loader` that is designed to remove the unnecessary `Obfuscate` attribute annotation from the obfuscation class (the original target will have GUID-named decoys).
+> [!IMPORTANT]
+> The properties and methods are contained within a dedicated class called `<TargetClass>Loader` that is designed to remove the unnecessary `Obfuscate` attribute marker from the actual obfuscation class. Note that the original target class with marker attribute will have GUID-named decoys which always throw.
 
 ```cs
 // Always returns a freshly decoded clone each time
@@ -81,7 +82,57 @@ password.Clear();  // Fills memory by zero
 
 
 
-## Diagnostics
+## Emitting Chaff
+
+Intended to eliminate unnecessary "marker" for obfuscation, generated classes don't have `DynamicallyAccessedMembers` or `UnityEngine.Scripting.Preserve` attribute.
+
+If you need to include the generated GUID-named chaff classes in build, use `link.xml` to prevent trimming on Native AOT or Unity IL2CPP build.
+
+```cs
+// Declare necessary chaff classes as desired
+
+/* API_KEY=working-dummy-to-detect-reverse-engineering */
+[Obfuscate] partial class DbSecrets { }
+
+/* API_KEY=working-dummy-to-detect-reverse-engineering */
+[Obfuscate] partial class DatabaseSecrets { }
+
+/* API_KEY=key-for-valid-usage */
+[Obfuscate] partial class MySecrets { }
+```
+
+
+Here shows sample `link.xml` for Unity. See the following link for more details.
+
+- Unity: https://docs.unity3d.com/Manual/managed-code-stripping-xml-formatting.html
+- C# / .NET: https://github.com/dotnet/runtime/blob/main/docs/tools/illink/data-formats.md
+
+
+```xml
+<linker>
+  <!-- Preserve an entire assembly -->
+  <assembly fullname="MyAssembly">
+    <!-- Preserve a specific type -->
+    <type fullname="MyNamespace.MyClass" preserve="all"/>
+    <!-- Preserve only methods -->
+    <type fullname="MyNamespace.MyOtherClass" preserve="methods"/>
+  </assembly>
+
+  <!-- Preserve Unity built-in assemblies -->
+  <assembly fullname="UnityEngine.CoreModule">
+    <type fullname="UnityEngine.GameObject" preserve="all"/>
+  </assembly>
+</linker>
+```
+
+
+&nbsp;
+
+
+
+
+
+# Diagnostics
 
 - Missing multiline comment yields a warning.
 - Invalid lines are ignored and reported (first invalid line is shown).
