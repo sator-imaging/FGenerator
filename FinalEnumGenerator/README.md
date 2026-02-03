@@ -59,6 +59,7 @@ Here shows how to use the generated extensions.
 
 ```cs
 using FinalEnums;
+using FinalEnums.EnumNamespace;  // Methods are generated in FinalEnums namespace
 
 if (MyEnum.TryParse("日本語", out var value))
 {
