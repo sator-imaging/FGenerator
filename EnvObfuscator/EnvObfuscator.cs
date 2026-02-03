@@ -341,12 +341,14 @@ namespace EnvObfuscator
         var targetSb = new StringBuilder(1024 + (entries.Count * 256));
         var targetDecoySb = new StringBuilder(1024 + (entries.Count * 256));
         var loaderTypeName = target.RawSymbol.Name + "Loader";
-        // Nested types can be private, but root types cannot, so normalize if needed.
         var loaderVisibility = target.ToVisibilityString();
+
+        // Nested types can be private, but root types cannot, so normalize if needed.
         if (target.RawSymbol.DeclaredAccessibility == Accessibility.Private)
         {
             loaderVisibility = "internal ";
         }
+
         var decoyNames = new HashSet<string>(StringComparer.Ordinal);
 
         var containingNamespace = target.RawSymbol.ContainingNamespace;
