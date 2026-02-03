@@ -391,7 +391,7 @@ namespace EnvObfuscator
             {
                 decoyValidateName = CreateHexName(nameRandom);
             }
-            while (!decoyNames.Add(decoyValidateName) || usedPropertyNames.Contains(decoyValidateName));
+            while (usedPropertyNames.Contains(decoyValidateName) || !decoyNames.Add(decoyValidateName));
 
             // targetDecoySb.AppendLine(PropertyDocComment);
             targetDecoySb.AppendLine($"        public static global::System.Memory<char> {decoyPropertyName}");
