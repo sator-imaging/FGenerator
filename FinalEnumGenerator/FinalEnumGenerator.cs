@@ -293,7 +293,7 @@ namespace FinalEnums
         var isFlagsEnum = enumSymbol.GetAttributes().Any(attr => attr.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
         var underlyingType = enumSymbol.EnumUnderlyingType;
         var containingTypes = target.ContainingTypes;
-        // The generated partial class is a top-level type, so its accessibility must be public or internal.
+        // The generated class is a top-level type, so its accessibility must be public or internal.
         var visibility = target.RawSymbol.DeclaredAccessibility == Accessibility.Public
             ? "public "
             : "internal ";
