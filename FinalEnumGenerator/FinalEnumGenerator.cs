@@ -1,7 +1,7 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-#:sdk FGenerator.Sdk@2.2.3
+#:sdk FGenerator.Sdk@2.3.0
 
 using FGenerator;
 using Microsoft.CodeAnalysis;

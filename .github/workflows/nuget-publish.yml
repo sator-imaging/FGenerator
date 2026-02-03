@@ -1,4 +1,4 @@
-name: nuget publish on release
+name: "[release.published] NuGet Push"
 
 on:
   release:
