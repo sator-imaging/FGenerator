@@ -1,6 +1,6 @@
 #:package FUnit@*
-#:package FinalEnumGenerator@2.2.3
-#:package EnvObfuscator@2.2.3
+#:package FinalEnumGenerator@2.3.1
+#:package EnvObfuscator@2.3.1
 //                      ~~~~~~~~~~ Push AFTER compiled generators are published
 
 using EnvObfuscator;
@@ -14,7 +14,11 @@ return FUnit.Run(args, describe =>
     {
         it("EnvObfuscator", () =>
         {
-            Must.BeEqual("Value", Obfuscator.Foo.ToString());
+            Must.BeEqual("Value", ObfuscatorLoader.Foo.ToString());
+
+            var foo = (stackalloc char[] { 'V', 'a', 'l', 'u', 'e' });
+            Must.BeTrue(ObfuscatorLoader.Validate_Foo(foo));
+            foo.Clear();
         });
 
         it("FinalEnums", () =>

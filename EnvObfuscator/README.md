@@ -44,7 +44,7 @@ static partial class EnvSecrets
 
 
 > [!NOTE]
-> The properties and methods are contained within a dedicated class called `<TargetClass>Loader` that is designed to remove the unnecessary `Obfuscate` attribute annotation from the obfuscation class (target partial type will have GUID-named decoys).
+> The properties and methods are contained within a dedicated class called `<TargetClass>Loader` that is designed to remove the unnecessary `Obfuscate` attribute annotation from the obfuscation class (the original target will have GUID-named decoys).
 
 ```cs
 // Always returns a freshly decoded clone each time
