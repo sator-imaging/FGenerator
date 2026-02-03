@@ -293,8 +293,14 @@ namespace FinalEnums
         var isFlagsEnum = enumSymbol.GetAttributes().Any(attr => attr.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
         var underlyingType = enumSymbol.EnumUnderlyingType;
         var containingTypes = target.ContainingTypes;
-        // Accessibility keyword including trailing space, e.g., "public "
+        // Accessibility keyword including trailing space, e.g., "public ".
         var visibility = target.ToVisibilityString();
+
+        // Nested types can be private, but root types cannot, so normalize if needed.
+        if (target.RawSymbol.DeclaredAccessibility == Accessibility.Private)
+        {
+            visibility = "internal ";
+        }
 
         var isUnsigned = IsUnsignedEnum(underlyingType);
 
