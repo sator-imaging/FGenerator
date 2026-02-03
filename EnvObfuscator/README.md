@@ -42,11 +42,13 @@ static partial class EnvSecrets
 }
 ```
 
-How to use the generated properties:
+
+> [!NOTE]
+> The properties and methods are contained within a dedicated class called `<TargetClass>Loader` that is designed to remove the unnecessary `Obfuscate` attribute annotation from the obfuscation class (target partial type will have GUID-named decoys).
 
 ```cs
 // Always returns a freshly decoded clone each time
-var apiKey = EnvSecrets.API_KEY;
+var apiKey = EnvSecretsLoader.API_KEY;
 var cache = apiKey.ToString();
 
 // Consuming decoded data...
@@ -56,11 +58,27 @@ apiKey.Span.Clear();
 cache = "";
 
 // Validation (no decoding, full-length compare to avoid timing differences)
-if (EnvSecrets.Validate_SECRET("PA$$WORD"))
+if (EnvSecretsLoader.Validate_SECRET("PA$$WORD"))
 {
     //...
 }
 ```
+
+
+> [!TIP]
+> As `string` type is immutable (cannot zero them explicitly) and GC-collected object (not erased on demand), instead using `stackalloc` can achieve validation under full control.
+
+```cs
+var password = (stackalloc char[] { ... });
+
+if (EnvSecretsLoader.Validate_SECRET(password))
+{
+    //...
+}
+
+password.Clear();  // Fills memory by zero
+```
+
 
 
 ## Diagnostics
