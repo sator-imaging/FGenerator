@@ -384,7 +384,7 @@ namespace EnvObfuscator
             {
                 decoyPropertyName = CreateHexName(nameRandom);
             }
-            while (!decoyNames.Add(decoyPropertyName) || usedPropertyNames.Contains(decoyPropertyName));
+            while (usedPropertyNames.Contains(decoyPropertyName) || !decoyNames.Add(decoyPropertyName));
 
             string decoyValidateName;
             do
