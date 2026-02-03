@@ -339,12 +339,38 @@ namespace EnvObfuscator
 
         var helperSb = new StringBuilder(1024 + (entries.Count * 256));
         var targetSb = new StringBuilder(1024 + (entries.Count * 256));
+        var targetDecoySb = new StringBuilder(1024 + (entries.Count * 256));
+        var loaderTypeName = target.RawSymbol.Name + "Loader";
+        // Nested types can be private, but root types cannot, so normalize if needed.
+        var loaderVisibility = target.ToVisibilityString();
+        if (target.RawSymbol.DeclaredAccessibility == Accessibility.Private)
+        {
+            loaderVisibility = "internal ";
+        }
+        var decoyNames = new HashSet<string>(StringComparer.Ordinal);
+
+        var containingNamespace = target.RawSymbol.ContainingNamespace;
+        bool hasNamespace = !containingNamespace.IsGlobalNamespace;
 
         targetSb.AppendLine();
-        targetSb.AppendLine(target.ToNamespaceAndContainingTypeDeclarations());
-        targetSb.Append("    partial ");
-        targetSb.AppendLine(target.ToDeclarationString(modifiers: false));
+        targetSb.AppendLine("// Loader type is intentionally declared outside of container types.");
+        if (hasNamespace)
+        {
+            targetSb.Append("namespace ");
+            targetSb.AppendLine(containingNamespace.ToDisplayString());
+            targetSb.AppendLine("{");
+        }
+        targetSb.Append("    ");
+        targetSb.Append(loaderVisibility);
+        targetSb.Append("sealed class ");
+        targetSb.AppendLine(loaderTypeName);
         targetSb.AppendLine("    {");
+
+        targetDecoySb.AppendLine();
+        targetDecoySb.AppendLine(target.ToNamespaceAndContainingTypeDeclarations());
+        targetDecoySb.Append("    partial ");
+        targetDecoySb.AppendLine(target.ToDeclarationString(modifiers: false));
+        targetDecoySb.AppendLine("    {");
 
         foreach (var entry in entries)
         {
@@ -352,6 +378,32 @@ namespace EnvObfuscator
             {
                 continue;
             }
+
+            string decoyPropertyName;
+            do
+            {
+                decoyPropertyName = CreateHexName(nameRandom);
+            }
+            while (!decoyNames.Add(decoyPropertyName) || usedPropertyNames.Contains(decoyPropertyName));
+
+            string decoyValidateName;
+            do
+            {
+                decoyValidateName = CreateHexName(nameRandom);
+            }
+            while (!decoyNames.Add(decoyValidateName) || usedPropertyNames.Contains(decoyValidateName));
+
+            // targetDecoySb.AppendLine(PropertyDocComment);
+            targetDecoySb.AppendLine($"        public static global::System.Memory<char> {decoyPropertyName}");
+            targetDecoySb.AppendLine("        {");
+            targetDecoySb.AppendLine("            [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
+            targetDecoySb.AppendLine("            get => throw new global::System.Exception();");
+            targetDecoySb.AppendLine("        }");
+            targetDecoySb.AppendLine();
+            // targetDecoySb.AppendLine(ValidateDocComment);
+            targetDecoySb.AppendLine("        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
+            targetDecoySb.AppendLine($"        public static bool {decoyValidateName}(global::System.ReadOnlySpan<char> value) => throw new global::System.Exception();");
+            targetDecoySb.AppendLine();
 
             if (entry.Value.Length == 0)
             {
@@ -619,19 +671,26 @@ namespace EnvObfuscator
             targetSb.AppendLine($"        public static global::System.Memory<char> {propertyName}");
             targetSb.AppendLine("        {");
             targetSb.AppendLine("            [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
-            targetSb.AppendLine($"            get => (({helperGetDelegateRef}){helperGetWrapperRef}.{wrapperGetField})();");
+            targetSb.AppendLine($"            get => ({helperGetWrapperRef}.{wrapperGetField} as {helperGetDelegateRef})!.Invoke();");
             targetSb.AppendLine("        }");
             targetSb.AppendLine();
             targetSb.AppendLine(ValidateDocComment);
             targetSb.AppendLine("        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
-            targetSb.AppendLine($"        public static bool Validate_{propertyName}(global::System.ReadOnlySpan<char> value) => (({helperValidateDelegateRef}){helperValidateWrapperRef}.{wrapperValidateField})(value);");
+            targetSb.AppendLine($"        public static bool Validate_{propertyName}(global::System.ReadOnlySpan<char> value) => ({helperValidateWrapperRef}.{wrapperValidateField} as {helperValidateDelegateRef})!.Invoke(value);");
             targetSb.AppendLine();
         }
 
         targetSb.AppendLine("    }");
-        targetSb.AppendLine(target.ToNamespaceAndContainingTypeClosingBraces());
+        if (hasNamespace)
+        {
+            targetSb.AppendLine("}");
+        }
+
+        targetDecoySb.AppendLine("    }");
+        targetDecoySb.AppendLine(target.ToNamespaceAndContainingTypeClosingBraces());
 
         sb.Append(helperSb);
+        sb.Append(targetDecoySb);
         sb.Append(targetSb);
 
         return sb.ToString();

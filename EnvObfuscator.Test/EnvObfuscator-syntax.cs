@@ -11,7 +11,7 @@ namespace EnvObfuscator.Test
 {
     public partial class EnvContainer
     {
-        public static readonly string CacheJA = EnvObfuscationTest.JA.ToString();
+        public static readonly string CacheJA = EnvObfuscationTestLoader.JA.ToString();
 
         /* TEST: Another comment block before env & blank lines after env comment */
 
