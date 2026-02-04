@@ -90,8 +90,9 @@ If you need to include the generated GUID-named chaff classes in build, use `lin
 
 ```cs
 // Declare necessary chaff classes as desired
-// * The working dummy provides the same functionality,
-//   but also logs extra information for later use in banning.
+
+// Tip: The working dummy should provide the same functionality,
+//      but also logs user information for later use in banning.
 
 /* API_KEY=working-dummy-to-detect-reverse-engineering */
 [Obfuscate] partial class DbSecrets { }
