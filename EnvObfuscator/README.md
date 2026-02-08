@@ -81,6 +81,13 @@ password.Clear();  // Fills memory by zero
 ```
 
 
+Some system APIs take a string parameter. Recommend that the decoded data should not be stored in local variable as possible.
+
+```cs
+var res = await httpClient.GetAsync(EnvSecretsLoader.URL.ToString());
+```
+
+
 
 ## Emitting Chaff
 
