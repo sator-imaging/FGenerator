@@ -501,6 +501,7 @@ namespace EnvObfuscator
                     : (upperUseLast ? obChar.OddUpperLastIndex : obChar.OddUpperFirstIndex);
                 helperSb.Append(BuildDecodeCallExpression(
                     "d",
+                    random,
                     isAscii: obChar.IsAscii,
                     lowerIsEven: lowerIsEven,
                     upperIsEven: upperIsEven,
@@ -607,6 +608,7 @@ namespace EnvObfuscator
                     : (upperUseLast ? obChar.OddUpperLastIndex : obChar.OddUpperFirstIndex);
                 helperSb.Append(BuildDecodeCallExpression(
                     "d",
+                    random,
                     isAscii: obChar.IsAscii,
                     lowerIsEven: lowerIsEven,
                     upperIsEven: upperIsEven,
@@ -781,17 +783,17 @@ namespace EnvObfuscator
         sb.Append(decodeArgFlags);
         sb.Append("LowerKey = (");
         sb.Append(decodeArgFlags);
-        sb.Append(" & 0x2) != 0 ? ek : ok;");
+        sb.Append(" & 0x40) != 0 ? ek : ok;");
         sb.AppendLine();
         sb.Append("        var ");
         sb.Append(decodeArgFlags);
         sb.Append("UpperKey = (");
         sb.Append(decodeArgFlags);
-        sb.Append(" & 0x4) != 0 ? ek : ok;");
+        sb.Append(" & 0x80) != 0 ? ek : ok;");
         sb.AppendLine();
         sb.Append("        if ((");
         sb.Append(decodeArgFlags);
-        sb.Append(" & 0x1) != 0)");
+        sb.Append(" & 0x20) != 0)");
         sb.AppendLine();
         sb.AppendLine("        {");
         sb.Append("            return (char)((ushort)(");
@@ -1093,15 +1095,18 @@ namespace EnvObfuscator
         return c.ToString();
     }
 
-    private static string BuildDecodeCallExpression(string decodeMethodRef, bool isAscii, bool lowerIsEven, bool upperIsEven, int lowerIndex, int upperIndex)
+    private static string BuildDecodeCallExpression(string decodeMethodRef, IRandomSource random, bool isAscii, bool lowerIsEven, bool upperIsEven, int lowerIndex, int upperIndex)
     {
         string lowerBytesRef = lowerIsEven ? "ecb" : "ocb";
         string upperBytesRef = upperIsEven ? "ecb" : "ocb";
         string lowerByteExpr = lowerBytesRef + "[" + lowerIndex + "]";
         string upperByteExpr = isAscii ? "0" : (upperBytesRef + "[" + upperIndex + "]");
-        byte flags = (byte)((isAscii ? 0x1 : 0x0)
-            | (lowerIsEven ? 0x2 : 0x0)
-            | (upperIsEven ? 0x4 : 0x0));
+        byte baseFlags = (byte)((isAscii ? 0x20 : 0x0)
+            | (lowerIsEven ? 0x40 : 0x0)
+            | (upperIsEven ? 0x80 : 0x0));
+        // Random noise occupies lower 5 bits so flag bits (7..5) stay intact.
+        byte randomMask = (byte)random.NextInt(0b_1_1111 + 1);
+        byte flags = (byte)(randomMask | baseFlags);
         string bytesArg = isAscii
             ? "((ushort)(" + lowerByteExpr + "))"
             : "((ushort)(" + lowerByteExpr + " | (" + upperByteExpr + " << 8)))";
