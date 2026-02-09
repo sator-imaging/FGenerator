@@ -1105,7 +1105,7 @@ namespace EnvObfuscator
             | (lowerIsEven ? 0x40 : 0x0)
             | (upperIsEven ? 0x80 : 0x0));
         // Random noise occupies lower 5 bits so flag bits (7..5) stay intact.
-        byte randomMask = (byte)random.NextInt(0b_1_1111 + 1);
+        byte randomMask = (byte)random.NextInt(1 << 5);
         byte flags = (byte)(randomMask | baseFlags);
         string bytesArg = isAscii
             ? "((ushort)(" + lowerByteExpr + "))"
