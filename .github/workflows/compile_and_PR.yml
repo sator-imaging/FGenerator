@@ -20,9 +20,16 @@ permissions:
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
 jobs:
 
+  test:
+    uses: ./.github/workflows/test.yml
+
   compile:
+    needs: test
+    if: success()
+
     #strategy:
     #  matrix:
     #    configuration: [Debug, Release]
