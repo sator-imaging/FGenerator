@@ -1,14 +1,22 @@
 > [!TIP]
-> There are Unity-compatible source generators in [../Compiled](../Compiled/) folder.
+> 🇺🇸 There are Unity-compatible source generators in [../Compiled](../Compiled/) folder.
 > (`.meta` files included)
 
 
+> [!TIP]
+> 🇯🇵 Unity 互換のソースジェネレーターが [../Compiled](../Compiled/) フォルダーにあります。（`.meta` ファイル付属）
+
+
+
+&nbsp;
 
 > [!IMPORTANT]
 > Analyzers in this folder are not safe for use in production environment.
 > Consider use [Unity-Analyzers](https://github.com/sator-imaging/Unity-Analyzers) instead.
 
 
+
+&nbsp;
 
 # Unity Analyzers
 
