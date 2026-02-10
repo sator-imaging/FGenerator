@@ -2,7 +2,6 @@
 // https://github.com/sator-imaging/FGenerator
 
 using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -309,9 +308,6 @@ namespace FGenerator
         }
 
 
-        static readonly Dictionary<(bool, bool, bool), SymbolDisplayFormat> cache_ToNameStringFormat
-            = new(capacity: 2 * 2 * 2);
-
         /// <summary>
         /// Renders a display name for the target with options for qualification, generics, and nullability.
         /// When fully qualified (default), includes the 'global::' prefix.
@@ -333,44 +329,37 @@ namespace FGenerator
             bool noGeneric = false,
             bool noNullable = false)
         {
-            var key = (localName, noGeneric, noNullable);
-
-            if (!cache_ToNameStringFormat.TryGetValue(key, out var format))
-            {
-                cache_ToNameStringFormat[key]
-                = format
-                = new(
-                    globalNamespaceStyle:
-                        localName
-                            ? SymbolDisplayGlobalNamespaceStyle.Omitted
-                            : SymbolDisplayGlobalNamespaceStyle.Included,
-                    typeQualificationStyle:
-                        localName
-                            ? SymbolDisplayTypeQualificationStyle.NameOnly
-                            : SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-                    genericsOptions:
-                        noGeneric
-                            ? SymbolDisplayGenericsOptions.None
-                            : SymbolDisplayGenericsOptions.IncludeTypeParameters |
-                              SymbolDisplayGenericsOptions.IncludeVariance,
-                    memberOptions: SymbolDisplayMemberOptions.None,
-                    delegateStyle: SymbolDisplayDelegateStyle.NameOnly,
-                    extensionMethodStyle: SymbolDisplayExtensionMethodStyle.Default,
-                    parameterOptions: SymbolDisplayParameterOptions.None,
-                    propertyStyle: SymbolDisplayPropertyStyle.NameOnly,
-                    localOptions: SymbolDisplayLocalOptions.None,
-                    kindOptions: SymbolDisplayKindOptions.None,
-                    miscellaneousOptions:
-                        SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
-                        SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
-                        SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral
-                        | (noNullable
-                            ? SymbolDisplayMiscellaneousOptions.None
-                            : //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
-                              SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-                        )
-                );
-            }
+            var format = new SymbolDisplayFormat(
+                globalNamespaceStyle:
+                    localName
+                        ? SymbolDisplayGlobalNamespaceStyle.Omitted
+                        : SymbolDisplayGlobalNamespaceStyle.Included,
+                typeQualificationStyle:
+                    localName
+                        ? SymbolDisplayTypeQualificationStyle.NameOnly
+                        : SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+                genericsOptions:
+                    noGeneric
+                        ? SymbolDisplayGenericsOptions.None
+                        : SymbolDisplayGenericsOptions.IncludeTypeParameters |
+                          SymbolDisplayGenericsOptions.IncludeVariance,
+                memberOptions: SymbolDisplayMemberOptions.None,
+                delegateStyle: SymbolDisplayDelegateStyle.NameOnly,
+                extensionMethodStyle: SymbolDisplayExtensionMethodStyle.Default,
+                parameterOptions: SymbolDisplayParameterOptions.None,
+                propertyStyle: SymbolDisplayPropertyStyle.NameOnly,
+                localOptions: SymbolDisplayLocalOptions.None,
+                kindOptions: SymbolDisplayKindOptions.None,
+                miscellaneousOptions:
+                    SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+                    SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+                    SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral
+                    | (noNullable
+                        ? SymbolDisplayMiscellaneousOptions.None
+                        : //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
+                          SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+                    )
+            );
 
             var result = symbol.ToDisplayString(format);
 
@@ -411,9 +400,6 @@ namespace FGenerator
         }
 
 
-        static readonly Dictionary<(bool, bool), SymbolDisplayFormat> cache_ToDeclarationStringFormat
-            = new(capacity: 2 * 2);
-
         /// <summary>
         /// Renders a declaration-style string for the target (optionally including modifiers and generic constraints).
         /// </summary>
@@ -437,59 +423,52 @@ namespace FGenerator
                 modifiers = false;
             }
 
-            var key = (modifiers, genericConstraints);
-
-            if (!cache_ToDeclarationStringFormat.TryGetValue(key, out var format))
-            {
-                cache_ToDeclarationStringFormat[key]
-                = format
-                = new(
-                    globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
-                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
-                    genericsOptions:
-                        SymbolDisplayGenericsOptions.IncludeTypeParameters |
-                        SymbolDisplayGenericsOptions.IncludeVariance
-                        | (!genericConstraints
-                            ? SymbolDisplayGenericsOptions.None
-                            : SymbolDisplayGenericsOptions.IncludeTypeConstraints
-                        ),
-                    memberOptions:
-                        SymbolDisplayMemberOptions.IncludeConstantValue |
-                        SymbolDisplayMemberOptions.IncludeExplicitInterface |
-                        SymbolDisplayMemberOptions.IncludeParameters |
-                        SymbolDisplayMemberOptions.IncludeRef |
-                        SymbolDisplayMemberOptions.IncludeType
-                        | (!modifiers
-                            ? SymbolDisplayMemberOptions.None
-                            : SymbolDisplayMemberOptions.IncludeAccessibility |
-                              SymbolDisplayMemberOptions.IncludeModifiers
-                        ),
-                    delegateStyle: SymbolDisplayDelegateStyle.NameAndSignature,
-                    extensionMethodStyle: SymbolDisplayExtensionMethodStyle.InstanceMethod,
-                    parameterOptions:
-                        SymbolDisplayParameterOptions.IncludeDefaultValue |
-                        SymbolDisplayParameterOptions.IncludeExtensionThis |
-                        SymbolDisplayParameterOptions.IncludeName |
-                        SymbolDisplayParameterOptions.IncludeOptionalBrackets |
-                        SymbolDisplayParameterOptions.IncludeParamsRefOut |
-                        SymbolDisplayParameterOptions.IncludeType,
-                    propertyStyle: SymbolDisplayPropertyStyle.ShowReadWriteDescriptor,
-                    localOptions:
-                        SymbolDisplayLocalOptions.IncludeConstantValue |
-                        SymbolDisplayLocalOptions.IncludeRef |
-                        SymbolDisplayLocalOptions.IncludeType,
-                    kindOptions:
-                        SymbolDisplayKindOptions.IncludeMemberKeyword |
-                        SymbolDisplayKindOptions.IncludeNamespaceKeyword |
-                        SymbolDisplayKindOptions.IncludeTypeKeyword,
-                    miscellaneousOptions:
-                        SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
-                        SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
-                        SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral |
-                        //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
-                        SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-                );
-            }
+            var format = new SymbolDisplayFormat(
+                globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
+                typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
+                genericsOptions:
+                    SymbolDisplayGenericsOptions.IncludeTypeParameters |
+                    SymbolDisplayGenericsOptions.IncludeVariance
+                    | (!genericConstraints
+                        ? SymbolDisplayGenericsOptions.None
+                        : SymbolDisplayGenericsOptions.IncludeTypeConstraints
+                    ),
+                memberOptions:
+                    SymbolDisplayMemberOptions.IncludeConstantValue |
+                    SymbolDisplayMemberOptions.IncludeExplicitInterface |
+                    SymbolDisplayMemberOptions.IncludeParameters |
+                    SymbolDisplayMemberOptions.IncludeRef |
+                    SymbolDisplayMemberOptions.IncludeType
+                    | (!modifiers
+                        ? SymbolDisplayMemberOptions.None
+                        : SymbolDisplayMemberOptions.IncludeAccessibility |
+                          SymbolDisplayMemberOptions.IncludeModifiers
+                    ),
+                delegateStyle: SymbolDisplayDelegateStyle.NameAndSignature,
+                extensionMethodStyle: SymbolDisplayExtensionMethodStyle.InstanceMethod,
+                parameterOptions:
+                    SymbolDisplayParameterOptions.IncludeDefaultValue |
+                    SymbolDisplayParameterOptions.IncludeExtensionThis |
+                    SymbolDisplayParameterOptions.IncludeName |
+                    SymbolDisplayParameterOptions.IncludeOptionalBrackets |
+                    SymbolDisplayParameterOptions.IncludeParamsRefOut |
+                    SymbolDisplayParameterOptions.IncludeType,
+                propertyStyle: SymbolDisplayPropertyStyle.ShowReadWriteDescriptor,
+                localOptions:
+                    SymbolDisplayLocalOptions.IncludeConstantValue |
+                    SymbolDisplayLocalOptions.IncludeRef |
+                    SymbolDisplayLocalOptions.IncludeType,
+                kindOptions:
+                    SymbolDisplayKindOptions.IncludeMemberKeyword |
+                    SymbolDisplayKindOptions.IncludeNamespaceKeyword |
+                    SymbolDisplayKindOptions.IncludeTypeKeyword,
+                miscellaneousOptions:
+                    SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+                    SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+                    SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral |
+                    //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
+                    SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+            );
 
             var result = symbol.ToDisplayString(format);
 
