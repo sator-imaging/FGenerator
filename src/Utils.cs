@@ -411,9 +411,6 @@ namespace FGenerator
         }
 
 
-        static readonly Dictionary<(bool, bool), SymbolDisplayFormat> cache_ToDeclarationStringFormat
-            = new(capacity: 2 * 2);
-
         /// <summary>
         /// Renders a declaration-style string for the target (optionally including modifiers and generic constraints).
         /// </summary>
@@ -437,59 +434,52 @@ namespace FGenerator
                 modifiers = false;
             }
 
-            var key = (modifiers, genericConstraints);
-
-            if (!cache_ToDeclarationStringFormat.TryGetValue(key, out var format))
-            {
-                cache_ToDeclarationStringFormat[key]
-                = format
-                = new(
-                    globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
-                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
-                    genericsOptions:
-                        SymbolDisplayGenericsOptions.IncludeTypeParameters |
-                        SymbolDisplayGenericsOptions.IncludeVariance
-                        | (!genericConstraints
-                            ? SymbolDisplayGenericsOptions.None
-                            : SymbolDisplayGenericsOptions.IncludeTypeConstraints
-                        ),
-                    memberOptions:
-                        SymbolDisplayMemberOptions.IncludeConstantValue |
-                        SymbolDisplayMemberOptions.IncludeExplicitInterface |
-                        SymbolDisplayMemberOptions.IncludeParameters |
-                        SymbolDisplayMemberOptions.IncludeRef |
-                        SymbolDisplayMemberOptions.IncludeType
-                        | (!modifiers
-                            ? SymbolDisplayMemberOptions.None
-                            : SymbolDisplayMemberOptions.IncludeAccessibility |
-                              SymbolDisplayMemberOptions.IncludeModifiers
-                        ),
-                    delegateStyle: SymbolDisplayDelegateStyle.NameAndSignature,
-                    extensionMethodStyle: SymbolDisplayExtensionMethodStyle.InstanceMethod,
-                    parameterOptions:
-                        SymbolDisplayParameterOptions.IncludeDefaultValue |
-                        SymbolDisplayParameterOptions.IncludeExtensionThis |
-                        SymbolDisplayParameterOptions.IncludeName |
-                        SymbolDisplayParameterOptions.IncludeOptionalBrackets |
-                        SymbolDisplayParameterOptions.IncludeParamsRefOut |
-                        SymbolDisplayParameterOptions.IncludeType,
-                    propertyStyle: SymbolDisplayPropertyStyle.ShowReadWriteDescriptor,
-                    localOptions:
-                        SymbolDisplayLocalOptions.IncludeConstantValue |
-                        SymbolDisplayLocalOptions.IncludeRef |
-                        SymbolDisplayLocalOptions.IncludeType,
-                    kindOptions:
-                        SymbolDisplayKindOptions.IncludeMemberKeyword |
-                        SymbolDisplayKindOptions.IncludeNamespaceKeyword |
-                        SymbolDisplayKindOptions.IncludeTypeKeyword,
-                    miscellaneousOptions:
-                        SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
-                        SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
-                        SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral |
-                        //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
-                        SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-                );
-            }
+            var format = new SymbolDisplayFormat(
+                globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
+                typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
+                genericsOptions:
+                    SymbolDisplayGenericsOptions.IncludeTypeParameters |
+                    SymbolDisplayGenericsOptions.IncludeVariance
+                    | (!genericConstraints
+                        ? SymbolDisplayGenericsOptions.None
+                        : SymbolDisplayGenericsOptions.IncludeTypeConstraints
+                    ),
+                memberOptions:
+                    SymbolDisplayMemberOptions.IncludeConstantValue |
+                    SymbolDisplayMemberOptions.IncludeExplicitInterface |
+                    SymbolDisplayMemberOptions.IncludeParameters |
+                    SymbolDisplayMemberOptions.IncludeRef |
+                    SymbolDisplayMemberOptions.IncludeType
+                    | (!modifiers
+                        ? SymbolDisplayMemberOptions.None
+                        : SymbolDisplayMemberOptions.IncludeAccessibility |
+                          SymbolDisplayMemberOptions.IncludeModifiers
+                    ),
+                delegateStyle: SymbolDisplayDelegateStyle.NameAndSignature,
+                extensionMethodStyle: SymbolDisplayExtensionMethodStyle.InstanceMethod,
+                parameterOptions:
+                    SymbolDisplayParameterOptions.IncludeDefaultValue |
+                    SymbolDisplayParameterOptions.IncludeExtensionThis |
+                    SymbolDisplayParameterOptions.IncludeName |
+                    SymbolDisplayParameterOptions.IncludeOptionalBrackets |
+                    SymbolDisplayParameterOptions.IncludeParamsRefOut |
+                    SymbolDisplayParameterOptions.IncludeType,
+                propertyStyle: SymbolDisplayPropertyStyle.ShowReadWriteDescriptor,
+                localOptions:
+                    SymbolDisplayLocalOptions.IncludeConstantValue |
+                    SymbolDisplayLocalOptions.IncludeRef |
+                    SymbolDisplayLocalOptions.IncludeType,
+                kindOptions:
+                    SymbolDisplayKindOptions.IncludeMemberKeyword |
+                    SymbolDisplayKindOptions.IncludeNamespaceKeyword |
+                    SymbolDisplayKindOptions.IncludeTypeKeyword,
+                miscellaneousOptions:
+                    SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+                    SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+                    SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral |
+                    //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
+                    SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+            );
 
             var result = symbol.ToDisplayString(format);
 
