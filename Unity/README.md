@@ -1,3 +1,9 @@
+> [!TIP]
+> There are Unity-compatible source generators in [../Compiled](../Compiled/) folder.
+> (`.meta` files included)
+
+
+
 > [!IMPORTANT]
 > Analyzers in this folder are not safe for use in production environment.
 > Consider use [Unity-Analyzers](https://github.com/sator-imaging/Unity-Analyzers) instead.
