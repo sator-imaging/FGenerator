@@ -13,7 +13,7 @@ jobs:
   publish:
     needs: test
     if: success()
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     permissions:
       id-token: write  # enable GitHub OIDC token issuance for this job
