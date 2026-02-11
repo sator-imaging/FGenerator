@@ -429,10 +429,10 @@ namespace EnvObfuscator
                 entryIndices[i] = index;
             }
 
-            bool decodeArg1UseUpperBits = nameRandom.NextBool();
+            int decodeArg1FlagsBitWindow = nameRandom.NextInt(6);
             bool decodeArg2LowerInLowBits = nameRandom.NextBool();
             bool decodeArg3OddInUpperHalf = nameRandom.NextBool();
-            string decodeRef = AppendDecodeHelper(helperSb, nameRandom, decodeArg1UseUpperBits, decodeArg2LowerInLowBits, decodeArg3OddInUpperHalf);
+            string decodeRef = AppendDecodeHelper(helperSb, nameRandom, decodeArg1FlagsBitWindow, decodeArg2LowerInLowBits, decodeArg3OddInUpperHalf);
             string helperGetNamespace = CreateHexName(nameRandom);
             string helperGetClass = CreateHexName(nameRandom);
             string helperGetMethod = CreateHexName(nameRandom);
@@ -507,7 +507,7 @@ namespace EnvObfuscator
                 helperSb.Append(BuildDecodeCallExpression(
                     "d",
                     random,
-                    flagsUseUpperBits: decodeArg1UseUpperBits,
+                    flagsBitWindow: decodeArg1FlagsBitWindow,
                     lowerInLowBits: decodeArg2LowerInLowBits,
                     ocLength: ocBytes.Length,
                     ecLength: ecBytes.Length,
@@ -620,7 +620,7 @@ namespace EnvObfuscator
                 helperSb.Append(BuildDecodeCallExpression(
                     "d",
                     random,
-                    flagsUseUpperBits: decodeArg1UseUpperBits,
+                    flagsBitWindow: decodeArg1FlagsBitWindow,
                     lowerInLowBits: decodeArg2LowerInLowBits,
                     ocLength: ocBytes.Length,
                     ecLength: ecBytes.Length,
@@ -745,7 +745,7 @@ namespace EnvObfuscator
         return "global::" + namespaceName + ".";
     }
 
-    private static string AppendDecodeHelper(StringBuilder sb, IRandomSource nameRandom, bool flagsUseUpperBits, bool lowerInLowBits, bool oddInUpperHalf)
+    private static string AppendDecodeHelper(StringBuilder sb, IRandomSource nameRandom, int flagsBitWindow, bool lowerInLowBits, bool oddInUpperHalf)
     {
         string decodeNamespace = CreateHexName(nameRandom);
         string decodeClass = CreateHexName(nameRandom);
@@ -759,9 +759,9 @@ namespace EnvObfuscator
         string decodeDelegateNamespace = CreateHexName(nameRandom);
         string decodeDelegateClass = CreateHexName(nameRandom);
         string decodeDelegateType = CreateHexName(nameRandom);
-        byte asciiMask = flagsUseUpperBits ? (byte)0x10 : (byte)0x02;
-        byte lowerEvenMask = flagsUseUpperBits ? (byte)0x20 : (byte)0x04;
-        byte upperEvenMask = flagsUseUpperBits ? (byte)0x40 : (byte)0x08;
+        byte asciiMask = (byte)(1 << flagsBitWindow);
+        byte lowerEvenMask = (byte)(1 << (flagsBitWindow + 1));
+        byte upperEvenMask = (byte)(1 << (flagsBitWindow + 2));
 
         sb.AppendLine();
         sb.AppendLine("// Decode a single character using preselected flags and byte indices.");
@@ -1115,7 +1115,7 @@ namespace EnvObfuscator
         return c.ToString();
     }
 
-    private static string BuildDecodeCallExpression(string decodeMethodRef, IRandomSource random, bool flagsUseUpperBits, bool lowerInLowBits, int ocLength, int ecLength, bool isAscii, bool lowerIsEven, bool upperIsEven, int lowerIndex, int upperIndex)
+    private static string BuildDecodeCallExpression(string decodeMethodRef, IRandomSource random, int flagsBitWindow, bool lowerInLowBits, int ocLength, int ecLength, bool isAscii, bool lowerIsEven, bool upperIsEven, int lowerIndex, int upperIndex)
     {
         string lowerBytesRef = lowerIsEven ? "ecb" : "ocb";
         string upperBytesRef = upperIsEven ? "ecb" : "ocb";
@@ -1126,13 +1126,13 @@ namespace EnvObfuscator
         string upperByteExpr = isAscii
             ? (asciiNoiseBytesRef + "[" + asciiNoiseIndex + "]")
             : (upperBytesRef + "[" + upperIndex + "]");
-        byte asciiMask = flagsUseUpperBits ? (byte)0x10 : (byte)0x02;
-        byte lowerEvenMask = flagsUseUpperBits ? (byte)0x20 : (byte)0x04;
-        byte upperEvenMask = flagsUseUpperBits ? (byte)0x40 : (byte)0x08;
+        byte asciiMask = (byte)(1 << flagsBitWindow);
+        byte lowerEvenMask = (byte)(1 << (flagsBitWindow + 1));
+        byte upperEvenMask = (byte)(1 << (flagsBitWindow + 2));
         byte baseFlags = (byte)((isAscii ? asciiMask : 0x0)
             | (lowerIsEven ? lowerEvenMask : 0x0)
             | (upperIsEven ? upperEvenMask : 0x0));
-        byte usedMask = flagsUseUpperBits ? (byte)0x70 : (byte)0x0E;
+        byte usedMask = (byte)(0x07 << flagsBitWindow);
         // 1) fill all bits randomly, 2) overwrite only the semantic flag bits.
         byte flags = (byte)random.NextInt(256);
         flags = (byte)((flags & ~usedMask) | baseFlags);
