@@ -429,7 +429,8 @@ namespace EnvObfuscator
                 entryIndices[i] = index;
             }
 
-            int decodeArg1FlagsBitWindow = nameRandom.NextInt(6);
+            const int flagsBitWindowRange = 6; // 8 bits in a byte - 3 flag bits + 1 = 6
+            int decodeArg1FlagsBitWindow = nameRandom.NextInt(flagsBitWindowRange);
             bool decodeArg2LowerInLowBits = nameRandom.NextBool();
             bool decodeArg3OddInUpperHalf = nameRandom.NextBool();
             string decodeRef = AppendDecodeHelper(helperSb, nameRandom, decodeArg1FlagsBitWindow, decodeArg2LowerInLowBits, decodeArg3OddInUpperHalf);
