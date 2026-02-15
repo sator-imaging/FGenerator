@@ -86,8 +86,8 @@ Some system APIs take a string parameter. Recommend that the decoded data should
 ```cs
 var res = await httpClient.GetAsync(EnvSecretsLoader.URL.ToString());
 
-// Not recommended: You can use GC.Collect or MemoryMarshal to
-// force zero memory (but it would be predictable code pattern)
+// Consideration: You can use GC.Collect, MemoryMarshal or CryptographicOperations.ZeroMemory
+// to force zero memory (but it would be predictable code pattern)
 ```
 
 
