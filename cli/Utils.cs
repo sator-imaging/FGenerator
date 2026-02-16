@@ -2,11 +2,16 @@
 // https://github.com/sator-imaging/FGenerator
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace FGenerator.Cli
 {
-    internal static class Utils
+    internal static partial class Utils
     {
+        const string AnsiColorRed = "\u001b[97;41m";
+        const string AnsiColorYellow = "\u001b[97;43m";
+        const string AnsiColorReset = "\u001b[0m";
+
         public static int ExecuteProcessAndCapture(string exe, string arguments, out string stdout, out string stderr)
         {
             using var process = new Process
@@ -135,13 +140,9 @@ PluginImporter:
             Console.WriteLine($"Generated meta for: {dllFile.Name}");
         }
 
-        // https://github.com/sator-imaging/FUnit/blob/main/cli/Program.cs#L486
+        // https://github.com/sator-imaging/FUnit/blob/v1.8.1/cli/Program.cs#L562-L606
         static string Colorize(string message)
         {
-            const string AnsiColorRed = "\u001b[97;41m";
-            const string AnsiColorYellow = "\u001b[97;43m";
-            const string AnsiColorReset = "\u001b[0m";
-
             if (string.IsNullOrWhiteSpace(message))
             {
                 return message;
@@ -150,18 +151,30 @@ PluginImporter:
             var ansiEscapeIndex = message.IndexOf('\u001b');
             if (ansiEscapeIndex == -1)
             {
-                message = message.Replace("error", $"{AnsiColorRed}error{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
-                message = message.Replace("warning", $"{AnsiColorYellow}warning{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
+                message = ColorizeInternal(message);
             }
             else
             {
                 var head = message[..ansiEscapeIndex];
                 var tail = message[ansiEscapeIndex..];
-                head = head.Replace("error", $"{AnsiColorRed}error{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
-                head = head.Replace("warning", $"{AnsiColorYellow}warning{AnsiColorReset}", StringComparison.OrdinalIgnoreCase);
-                message = head + tail;
+                message = ColorizeInternal(head) + tail;
             }
             return message;
         }
+
+        static string ColorizeInternal(string text)
+        {
+            return LogRegex.WarningOrError().Replace(text, match =>
+            {
+                var color = match.Value.StartsWith("err", StringComparison.OrdinalIgnoreCase) ? AnsiColorRed : AnsiColorYellow;
+                return $"{color}{match.Value}{AnsiColorReset}";
+            });
+        }
+    }
+
+    internal static partial class LogRegex
+    {
+        [GeneratedRegex(@"\b(warning(\(s\)|s)?|error(\(s\)|s)?|warn|err)(?!\w)", RegexOptions.IgnoreCase)]
+        public static partial Regex WarningOrError();
     }
 }
