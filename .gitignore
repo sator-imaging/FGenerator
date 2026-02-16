@@ -17,8 +17,10 @@ obj
 !Unity
 
 !.gitignore
-!Directory.Build.props
-!FGenerator.slnx
+!.editorconfig
+!*.props
+!*.slnx
+!*.png
 
 *.md
 !**/README.md
