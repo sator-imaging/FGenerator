@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace FGenerator.Cli
 {
-    internal static partial class Utils
+    internal static class Utils
     {
         const string AnsiColorRed = "\u001b[97;41m";
         const string AnsiColorYellow = "\u001b[97;43m";
