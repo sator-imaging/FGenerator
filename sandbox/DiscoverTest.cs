@@ -32,6 +32,12 @@ namespace SandboxTest
     public delegate void DiscoverTestDelegate();
 
     [Discover]
+    public delegate void DiscoverTestDelegateWithArgs(int a, string b);
+
+    [Discover]
+    public delegate TResult DiscoverTestGenericDelegate<T1, TResult>(T1 arg, Func<T1, TResult> func);
+
+    [Discover]
     public partial class DiscoverGenericClass<T>
     {
         [Discover]
@@ -49,5 +55,23 @@ namespace SandboxTest
             [Discover]
             public void NestedMethod() { }
         }
+    }
+
+    public partial class DiscoveryMoreCases
+    {
+        [Discover]
+        public int this[int x, int y] => x + y;
+
+        [Discover]
+        public void TupleMethod((int x, int y) t) { }
+
+        [Discover]
+        public int this[(int x, int y) t] => t.x;
+
+        [Discover]
+        public void NoArgMethod() { }
+
+        [Discover]
+        public void WithArgsMethod(int x, string y) { }
     }
 }
