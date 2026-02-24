@@ -110,7 +110,14 @@ namespace FGenerator
 
         private static void AppendNameWithGenericTypeParameterCount(StringBuilder sb, ISymbol symbol)
         {
-            sb.Append(symbol.Name);
+            if (symbol is IPropertySymbol { IsIndexer: true })
+            {
+                sb.Append("Item");
+            }
+            else
+            {
+                sb.Append(symbol.Name);
+            }
 
             int typeParamCount = 0;
             if (symbol is INamedTypeSymbol nts)
@@ -364,6 +371,11 @@ namespace FGenerator
             );
 
             var result = symbol.ToDisplayString(format);
+
+            if (symbol is IPropertySymbol { IsIndexer: true } && result == "this")
+            {
+                result = "Item";
+            }
 
             if (!localName)
             {
