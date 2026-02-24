@@ -11,12 +11,12 @@ using System;
 using System.Text;
 
 [Generator]
-public class DiscoveryTargetsTestGenerator : FGeneratorBase
+public class DiscoverTestGenerator : FGeneratorBase
 {
-    protected override string DiagnosticCategory => "DiscoveryTargetsTest";
-    protected override string DiagnosticIdPrefix => "DSCT";
+    protected override string DiagnosticCategory => "DiscoverTest";
+    protected override string DiagnosticIdPrefix => "DISC";
 
-    protected override string? TargetAttributeName => "DiscoverTargets";
+    protected override string? TargetAttributeName => "Discover";
 
     protected override DiscoveryTargets DiscoveryTargets =>
         DiscoveryTargets.Type |
@@ -28,7 +28,7 @@ public class DiscoveryTargetsTestGenerator : FGeneratorBase
     protected override string? PostInitializationOutput =>
 @"using System;
 [AttributeUsage(AttributeTargets.All)]
-internal sealed class DiscoverTargetsAttribute : Attribute { }
+internal sealed class DiscoverAttribute : Attribute { }
 ";
 
     protected override CodeGeneration? Generate(Target target, out AnalyzeResult? diagnostic)
