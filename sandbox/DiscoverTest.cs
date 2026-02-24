@@ -45,6 +45,12 @@ namespace SandboxTest
 
         [Discover]
         public int this[T value] => 0;
+
+        [Discover]
+        public delegate TMethod DiscoverNestedGenericDelegate<TMethod>(T typeArg, TMethod methodTypeArg);
+
+        [Discover]
+        public TMethod DiscoverNestedGenericMethod<TMethod>(T typeArg, TMethod methodTypeArg) => methodTypeArg;
     }
 
     public partial class DiscoverOuterClass
