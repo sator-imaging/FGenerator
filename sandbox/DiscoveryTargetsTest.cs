@@ -3,7 +3,7 @@ using System;
 namespace SandboxTest
 {
     [DiscoverTargets]
-    public class DiscoveryTargetsTestClass
+    public partial class DiscoveryTargetsTestClass
     {
         [DiscoverTargets]
         public int discoveryField;
@@ -30,4 +30,14 @@ namespace SandboxTest
 
     [DiscoverTargets]
     public delegate void DiscoveryTargetsTestDelegate();
+
+    public partial class DiscoveryTargetsOuterClass
+    {
+        [DiscoverTargets]
+        public partial class DiscoveryTargetsNestedClass
+        {
+            [DiscoverTargets]
+            public void NestedMethod() { }
+        }
+    }
 }
