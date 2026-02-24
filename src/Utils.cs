@@ -14,6 +14,8 @@ namespace FGenerator
     /// </summary>
     public static class Utils
     {
+        private const string IndexerDisplayName = "Item";
+
         /// <summary>
         /// Builds a generated file hint name for the target (including ".g.cs").
         /// </summary>
@@ -110,7 +112,14 @@ namespace FGenerator
 
         private static void AppendNameWithGenericTypeParameterCount(StringBuilder sb, ISymbol symbol)
         {
-            sb.Append(symbol.Name);
+            if (symbol is IPropertySymbol { IsIndexer: true })
+            {
+                sb.Append(IndexerDisplayName);
+            }
+            else
+            {
+                sb.Append(symbol.Name);
+            }
 
             int typeParamCount = 0;
             if (symbol is INamedTypeSymbol nts)
@@ -364,6 +373,11 @@ namespace FGenerator
             );
 
             var result = symbol.ToDisplayString(format);
+
+            if (symbol is IPropertySymbol { IsIndexer: true } && result == "this")
+            {
+                result = IndexerDisplayName;
+            }
 
             if (!localName)
             {
