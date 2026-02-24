@@ -18,13 +18,6 @@ public class DiscoverTestGenerator : FGeneratorBase
 
     protected override string? TargetAttributeName => "Discover";
 
-    protected override DiscoveryTargets DiscoveryTargets =>
-        DiscoveryTargets.Type |
-        DiscoveryTargets.Field |
-        DiscoveryTargets.Property |
-        DiscoveryTargets.Event |
-        DiscoveryTargets.Method;
-
     protected override string? PostInitializationOutput =>
 @"using System;
 [AttributeUsage(AttributeTargets.All)]
