@@ -31,6 +31,16 @@ namespace SandboxTest
     [Discover]
     public delegate void DiscoverTestDelegate();
 
+    [Discover]
+    public partial class DiscoverGenericClass<T>
+    {
+        [Discover]
+        public void Method<TMethod>(T typeArg, TMethod methodTypeArg) { }
+
+        [Discover]
+        public int this[T value] => 0;
+    }
+
     public partial class DiscoverOuterClass
     {
         [Discover]
