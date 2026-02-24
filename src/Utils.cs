@@ -14,6 +14,8 @@ namespace FGenerator
     /// </summary>
     public static class Utils
     {
+        private const string IndexerDisplayName = "Item";
+
         /// <summary>
         /// Builds a generated file hint name for the target (including ".g.cs").
         /// </summary>
@@ -112,7 +114,7 @@ namespace FGenerator
         {
             if (symbol is IPropertySymbol { IsIndexer: true })
             {
-                sb.Append("Item");
+                sb.Append(IndexerDisplayName);
             }
             else
             {
@@ -374,7 +376,7 @@ namespace FGenerator
 
             if (symbol is IPropertySymbol { IsIndexer: true } && result == "this")
             {
-                result = "Item";
+                result = IndexerDisplayName;
             }
 
             if (!localName)
