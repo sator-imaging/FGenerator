@@ -240,7 +240,8 @@ namespace FGenerator
         {
             var sb = new StringBuilder(capacity: 16);
 
-            AppendContainingTypeClosingBraces(sb, symbol, !symbol.ContainingNamespace.IsGlobalNamespace, indentSize, indentChar);
+            var typeSymbol = symbol is ITypeSymbol ts ? ts : symbol.ContainingType;
+            AppendContainingTypeClosingBraces(sb, typeSymbol, !typeSymbol.ContainingNamespace.IsGlobalNamespace, indentSize, indentChar);
 
             var result = sb.ToString();
             return result;
@@ -260,7 +261,8 @@ namespace FGenerator
         {
             var sb = new StringBuilder(capacity: 16);
 
-            AppendContainingTypeClosingBraces(sb, symbol, addNamespaceCloseBrace: false, indentSize, indentChar);
+            var typeSymbol = symbol is ITypeSymbol ts ? ts : symbol.ContainingType;
+            AppendContainingTypeClosingBraces(sb, typeSymbol, addNamespaceCloseBrace: false, indentSize, indentChar);
 
             var result = sb.ToString();
             return result;

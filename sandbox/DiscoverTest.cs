@@ -1,0 +1,53 @@
+using System;
+
+namespace SandboxTest
+{
+    [Discover]
+    public partial class DiscoverTestClass
+    {
+        [Discover]
+        public int discoveryField;
+
+        [Discover]
+        public int DiscoveryProperty { get; set; }
+
+        [Discover]
+        public event Action DiscoveryEvent;
+
+        [Discover]
+        public void DiscoveryMethod() { }
+
+        [Discover]
+        public int this[int index] => 0;
+    }
+
+    [Discover]
+    public enum DiscoverTestEnum
+    {
+        [Discover]
+        Value1
+    }
+
+    [Discover]
+    public delegate void DiscoverTestDelegate();
+
+    [Discover]
+    public partial class DiscoverGenericClass<T>
+    {
+        [Discover]
+        public void Method<TMethod>(T typeArg, TMethod methodTypeArg) { }
+
+        [Discover]
+        public int this[T value] => 0;
+    }
+
+    public partial class DiscoverOuterClass
+    {
+        [Discover]
+        public partial class DiscoverNestedClass
+        {
+            [Discover]
+            public void NestedMethod() { }
+        }
+    }
+}

@@ -34,6 +34,7 @@
 
     <Analyzer Include="../.z__merged_dll__/FinalEnumGenerator.dll" />
     <Analyzer Include="../.z__merged_dll__/EnvObfuscator.dll" />
+    <Analyzer Include="../.z__merged_dll__/DiscoverTest.dll" />
 
     <Analyzer Include="../.z__merged_dll__/UnityAsyncMethodAuditor.dll" />
 
