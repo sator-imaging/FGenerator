@@ -28,14 +28,16 @@ internal sealed class DiscoverAttribute : Attribute { }
     {
         diagnostic = null;
 
+        var isTypeOrMember = target.RawSymbol is ITypeSymbol or IMethodSymbol or IPropertySymbol or IFieldSymbol or IEventSymbol;
+
         var sb = new StringBuilder();
-        sb.AppendLine(target.ToNamespaceAndContainingTypeDeclarations());
+        if (isTypeOrMember) sb.AppendLine(target.ToNamespaceAndContainingTypeDeclarations());
         sb.AppendLine("/*");
         sb.AppendLine($"ToDeclarationString: {target.ToDeclarationString()}");
         sb.AppendLine($"ToNameString: {target.ToNameString()}");
         sb.AppendLine($"ToAssemblyUniqueIdentifier: {target.ToAssemblyUniqueIdentifier()}");
         sb.AppendLine("*/");
-        sb.AppendLine(target.ToNamespaceAndContainingTypeClosingBraces());
+        if (isTypeOrMember) sb.AppendLine(target.ToNamespaceAndContainingTypeClosingBraces());
 
         return new CodeGeneration(target.ToHintName(), sb.ToString());
     }

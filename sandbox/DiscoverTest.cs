@@ -1,5 +1,8 @@
 using System;
 
+[module: Discover]
+[assembly: Discover]
+
 namespace SandboxTest
 {
     [Discover]
@@ -79,5 +82,13 @@ namespace SandboxTest
 
         [Discover]
         public void WithArgsMethod(int x, string y) { }
+    }
+
+    [Discover]
+    public readonly partial record struct DiscoverGenericRecord<[Discover] TValue>
+    {
+        [return: Discover]
+        [Discover]
+        public static TResult DiscoverMethod<TResult>([Discover] TResult value) => value;
     }
 }
