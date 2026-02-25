@@ -1,6 +1,6 @@
 using System;
 
-[module: Discover]
+[module: Discover] // Won't support
 [assembly: Discover]
 
 namespace SandboxTest
@@ -87,8 +87,13 @@ namespace SandboxTest
     [Discover]
     public readonly partial record struct DiscoverGenericRecord<[Discover] TValue>
     {
+        // TODO: There is no way to emit diagnostic on return type of method symbol.
         [return: Discover]
         [Discover]
+        // method parameter and type parameter should have method signature in assembly unique identifier e.g. Method<[Discover] TResult>([Discover] TResult value)
         public static TResult DiscoverMethod<[Discover] TResult>([Discover] TResult value) => value;
+
+        [Discover]
+        public int this[[Discover] int index] => 0;
     }
 }

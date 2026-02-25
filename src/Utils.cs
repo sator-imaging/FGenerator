@@ -61,6 +61,24 @@ namespace FGenerator
                 sb.Append(separator);
             }
 
+            if (symbol.ContainingSymbol != null &&
+                !SymbolEqualityComparer.Default.Equals(symbol.ContainingSymbol, symbol.ContainingType) &&
+                symbol.ContainingSymbol is not INamespaceSymbol)
+            {
+                AppendSymbolNameAndSignature(sb, symbol.ContainingSymbol, separator);
+                sb.Append(separator);
+            }
+
+            AppendSymbolNameAndSignature(sb, symbol, separator);
+
+            sb.Replace(".", separator);  // namespace
+            sb.Replace("+", separator);  // nested type (maybe)
+
+            return sb.ToString();
+        }
+
+        private static void AppendSymbolNameAndSignature(StringBuilder sb, ISymbol symbol, string separator)
+        {
             AppendNameWithGenericTypeParameterCount(sb, symbol);
 
             if (symbol is IPropertySymbol property &&
@@ -88,11 +106,6 @@ namespace FGenerator
                     AppendNameWithGenericTypeParameterCount(sb, p.Type);
                 }
             }
-
-            sb.Replace(".", separator);  // namespace
-            sb.Replace("+", separator);  // nested type (maybe)
-
-            return sb.ToString();
         }
 
 
