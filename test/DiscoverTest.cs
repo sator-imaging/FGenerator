@@ -33,9 +33,9 @@ internal sealed class DiscoverAttribute : Attribute { }
         var sb = new StringBuilder();
         if (isTypeOrMember) sb.AppendLine(target.ToNamespaceAndContainingTypeDeclarations());
         sb.AppendLine("/*");
-        sb.AppendLine($"ToDeclarationString: {target.ToDeclarationString()}");
-        sb.AppendLine($"ToNameString: {target.ToNameString()}");
-        sb.AppendLine($"ToAssemblyUniqueIdentifier: {target.ToAssemblyUniqueIdentifier()}");
+sb.AppendLine($"    {target.ToDeclarationString()}  // ToDeclarationString");
+sb.AppendLine($"    {target.ToNameString()}  // ToNameString");
+sb.AppendLine($"    {target.ToAssemblyUniqueIdentifier()}  // ToAssemblyUniqueIdentifier");
         sb.AppendLine("*/");
         if (isTypeOrMember) sb.AppendLine(target.ToNamespaceAndContainingTypeClosingBraces());
 
