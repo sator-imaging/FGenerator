@@ -89,6 +89,6 @@ namespace SandboxTest
     {
         [return: Discover]
         [Discover]
-        public static TResult DiscoverMethod<TResult>([Discover] TResult value) => value;
+        public static TResult DiscoverMethod<[Discover] TResult>([Discover] TResult value) => value;
     }
 }
