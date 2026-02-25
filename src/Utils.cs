@@ -2,6 +2,7 @@
 // https://github.com/sator-imaging/FGenerator
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -555,16 +556,8 @@ namespace FGenerator
         /// </summary>
         public static string ToVisibilityString(this ISymbol symbol)
         {
-            return symbol.DeclaredAccessibility switch
-            {
-                Accessibility.Public => "public ",
-                Accessibility.Private => "private ",
-                Accessibility.Internal => "internal ",
-                Accessibility.Protected => "protected ",
-                Accessibility.ProtectedOrInternal => "protected internal ",
-                Accessibility.ProtectedAndInternal => "private protected ",
-                Accessibility.NotApplicable or _ => string.Empty,
-            };
+            var text = SyntaxFacts.GetText(symbol.DeclaredAccessibility);
+            return string.IsNullOrEmpty(text) ? string.Empty : text + " ";
         }
     }
 }
