@@ -49,9 +49,16 @@ namespace FGenerator
                 sb.Append(separator);
             }
 
-            foreach (var containing in GetContainingTypes(symbol, out _))
+            var stack = ImmutableStack<ISymbol>.Empty;
+            for (var current = symbol.ContainingSymbol; current != null && current is not INamespaceSymbol; current = current.ContainingSymbol)
+            {
+                stack = stack.Push(current);
+            }
+
+            foreach (var containing in stack)
             {
                 AppendNameWithGenericTypeParameterCount(sb, containing);
+                AppendSignatureIfMember(sb, containing, separator);
                 sb.Append(separator);
             }
 
@@ -62,7 +69,16 @@ namespace FGenerator
             }
 
             AppendNameWithGenericTypeParameterCount(sb, symbol);
+            AppendSignatureIfMember(sb, symbol, separator);
 
+            sb.Replace(".", separator);  // namespace
+            sb.Replace("+", separator);  // nested type (maybe)
+
+            return sb.ToString();
+        }
+
+        private static void AppendSignatureIfMember(StringBuilder sb, ISymbol symbol, string separator)
+        {
             if (symbol is IPropertySymbol property &&
                 property.IsIndexer)
             {
@@ -88,11 +104,6 @@ namespace FGenerator
                     AppendNameWithGenericTypeParameterCount(sb, p.Type);
                 }
             }
-
-            sb.Replace(".", separator);  // namespace
-            sb.Replace("+", separator);  // nested type (maybe)
-
-            return sb.ToString();
         }
 
 
