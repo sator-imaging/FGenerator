@@ -21,7 +21,7 @@ namespace SandboxTest
         public void DiscoveryMethod() { }
 
         [Discover]
-        public int this[int index] => 0;
+        public int this[[Discover] int index] => 0;
     }
 
     [Discover]
