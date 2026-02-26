@@ -55,16 +55,59 @@ namespace FGenerator
                 sb.Append(separator);
             }
 
-            if (GetExplicitInterfaceImplementationSymbol(symbol) is ISymbol iface)
+            var members = new System.Collections.Generic.List<ISymbol>();
+            for (var curr = symbol.ContainingSymbol; curr is IMethodSymbol or IPropertySymbol; curr = curr.ContainingSymbol)
             {
-                AppendNameWithGenericTypeParameterCount(sb, iface);
+                members.Add(curr);
+            }
+            members.Reverse();
+
+            foreach (var m in members)
+            {
+                if (GetExplicitInterfaceImplementationSymbol(m) is ISymbol iface)
+                {
+                    AppendNameWithGenericTypeParameterCount(sb, iface);
+                    sb.Append(separator);
+                }
+                AppendNameWithGenericTypeParameterCount(sb, m);
+                AppendSignature(sb, m, separator);
+                sb.Append(separator);
+            }
+
+            if (GetExplicitInterfaceImplementationSymbol(symbol) is ISymbol iface2)
+            {
+                AppendNameWithGenericTypeParameterCount(sb, iface2);
                 sb.Append(separator);
             }
 
             AppendNameWithGenericTypeParameterCount(sb, symbol);
+            AppendSignature(sb, symbol, separator);
 
-            if (symbol is IPropertySymbol property &&
-                property.IsIndexer)
+            sb.Replace(".", separator);  // namespace
+            sb.Replace("+", separator);  // nested type (maybe)
+
+            return sb.ToString();
+        }
+
+
+        internal static ImmutableStack<INamedTypeSymbol> GetContainingTypes(ISymbol target, out int numberOfTypes)
+        {
+            var result = ImmutableStack<INamedTypeSymbol>.Empty;
+
+            int count = 0;
+            for (var current = target.ContainingType; current != null; current = current.ContainingType)
+            {
+                count++;
+                result = result.Push(current);
+            }
+
+            numberOfTypes = count;
+            return result;
+        }
+
+        private static void AppendSignature(StringBuilder sb, ISymbol symbol, string separator)
+        {
+            if (symbol is IPropertySymbol { IsIndexer: true } property)
             {
                 for (int i = 0; i < property.Parameters.Length; i++)
                 {
@@ -88,27 +131,6 @@ namespace FGenerator
                     AppendNameWithGenericTypeParameterCount(sb, p.Type);
                 }
             }
-
-            sb.Replace(".", separator);  // namespace
-            sb.Replace("+", separator);  // nested type (maybe)
-
-            return sb.ToString();
-        }
-
-
-        internal static ImmutableStack<INamedTypeSymbol> GetContainingTypes(ISymbol target, out int numberOfTypes)
-        {
-            var result = ImmutableStack<INamedTypeSymbol>.Empty;
-
-            int count = 0;
-            for (var current = target.ContainingType; current != null; current = current.ContainingType)
-            {
-                count++;
-                result = result.Push(current);
-            }
-
-            numberOfTypes = count;
-            return result;
         }
 
         private static void AppendNameWithGenericTypeParameterCount(StringBuilder sb, ISymbol symbol)
