@@ -86,17 +86,22 @@ namespace FGenerator
             {
                 for (int i = 0; i < property.Parameters.Length; i++)
                 {
+                    var p = property.Parameters[i];
+                    if (p.Type.TypeKind == TypeKind.TypeParameter) continue;
+
                     sb.Append(separator);
-                    AppendNameWithGenericTypeParameterCount(sb, property.Parameters[i].Type);
+                    AppendNameWithGenericTypeParameterCount(sb, p.Type);
                 }
             }
             else if (symbol is IMethodSymbol method)
             {
                 for (int i = 0; i < method.Parameters.Length; i++)
                 {
+                    var p = method.Parameters[i];
+                    if (p.Type.TypeKind == TypeKind.TypeParameter) continue;
+
                     sb.Append(separator);
 
-                    var p = method.Parameters[i];
                     if (p.RefKind != RefKind.None)
                     {
                         sb.Append(p.RefKind.ToString().ToLowerInvariant());
@@ -139,10 +144,6 @@ namespace FGenerator
             if (symbol is INamedTypeSymbol nts)
             {
                 typeParamCount = nts.TypeParameters.Length;
-            }
-            else if (symbol is IMethodSymbol ms)
-            {
-                typeParamCount = ms.TypeParameters.Length;
             }
 
             if (typeParamCount > 0)
