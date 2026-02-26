@@ -84,6 +84,7 @@ namespace SandboxTest
         public void WithArgsMethod(int x, string y) { }
     }
 
+    // NOTE: Type parameter can be marked with attribute but won't be discovered
     [Discover]
     public readonly partial record struct DiscoverGenericRecord<[Discover] TValue>
     {
