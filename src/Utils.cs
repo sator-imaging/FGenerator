@@ -41,6 +41,11 @@ namespace FGenerator
         /// </summary>
         public static string ToAssemblyUniqueIdentifier(this ISymbol symbol, string separator = DefaultSeparator)
         {
+            if (symbol is ITypeParameterSymbol)
+            {
+                return ToAssemblyUniqueIdentifier(symbol.ContainingSymbol, separator);
+            }
+
             var sb = new StringBuilder(capacity: 128);
 
             if (symbol.ContainingNamespace != null && !symbol.ContainingNamespace.IsGlobalNamespace)
