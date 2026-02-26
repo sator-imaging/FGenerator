@@ -90,7 +90,6 @@ namespace SandboxTest
         // TODO: There is no way to emit diagnostic on return type of method symbol.
         [return: Discover]
         [Discover]
-        // method parameter and type parameter should have method signature in assembly unique identifier e.g. Method<[Discover] TResult>([Discover] TResult value)
         public static TResult DiscoverMethod<[Discover] TResult>([Discover] TResult value) => value;
 
         [Discover]
