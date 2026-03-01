@@ -167,7 +167,7 @@ namespace AutoNotifyGenerator
 
             bool ShouldGenerateProperty(IFieldSymbol field)
             {
-                if (field.IsImplicitlyDeclared || field.AssociatedSymbol != null)
+                if (field.AssociatedSymbol != null)
                     return false; // compiler generated or backing field
                 if (field.IsConst || field.IsStatic)
                     return false;
