@@ -16,15 +16,15 @@
         <dependency id="Microsoft.CodeAnalysis.CSharp" version="4.0.1" exclude="Build,Analyzers" />
       </group>
     </dependencies>
-    <description>Generates High-Performance `string` and `UTF-8` Extensions for Enums</description>
-    <tags>string, UTF-8, Extensions, Enum, Enums</tags>
-    <id>FinalEnumGenerator</id>
-    <title>FinalEnumGenerator</title>
+    <description>Compile-Time Macro for C# You've Ever Dreamed</description>
+    <tags>Compile-Time, Macro, Macro for C#</tags>
+    <id>MacroDotNet</id>
+    <title>MacroDotNet</title>
     <version>3.0.0-rc.1</version>
   </metadata>
   <files>
-    <file src="FinalEnumGenerator.dll" target="analyzers/dotnet/cs" />
-    <file src="../FinalEnumGenerator/README.md" target="" />
+    <file src="MacroDotNet.dll" target="analyzers/dotnet/cs" />
+    <file src="../MacroDotNet/README.md" target="" />
     <file src="../icon-128px.png" target="" />
   </files>
 </package>
