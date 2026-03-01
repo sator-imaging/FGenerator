@@ -97,11 +97,12 @@ namespace FGenerator.Cli
             // Execute the glob pattern match
             var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(baseDirectory)));
             var matchedFiles = result.Files
-                                     .Select(f => new FileInfo(Path.Combine(baseDirectory, f.Path)))
-                                     .Where(x => File.Exists(x.FullName));
-
-            // Filter to only .cs files
-            matchedFiles = matchedFiles.Where(f => f.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)).ToArray();
+                .Select(f => new FileInfo(Path.Combine(baseDirectory, f.Path)))
+                .Where(x => File.Exists(x.FullName))
+                // Filter to only .cs files
+                .Where(f => f.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
+                .ToArray()
+                ;
 
             if (matchedFiles.Length == 0)
             {
