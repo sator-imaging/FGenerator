@@ -275,7 +275,6 @@ namespace MacroDotNet
                 result.Append("\n---");
                 result.Append(generatedCodeSpan);
 
-                // TODO: This is Try... method but set the out variable on 'false' code path.
                 diagnostic = new AnalyzeResult(
                     "_DEBUG",
                     "Generated code preview",
