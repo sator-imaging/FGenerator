@@ -179,13 +179,13 @@ namespace FGenerator
         /// <summary>
         /// Builds containing type openings for the target (partial, nested/generic aware).
         /// </summary>
-        public static string ToContainingTypeDeclarations(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
+        internal static string ToContainingTypeDeclarations(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
             => ToContainingTypeDeclarations(target.RawSymbol, indentSize, indentChar);
 
         /// <summary>
         /// Builds containing type openings for the symbol (partial, nested/generic aware).
         /// </summary>
-        public static string ToContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
+        internal static string ToContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
         {
             var sb = new StringBuilder(capacity: 256);
 
@@ -261,13 +261,13 @@ namespace FGenerator
         /// <summary>
         /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(Target, int, char)"/>.
         /// </summary>
-        public static string ToContainingTypeClosingBraces(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
+        internal static string ToContainingTypeClosingBraces(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
             => ToContainingTypeClosingBraces(target.RawSymbol, indentSize, indentChar);
 
         /// <summary>
         /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(ISymbol, int, char)"/>.
         /// </summary>
-        public static string ToContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
+        internal static string ToContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
         {
             var sb = new StringBuilder(capacity: 16);
 
