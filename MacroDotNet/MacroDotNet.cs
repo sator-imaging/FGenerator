@@ -189,11 +189,7 @@ namespace MacroDotNet
 
             if (IsDebugSymbolDefined(target.Compilation))
             {
-                if (TryBuildGeneratedSyntaxDiagnostic(generatedCode, out diagnostic))
-                {
-                    // NOTE: To allow easily preview problematic generated code,
-                    //       DO NOT return null here!
-                }
+                BuildGeneratedSyntaxDiagnostic(generatedCode, out diagnostic);
             }
 
             return new CodeGeneration(target.ToHintName(), generatedCode);
@@ -233,7 +229,7 @@ namespace MacroDotNet
         return false;
     }
 
-    private static bool TryBuildGeneratedSyntaxDiagnostic(string generatedCode, out AnalyzeResult? diagnostic)
+    private static void BuildGeneratedSyntaxDiagnostic(string generatedCode, out AnalyzeResult? diagnostic)
     {
         var tree = CSharpSyntaxTree.ParseText(generatedCode);
 
@@ -285,8 +281,6 @@ namespace MacroDotNet
                     "Generated code preview",
                     DiagnosticSeverity.Info,
                     result.ToString());
-
-                return false;
             }
             else
             {
@@ -298,8 +292,6 @@ namespace MacroDotNet
                     "Generated syntax errors",
                     DiagnosticSeverity.Error,
                     result.ToString());
-
-                return true;
             }
         }
         finally
