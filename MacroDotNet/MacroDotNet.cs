@@ -915,9 +915,10 @@ using System.Threading.Tasks;
                 while (newCapacity < resultLength);
             }
 
+            char[]? expanded = null;
             try
             {
-                var expanded = ArrayPool<char>.Shared.Rent(newCapacity);
+                expanded = ArrayPool<char>.Shared.Rent(newCapacity);
 
                 buffer.AsSpan(0, consumed).CopyTo(expanded);
                 value.CopyTo(expanded.AsSpan(consumed));
@@ -927,7 +928,12 @@ using System.Threading.Tasks;
             }
             catch
             {
-                Dispose();
+                if (expanded != null)
+                {
+                    ArrayPool<char>.Shared.Return(expanded, clearArray: false);
+                }
+
+                throw;
             }
             finally
             {
