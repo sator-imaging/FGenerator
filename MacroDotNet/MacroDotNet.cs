@@ -89,7 +89,7 @@ namespace MacroDotNet
                         output.Append(DefaultUsings);
                         output.Append('\n');
                         AppendDeclarationSiteUsings(type, ref output);
-                        output.Append(target.ToContainingTypeDeclarations());
+                        output.Append(target.ToNamespaceAndContainingTypeDeclarations());
                         output.Append('\n');
                         output.Append("    partial ");
                         output.Append(target.ToDeclarationString(modifiers: false));
@@ -182,7 +182,7 @@ namespace MacroDotNet
             result.Append('\n');
             result.Append("    }");
             result.Append('\n');
-            result.Append(target.ToContainingTypeClosingBraces());
+            result.Append(target.ToNamespaceAndContainingTypeClosingBraces());
             result.Append('\n');
 
             var generatedCode = result.ToString();
@@ -589,7 +589,8 @@ namespace MacroDotNet
     */
     private const string DefaultUsings =
 // Unity-safe Usings
-@"using System;
+@"#pragma warning disable CS0105  // Using directive appeared previously in this namespace
+using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Concurrent;

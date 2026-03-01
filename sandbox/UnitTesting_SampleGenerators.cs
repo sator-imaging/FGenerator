@@ -1,7 +1,7 @@
-using FGeneratorDebugger;
 using FGenerator.Sandbox;
 using FGenerator.Sandbox.StackArray;
 using FGenerator.Sandbox.StackList;
+using FGeneratorDebugger;
 using System;
 using System.Threading.Tasks;
 

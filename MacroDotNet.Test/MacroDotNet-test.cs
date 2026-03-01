@@ -1,3 +1,4 @@
+using MacroDotNet.Test;
 using System.Collections.Generic;
 
 #pragma warning disable CA1050   // Declare types in namespaces
@@ -23,7 +24,7 @@ return FUnit.Run(args, describe =>
             Must.BeEqual("<int?, object?>", fixture.TypeArgsDictNullable);
             Must.BeEqual("payload-ok", fixture.PayloadHolder);
             Must.BeEqual("Dictionary", fixture.BareTypeNullableGeneric);
-            Must.BeEqual("global::MacroSyntaxFixture", fixture.ContainerContainerSlot);
+            Must.BeEqual("global::MacroDotNet.Test.MacroSyntaxFixture", fixture.ContainerContainerSlot);
         });
 
         it("Replaces $initialValue including null/default/new()", () =>
@@ -114,8 +115,8 @@ return FUnit.Run(args, describe =>
     {
         it("Resolves generic-aware full name in $containerType.$fieldName", () =>
         {
-            var fixture = new MacroGenericFixture<int>();
-            Must.BeEqual("global::MacroGenericFixture<T>._value", fixture.FullName);
+            var fixture = new OuterClass.NestedClass.MacroGenericFixture<int>();
+            Must.BeEqual("global::MacroDotNet.Test.OuterClass.NestedClass.MacroGenericFixture<T>._value", fixture.FullName);
         });
     });
 
@@ -127,8 +128,8 @@ return FUnit.Run(args, describe =>
             Must.BeEqual("where TItem : unmanaged", fixture.TypeConstraintsText);
             Must.BeEqual("where TItem : class?", fixture.TypeConstraintsNullableText);
             Must.BeEqual("where TItem : class", fixture.TypeConstraintsClassText);
-            Must.BeEqual("where TItem : global::MyClass", fixture.TypeConstraintsBaseClassText);
-            Must.BeEqual("where TItem : global::MyClass?", fixture.TypeConstraintsNullableBaseClassText);
+            Must.BeEqual("where TItem : global::MacroDotNet.Test.MyClass", fixture.TypeConstraintsBaseClassText);
+            Must.BeEqual("where TItem : global::MacroDotNet.Test.MyClass?", fixture.TypeConstraintsNullableBaseClassText);
             Must.BeEqual("where TItem : class?, global::System.IDisposable, new() where TValue : notnull", fixture.TypeConstraintsComplexText);
             Must.BeEqual("where T : TOther", fixture.TypeConstraintsTypeParameterText);
             Must.BeEqual(string.Empty, fixture.TypeConstraintsNonGenericText);
@@ -152,7 +153,7 @@ return FUnit.Run(args, describe =>
             Must.BeEqual("private", fixture.TokenVisibility);
             Must.BeEqual("5", fixture.TokenInitialValue);
             Must.BeEqual("<int?>", fixture.TokenTypeArgs);
-            Must.BeEqual("global::MacroTokenFixture", fixture.TokenContainerType);
+            Must.BeEqual("global::MacroDotNet.Test.MacroTokenFixture", fixture.TokenContainerType);
             Must.BeEqual("[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]", fixture.TokenInline);
             Must.BeEqual("[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]", fixture.TokenNoInline);
 
