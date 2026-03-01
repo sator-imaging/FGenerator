@@ -7,7 +7,10 @@ Generates High-Performance `string` and `UTF-8` Extensions for Enums
 [![nuget](https://img.shields.io/nuget/vpre/FinalEnumGenerator)](https://www.nuget.org/packages/FinalEnumGenerator)
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator/6.2-finalenumgenerator)
 
+*Unity 2022.3.12+ is supported*
+
 </div>
+
 
 &nbsp;
 
@@ -18,11 +21,11 @@ Generates High-Performance `string` and `UTF-8` Extensions for Enums
 - Emits diagnostics for non-public containing types and ambiguous/invalid display names.
 
 
+
+
+
+
 &nbsp;
-
-
-
-
 
 # 🚀 Getting Started
 
@@ -82,11 +85,11 @@ if (MyEnum.IsDefined(100))
 ```
 
 
+
+
+
+
 &nbsp;
-
-
-
-
 
 # 🕹️ Technical Specs
 

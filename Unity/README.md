@@ -7,12 +7,14 @@
 > 🇯🇵 Unity 互換のソースジェネレーターが [../Compiled](../Compiled/) フォルダーにあります。（`.meta` ファイル付属）
 
 
-
 &nbsp;
 
-> [!IMPORTANT]
+
+> [!CAUTION]
 > Analyzers in this folder are not safe for use in production environment.
 > Consider use [Unity-Analyzers](https://github.com/sator-imaging/Unity-Analyzers) instead.
+
+
 
 
 

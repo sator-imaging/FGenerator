@@ -7,7 +7,10 @@ Generates Obfuscated Properties from `.env` File Content
 [![nuget](https://img.shields.io/nuget/vpre/EnvObfuscator)](https://www.nuget.org/packages/EnvObfuscator)
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator/6.1-envobfuscator)
 
+*Unity 2022.3.12+ is supported*
+
 </div>
+
 
 &nbsp;
 
@@ -17,11 +20,11 @@ Generates Obfuscated Properties from `.env` File Content
 - Ability to generate GUID-named chaff classes.
 
 
+
+
+
+
 &nbsp;
-
-
-
-
 
 # 🚀 Getting Started
 
@@ -139,11 +142,11 @@ Here shows sample `link.xml` for Unity. See the following link for more details.
 ```
 
 
+
+
+
+
 &nbsp;
-
-
-
-
 
 # Diagnostics
 
@@ -161,11 +164,11 @@ Here shows sample `link.xml` for Unity. See the following link for more details.
 > `error CS0101: The namespace '<random_namespace>' already contains a definition for '<random_class>'` or similar.
 
 
+
+
+
+
 &nbsp;
-
-
-
-
 
 # 🕹️ Technical Specs
 

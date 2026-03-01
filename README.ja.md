@@ -10,14 +10,13 @@
 &nbsp;
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
 <br/>
+[![MacroDotNet](https://img.shields.io/nuget/vpre/MacroDotNet?label=MacroDotNet)](https://www.nuget.org/packages/MacroDotNet)
 [![EnvObfuscator](https://img.shields.io/nuget/vpre/EnvObfuscator?label=EnvObfuscator)](https://github.com/sator-imaging/FGenerator/tree/main/EnvObfuscator)
 [![FinalEnumGenerator](https://img.shields.io/nuget/vpre/FinalEnumGenerator?label=FinalEnumGenerator)](https://github.com/sator-imaging/FGenerator/tree/main/FinalEnumGenerator)
 
-[<kbd>🇺🇸 English</kbd>](./README.md)
-&nbsp;
-[<kbd>🇯🇵 日本語版</kbd>](./README.ja.md)
-&nbsp;
-[<kbd>🇨🇳 简体中文版</kbd>](./README.zh-CN.md)
+[![🇯🇵](https://img.shields.io/badge/🇯🇵-日本語-789)](./README.ja.md)
+[![🇨🇳](https://img.shields.io/badge/🇨🇳-简体中文-789)](./README.zh-CN.md)
+[![🇺🇸](https://img.shields.io/badge/🇺🇸-English-789)](./README.md)
 
 </div>
 
