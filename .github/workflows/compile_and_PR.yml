@@ -6,6 +6,7 @@ on:
     paths:
       - "EnvObfuscator/**/*.cs"
       - "FinalEnumGenerator/**/*.cs"
+      - "MacroDotNet/**/*.cs"
   #pull_request:
   #  branches: [ "main" ]
   #release:
@@ -48,7 +49,7 @@ jobs:
           dotnet run --project cli -c Release -- build \
             --unity --merge \
             --force --output $OUTDIR \
-            "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
+            "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs" "MacroDotNet/*.cs"  # enquote to prevent expanding
 
 
           ### Git work ####
