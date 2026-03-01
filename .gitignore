@@ -9,6 +9,8 @@ obj
 !EnvObfuscator.Test
 !FinalEnumGenerator
 !FinalEnumGenerator.Test
+!MacroDotNet
+!MacroDotNet.Test
 !sample
 !sandbox
 !sdk
@@ -26,3 +28,5 @@ obj
 !**/README.md
 !README.*.md
 !LICENSE.md
+
+SPEC.md

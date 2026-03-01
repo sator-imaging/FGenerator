@@ -34,7 +34,7 @@ jobs:
           ${{ matrix.merge }} \
           ${{ matrix.debug }} \
           --force --output  ./.z__merged_dll__ \
-          "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
+          "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs" "MacroDotNet/*.cs"  # enquote to prevent expanding
 
         dnx -y FGenerator.Cli -- build \
           ${{ matrix.unity }} \
@@ -55,6 +55,9 @@ jobs:
 
         dotnet build         FinalEnumGenerator.Test   -c Release -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
         dotnet run --project FinalEnumGenerator.Test   -c Release --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
+
+        dotnet build         MacroDotNet.Test   -c Release -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+        dotnet run --project MacroDotNet.Test   -c Release --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
         dotnet build         sandbox   -c Release -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
         dotnet run --project sandbox   -c Release --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
