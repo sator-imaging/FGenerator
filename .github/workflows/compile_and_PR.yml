@@ -1,4 +1,4 @@
-name: "[push.paths] Compile & PR"
+name: "[push.paths] Compile & PR & NuGet"
 
 on:
   push:
@@ -96,6 +96,7 @@ jobs:
         run: |
           dotnet pack Compiled/EnvObfuscator.nuspec      -o nuget-pack
           dotnet pack Compiled/FinalEnumGenerator.nuspec -o nuget-pack
+          dotnet pack Compiled/MacroDotNet.nuspec        -o nuget-pack
 
       - name: Push to NuGet
         run: |
