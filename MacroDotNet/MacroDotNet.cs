@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 [Generator]
 public sealed class MacroDotNetGenerator : FGeneratorBase
 {
-    private const int MaxArgCount = 10;
+    private const byte MaxArgCount = 10;
     private const string DebugSymbol = "DEBUG";
     private static readonly Regex DisplayPrefixRegex = new Regex(@"^[^_]*_", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
