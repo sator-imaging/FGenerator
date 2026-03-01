@@ -83,6 +83,14 @@ namespace MacroDotNet
                 var output = outputBufferHolder ?? new ValuePoolBuffer(OutputBufferCapacity);
                 if (outputBufferHolder == null)
                 {
+                    if (!target.IsPartial)
+                    {
+                        diagnostic = new AnalyzeResult("002", "Containing type must be partial", DiagnosticSeverity.Error,
+                            $"Type '{type.ToNameString(localName: true)}' must be declared partial to use [Macro].");
+
+                        return null;
+                    }
+
                     init(ref output, target, type);
 
                     static void init(ref ValuePoolBuffer output, Target target, INamedTypeSymbol type)
@@ -129,9 +137,8 @@ namespace MacroDotNet
                         else
                         {
                             work = scratchBufferHolder.Value;
+                            work.Clear();
                         }
-
-                        work.Clear();
 
                         if (!args.IsEmpty())
                         {
@@ -168,14 +175,6 @@ namespace MacroDotNet
 
             if (outputBufferHolder == null)
             {
-                return null;
-            }
-
-            if (!target.IsPartial)
-            {
-                diagnostic = new AnalyzeResult("002", "Containing type must be partial", DiagnosticSeverity.Error,
-                    $"Type '{type.ToNameString(localName: true)}' must be declared partial to use [Macro].");
-
                 return null;
             }
 
@@ -235,10 +234,10 @@ namespace MacroDotNet
         var tree = CSharpSyntaxTree.ParseText(generatedCode);
 
         var generatedCodeSpan = generatedCode.AsSpan(DefaultUsings.Length);
+
         ValuePoolBuffer? bufferHolder = null;
         try
         {
-
             foreach (var parseDiagnostic in tree.GetDiagnostics())
             {
                 if (parseDiagnostic.Severity != DiagnosticSeverity.Error)
