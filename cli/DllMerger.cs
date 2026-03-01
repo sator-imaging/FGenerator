@@ -13,9 +13,9 @@ namespace FGenerator.Cli
         {
             var tempDllFileList = outputDir.GetFiles("*.dll")
                 .Select(f => f.FullName)
-                .ToList();
+                .ToArray();
 
-            if (tempDllFileList.Count == 0)
+            if (tempDllFileList.Length == 0)
             {
                 Console.WriteLine("No DLLs found to merge.");
                 return null;
@@ -27,21 +27,21 @@ namespace FGenerator.Cli
                 .FirstOrDefault(f => Path.GetFileName(f) == outputDllFileName)
                 ?? throw new Exception("Primary DLL not found.");
 
-            var otherDlls = tempDllFileList.Where(f => f != primaryDll).ToList();
+            var otherDlls = tempDllFileList.Where(f => f != primaryDll).ToArray();
 
             EnsureMissingReferencesStubbed(new(primaryDll), outputDir, tempDllFileList);
 
             // If we only have one DLL and it's the primary one, nothing to merge? 
             // Or maybe we want to repack it anyway? 
             // Usually merge implies > 1.
-            if (otherDlls.Count == 0)
+            if (otherDlls.Length == 0)
             {
                 Console.WriteLine("Only one DLL found. Skipping merge.");
                 return new(primaryDll);
             }
 
             var outputPath = Path.Combine(outputDir.FullName, "__merged__", outputDllFileName);
-            Console.WriteLine($"Merging {tempDllFileList.Count} assemblies into {outputPath}...");
+            Console.WriteLine($"Merging {tempDllFileList.Length} assemblies into {outputPath}...");
             Console.WriteLine($"- [MAIN] {primaryDll}");
             Console.WriteLine($"- {string.Join("\n- ", otherDlls)}");
 
@@ -82,7 +82,7 @@ namespace FGenerator.Cli
             }
         }
 
-        private static void EnsureMissingReferencesStubbed(FileInfo primaryDll, DirectoryInfo outputDir, List<string> existingDlls)
+        private static void EnsureMissingReferencesStubbed(FileInfo primaryDll, DirectoryInfo outputDir, string[] existingDlls)
         {
             var existingNames = existingDlls
                 .Select(Path.GetFileNameWithoutExtension)

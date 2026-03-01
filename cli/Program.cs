@@ -98,19 +98,18 @@ namespace FGenerator.Cli
             var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(baseDirectory)));
             var matchedFiles = result.Files
                                      .Select(f => new FileInfo(Path.Combine(baseDirectory, f.Path)))
-                                     .Where(x => File.Exists(x.FullName))
-                                     .ToList();
+                                     .Where(x => File.Exists(x.FullName));
 
             // Filter to only .cs files
-            matchedFiles = matchedFiles.Where(f => f.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)).ToList();
+            matchedFiles = matchedFiles.Where(f => f.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)).ToArray();
 
-            if (matchedFiles.Count == 0)
+            if (matchedFiles.Length == 0)
             {
                 WriteFailure($"No .cs files matched the pattern(s): {string.Join(", ", inputPatterns)}");
                 return 1;
             }
 
-            Console.WriteLine($"Found {matchedFiles.Count} file(s) matching pattern(s): {string.Join(", ", inputPatterns)}");
+            Console.WriteLine($"Found {matchedFiles.Length} file(s) matching pattern(s): {string.Join(", ", inputPatterns)}");
             Console.WriteLine();
 
             int successCount = 0;
@@ -118,10 +117,10 @@ namespace FGenerator.Cli
             var failedFiles = new List<string>();
 
             // Process each matched file
-            for (int i = 0; i < matchedFiles.Count; i++)
+            for (int i = 0; i < matchedFiles.Length; i++)
             {
                 var file = matchedFiles[i];
-                Console.WriteLine($"[{i + 1}/{matchedFiles.Count}] Processing: {file.Name}");
+                Console.WriteLine($"[{i + 1}/{matchedFiles.Length}] Processing: {file.Name}");
 
                 int exitCode = RunBuild(file, output, unity, merge, force, debug);
 
@@ -136,7 +135,7 @@ namespace FGenerator.Cli
                 }
 
                 // Add separator between files
-                if (i < matchedFiles.Count - 1)
+                if (i < matchedFiles.Length - 1)
                 {
                     Console.WriteLine();
                     Console.WriteLine(new string('=', 42));
@@ -149,7 +148,7 @@ namespace FGenerator.Cli
             Console.WriteLine(new string('=', 42));
             Console.WriteLine("SUMMARY");
             Console.WriteLine(new string('=', 42));
-            Console.WriteLine($"Total files: {matchedFiles.Count}");
+            Console.WriteLine($"Total files: {matchedFiles.Length}");
             WriteSuccess($"Succeeded: {successCount}");
             if (failureCount > 0)
             {

@@ -143,8 +143,7 @@ namespace AutoNotifyGenerator
             var candidateFields = target.Members
                 .OfType<IFieldSymbol>()
                 .Where(ShouldGenerateProperty)
-                .Select(field => (field, propertyName: GetPropertyName(field)))
-                .ToList();
+                .Select(field => (field, propertyName: GetPropertyName(field)));
 
             // Auto-generated properties for eligible backing fields
             foreach (var item in candidateFields)

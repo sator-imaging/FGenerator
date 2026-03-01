@@ -341,7 +341,7 @@ namespace FinalEnums
                         : Convert.ToInt64(f.ConstantValue, CultureInfo.InvariantCulture),
                 };
             })
-            .ToList();
+            .ToArray();
 
         var minDisplayNameLength = members.Min(m => m.DisplayName.Length);
         var maxDisplayNameLength = members.Max(m => m.DisplayName.Length);
@@ -395,30 +395,30 @@ namespace FinalEnums
         // GetNames, GetValues, GetNamesUtf8, IsDefined
         sb.AppendLine($"        // {enumKindLabel}");
         sb.AppendLine($"        public static string[] GetNames() => new string[] {{");
-        for (int i = 0; i < members.Count; i++)
+        for (int i = 0; i < members.Length; i++)
         {
             var member = members[i];
-            var suffix = i == members.Count - 1 ? string.Empty : ",";
+            var suffix = i == members.Length - 1 ? string.Empty : ",";
             sb.AppendLine($"            \"{member.DisplayNameLiteral}\"{suffix}");
         }
         sb.AppendLine("        };");
         sb.AppendLine();
         sb.AppendLine($"        // {enumKindLabel}");
         sb.AppendLine($"        public static {fullyQualifiedEnumName}[] GetValues() => new {fullyQualifiedEnumName}[] {{");
-        for (int i = 0; i < members.Count; i++)
+        for (int i = 0; i < members.Length; i++)
         {
             var member = members[i];
-            var suffix = i == members.Count - 1 ? string.Empty : ",";
+            var suffix = i == members.Length - 1 ? string.Empty : ",";
             sb.AppendLine($"            {fullyQualifiedEnumName}.{member.FieldName}{suffix}");
         }
         sb.AppendLine("        };");
         sb.AppendLine();
         sb.AppendLine($"        // {enumKindLabel}");
         sb.AppendLine($"        public static ReadOnlyMemory<byte>[] GetNamesUtf8() => new ReadOnlyMemory<byte>[] {{");
-        for (int i = 0; i < members.Count; i++)
+        for (int i = 0; i < members.Length; i++)
         {
             var member = members[i];
-            var suffix = i == members.Count - 1 ? string.Empty : ",";
+            var suffix = i == members.Length - 1 ? string.Empty : ",";
             sb.AppendLine($"            {member.FieldName}_utf8{suffix}");
         }
         sb.AppendLine("        };");
@@ -495,7 +495,7 @@ namespace FinalEnums
         sb.AppendLine();
 
         const int SwitchThreshold = 10;
-        string SW = members.Count >= SwitchThreshold ? "    " : "    ////";
+        string SW = members.Length >= SwitchThreshold ? "    " : "    ////";
 
         // TryParse(string?)
         sb.AppendLine($"        // {enumKindLabel}");
