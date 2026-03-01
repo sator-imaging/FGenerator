@@ -1,6 +1,5 @@
 // Test syntax fixtures for MacroDotNet generator.
 
-using MacroDotNet;
 using System.Collections.Generic;
 
 #pragma warning disable CA1050   // Declare types in namespaces
@@ -10,6 +9,8 @@ using System.Collections.Generic;
 #pragma warning disable IDE0051  // Remove unused private members
 #pragma warning disable IDE0032  // Use auto property
 #pragma warning disable CA1051   // Do not declare visible instance fields
+
+namespace MacroDotNet.Test;
 
 public partial class MacroSyntaxFixture
 {
@@ -125,10 +126,16 @@ public static class MacroArgTemplates
     public const string PayloadConst = "const-payload";
 }
 
-public partial class MacroGenericFixture<T>
+public partial class OuterClass
 {
-    [Macro("public string FullName => \"$containerType.$fieldName\";")]
-    private int _value;
+    public sealed partial record NestedClass
+    {
+        public partial class MacroGenericFixture<T>
+        {
+            [Macro("public string FullName => \"$containerType.$fieldName\";")]
+            private int _value;
+        }
+    }
 }
 
 public partial class MacroTokenFixture
