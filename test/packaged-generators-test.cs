@@ -1,6 +1,6 @@
 #:package FUnit@*
-#:package FinalEnumGenerator@3.0.0-rc.1
-#:package EnvObfuscator@3.0.0-rc.1
+#:package FinalEnumGenerator@2.5.1
+#:package EnvObfuscator@2.5.1
 //                      ~~~~~~~~~~ Push AFTER compiled generators are published
 
 using EnvObfuscator;
