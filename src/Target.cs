@@ -160,7 +160,7 @@ namespace FGenerator
                     {
                         foreach (var member in type.GetMembers())
                         {
-                            if (member is not ITypeSymbol nestedType)
+                            if (member.IsImplicitlyDeclared || member is not ITypeSymbol nestedType)
                             {
                                 continue;
                             }

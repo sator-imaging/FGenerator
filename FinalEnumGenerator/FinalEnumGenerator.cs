@@ -218,7 +218,7 @@ namespace FinalEnums
         long flagsValueMask = 0;
 
         // Emit diagnostics eagerly so consumer code can evolve enum shape without reusing an incompatible display name.
-        foreach (var field in typeSymbol.GetMembers().OfType<IFieldSymbol>().Where(f => f.IsConst))
+        foreach (var field in target.Members.OfType<IFieldSymbol>().Where(f => f.IsConst))
         {
             var displayName = GetDisplayName(field);
             if (hasFlagsAttribute && !string.IsNullOrEmpty(displayName) && displayName.Contains(","))
@@ -317,7 +317,7 @@ namespace FinalEnums
 
         var fullyQualifiedEnumName = enumSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        var members = enumSymbol.GetMembers()
+        var members = target.Members
             .OfType<IFieldSymbol>()
             .Where(f => f.IsConst)
             .Select(f =>

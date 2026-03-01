@@ -108,7 +108,7 @@ internal static class {nameof(UnityAsyncMethodAuditor)}
         }
 
         // Get all async methods in this type
-        var asyncMethods = typeSymbol.GetMembers()
+        var asyncMethods = target.Members
             .OfType<IMethodSymbol>()
             .Where(m => m.IsAsync);
 
