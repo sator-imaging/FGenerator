@@ -132,16 +132,15 @@ namespace MacroDotNet
                     }
 
                     var template = attr.ConstructorArguments.Length > 0 && attr.ConstructorArguments[0].Value is string s
-                        ? s
-                        : string.Empty;
+                        ? s.AsSpan()
+                        : default;
 
                     var args = GetMacroArgs(attr);
-                    var templateSpan = template.AsSpan();
 
-                    int firstTokenIndex = templateSpan.IndexOf('$');
+                    int firstTokenIndex = template.IndexOf('$');
                     if (firstTokenIndex < 0)
                     {
-                        output.Append(templateSpan);
+                        output.Append(template);
                     }
                     else
                     {
@@ -174,11 +173,11 @@ namespace MacroDotNet
                                 return null;
                             }
 
-                            AppendWithReplaceMacroArgs(ref work, templateSpan, firstTokenIndex, args);
+                            AppendWithReplaceMacroArgs(ref work, template, firstTokenIndex, args);
                         }
                         else
                         {
-                            work.Append(templateSpan);
+                            work.Append(template);
                         }
 
                         AppendWithTokenReplacements(in work, ref output, field);
