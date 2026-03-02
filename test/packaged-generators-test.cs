@@ -1,8 +1,8 @@
 #:package FUnit@*
-#:package FinalEnumGenerator@3.0.0-rc.1
-#:package EnvObfuscator@3.0.0-rc.1
-#:package MacroDotNet@3.0.0-rc.1
-//                      ~~~~~~~~~~ Push AFTER compiled generators are published
+#:package FinalEnumGenerator@3.0.0
+#:package EnvObfuscator@3.0.0
+#:package MacroDotNet@3.0.0
+//                    ~~~~~~~~~~~~ Push AFTER compiled generators are published
 
 using EnvObfuscator;
 using FinalEnumGenerator;
