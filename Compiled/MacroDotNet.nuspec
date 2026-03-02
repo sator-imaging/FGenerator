@@ -20,7 +20,7 @@
     <tags>Compile-Time, Macro, Macro for C#</tags>
     <id>MacroDotNet</id>
     <title>MacroDotNet</title>
-    <version>3.0.0-rc.1</version>
+    <version>3.0.0</version>
   </metadata>
   <files>
     <file src="MacroDotNet.dll" target="analyzers/dotnet/cs" />
