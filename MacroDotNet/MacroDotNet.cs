@@ -89,7 +89,7 @@ namespace MacroDotNet
                 foreach (var attr in field.GetAttributes())
                 {
                     var attrName = attr.AttributeClass?.Name;
-                    if (attrName is not "Macro" and not "MacroAttribute")
+                    if (attrName is not "MacroAttribute")
                     {
                         continue;
                     }
