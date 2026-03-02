@@ -78,43 +78,48 @@ namespace MacroDotNet
         ValuePoolBuffer? scratchBufferHolder = null;
         try
         {
-            foreach (var field in type.GetMembers().OfType<IFieldSymbol>().Where(x => HasMacroAttribute(x)))
+            foreach (var attributes in type.GetMembers().OfType<IFieldSymbol>().Select(FilterAndGetMacroArgs))
             {
-                var output = outputBufferHolder ?? new ValuePoolBuffer(OutputBufferCapacity);
-                if (outputBufferHolder == null)
+                bool isFirstAttrOfField = true;
+                foreach (var (field, template, args) in attributes)
                 {
-                    if (!target.IsPartial)
+                    var output = outputBufferHolder ?? new ValuePoolBuffer(OutputBufferCapacity);
+                    if (outputBufferHolder == null)
                     {
-                        diagnostic = new AnalyzeResult("002", "Containing type must be partial", DiagnosticSeverity.Error,
-                            $"Type '{type.ToNameString(localName: true)}' must be declared partial to use [Macro].");
+                        if (!target.IsPartial)
+                        {
+                            diagnostic = new AnalyzeResult("002", "Containing type must be partial", DiagnosticSeverity.Error,
+                                $"Type '{type.ToNameString(localName: true)}' must be declared partial to use [Macro].");
 
-                        return null;
+                            return null;
+                        }
+
+                        init(ref output, target, type);
+
+                        static void init(ref ValuePoolBuffer output, Target target, INamedTypeSymbol type)
+                        {
+                            output.Append(DefaultUsings);
+                            output.Append('\n');
+                            AppendDeclarationSiteUsings(type, ref output);
+                            output.Append(target.ToNamespaceAndContainingTypeDeclarations());
+                            output.Append('\n');
+                            output.Append("    partial ");
+                            output.Append(target.ToDeclarationString(modifiers: false));
+                            output.Append('\n');
+                            output.Append("    {");
+                            output.Append('\n');
+                        }
                     }
 
-                    init(ref output, target, type);
-
-                    static void init(ref ValuePoolBuffer output, Target target, INamedTypeSymbol type)
+                    if (isFirstAttrOfField)
                     {
-                        output.Append(DefaultUsings);
                         output.Append('\n');
-                        AppendDeclarationSiteUsings(type, ref output);
-                        output.Append(target.ToNamespaceAndContainingTypeDeclarations());
-                        output.Append('\n');
-                        output.Append("    partial ");
-                        output.Append(target.ToDeclarationString(modifiers: false));
-                        output.Append('\n');
-                        output.Append("    {");
-                        output.Append('\n');
+                        output.Append("#region  ==== ");
+                        output.Append(field.Name);
+                        output.Append(" ====\n\n");
+                        isFirstAttrOfField = false;
                     }
-                }
 
-                output.Append('\n');
-                output.Append("#region  ==== ");
-                output.Append(field.Name);
-                output.Append(" ====\n\n");
-
-                foreach (var (template, args) in GetMacroAttributes(field))
-                {
                     var templateSpan = template.AsSpan();
 
                     int firstTokenIndex = templateSpan.IndexOf('$');
@@ -166,11 +171,15 @@ namespace MacroDotNet
                     }
 
                     output.Append("\n\n");
+                    outputBufferHolder = output;  // Write back updated struct to Nullable<T> here!
                 }
 
-                output.Append("#endregion\n\n");
-
-                outputBufferHolder = output;  // Write back updated struct to Nullable<T> here!
+                if (!isFirstAttrOfField)
+                {
+                    var output = outputBufferHolder!.Value;
+                    output.Append("#endregion\n\n");
+                    outputBufferHolder = output;
+                }
             }
 
             if (outputBufferHolder == null)
@@ -506,27 +515,13 @@ namespace MacroDotNet
         }
     }
 
-    private static bool HasMacroAttribute(IFieldSymbol field)
+    private static IEnumerable<(IFieldSymbol Field, string Template, MacroArgs Args)> FilterAndGetMacroArgs(IFieldSymbol field)
     {
         if (field.IsImplicitlyDeclared)
         {
-            return false;
+            yield break;
         }
 
-        foreach (var attr in field.GetAttributes())
-        {
-            var attrName = attr.AttributeClass?.Name;
-            if (attrName is "Macro" or "MacroAttribute")
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static IEnumerable<(string template, MacroArgs args)> GetMacroAttributes(IFieldSymbol field)
-    {
         foreach (var attr in field.GetAttributes())
         {
             var attrName = attr.AttributeClass?.Name;
@@ -541,7 +536,7 @@ namespace MacroDotNet
 
             var args = GetMacroArgs(attr);
 
-            yield return (template, args);
+            yield return (field, template, args);
         }
     }
 
