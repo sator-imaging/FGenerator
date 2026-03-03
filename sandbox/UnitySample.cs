@@ -1,33 +1,41 @@
 //#define __expected_error
 
 using System;
-
 #if __expected_error
 using System.Threading.Tasks;
 using UnityEngine;
 #endif
 
-#pragma warning disable IDE0078  // Use pattern matching
-#pragma warning disable IDE0130  // Namespace does not match folder structure
-#pragma warning disable CA1822  // Mark members as static
-#pragma warning disable CA1050  // Declare types in namespaces
-#pragma warning disable CA1816  // Call GC.SuppressFinalize correctly
+#pragma warning disable IDE0078 // Use pattern matching
+#pragma warning disable IDE0130 // Namespace does not match folder structure
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable CA1050 // Declare types in namespaces
+#pragma warning disable CA1816 // Call GC.SuppressFinalize correctly
 
 namespace UnityEngine
 {
-    public class Object { }
-    public class Component : Object { }
+    public class Object
+    {
+    }
+
+    public class Component : Object
+    {
+    }
+
     public class MonoBehaviour : Component
     {
-        public bool IsEnabled { get; set; }
         public string Name = string.Empty;
-        public void Foo() { }
+        public bool IsEnabled { get; set; }
+
+        public void Foo()
+        {
+        }
+
         public event Action? OnChanged;
     }
 }
 
 #if __expected_error
-
 public class Behaviour : MonoBehaviour
 {
     public async void Receiverless() => Foo();  // Error

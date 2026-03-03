@@ -1,54 +1,54 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
 
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-  </PropertyGroup>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-  </PropertyGroup>
+    <PropertyGroup>
+        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Reference the generator project -->
-    <!-- OutputItemType="Analyzer" makes it work as a source generator -->
-    <!--
-    <ProjectReference Include="../AutoNotifyGenerator/AutoNotifyGenerator.csproj" 
-                      OutputItemType="Analyzer" 
-                      ReferenceOutputAssembly="false" />
-    -->
+    <ItemGroup>
+        <!-- Reference the generator project -->
+        <!-- OutputItemType="Analyzer" makes it work as a source generator -->
+        <!--
+        <ProjectReference Include="../AutoNotifyGenerator/AutoNotifyGenerator.csproj" 
+                          OutputItemType="Analyzer" 
+                          ReferenceOutputAssembly="false" />
+        -->
 
-    <Analyzer Include="../.z__merged_dll__/debug-all-types.dll" />
+        <Analyzer Include="../.z__merged_dll__/debug-all-types.dll"/>
 
-    <Analyzer Include="../.z__merged_dll__/FGenerator.dll" Condition=" Exists('../.z__merged_dll__/FGenerator.dll') " />
+        <Analyzer Include="../.z__merged_dll__/FGenerator.dll" Condition=" Exists('../.z__merged_dll__/FGenerator.dll') "/>
 
-    <Analyzer Include="../.z__merged_dll__/FGeneratorDebugger.dll" />
-    <Analyzer Include="../.z__merged_dll__/AutoNotifyGenerator.dll" />
-    <Analyzer Include="../.z__merged_dll__/StackArrayGenerator.dll" />
-    <Analyzer Include="../.z__merged_dll__/StackListGenerator.dll" />
+        <Analyzer Include="../.z__merged_dll__/FGeneratorDebugger.dll"/>
+        <Analyzer Include="../.z__merged_dll__/AutoNotifyGenerator.dll"/>
+        <Analyzer Include="../.z__merged_dll__/StackArrayGenerator.dll"/>
+        <Analyzer Include="../.z__merged_dll__/StackListGenerator.dll"/>
 
-    <Analyzer Include="../.z__merged_dll__/FinalEnumGenerator.dll" />
-    <Analyzer Include="../.z__merged_dll__/EnvObfuscator.dll" />
-    <Analyzer Include="../.z__merged_dll__/DiscoverTest.dll" />
+        <Analyzer Include="../.z__merged_dll__/FinalEnumGenerator.dll"/>
+        <Analyzer Include="../.z__merged_dll__/EnvObfuscator.dll"/>
+        <Analyzer Include="../.z__merged_dll__/DiscoverTest.dll"/>
 
-    <Analyzer Include="../.z__merged_dll__/UnityAsyncMethodAuditor.dll" />
+        <Analyzer Include="../.z__merged_dll__/UnityAsyncMethodAuditor.dll"/>
 
-  </ItemGroup>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FUnit" Version="*-*" />
-    <PackageReference Include="SatorImaging.PragmaAnalyzer" Version="*-*">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="SatorImaging.StaticMemberAnalyzer" Version="*-*">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="FUnit" Version="*-*"/>
+        <PackageReference Include="SatorImaging.PragmaAnalyzer" Version="*-*">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="SatorImaging.StaticMemberAnalyzer" Version="*-*">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
 </Project>

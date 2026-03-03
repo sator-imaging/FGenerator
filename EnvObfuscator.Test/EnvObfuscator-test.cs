@@ -1,19 +1,19 @@
 using EnvObfuscator.Test;
 
-#pragma warning disable SMA0024  // Enum to String
-#pragma warning disable CA1050   // Declare types in namespaces
-#pragma warning disable CS9113   // Parameter is unread.
-#pragma warning disable IDE1006  // Naming Styles
-#pragma warning disable CA1707   // Identifiers should not contain underscores
-#pragma warning disable CA1715   // Identifiers should have correct prefix
-#pragma warning disable CA1816   // Call GC.SuppressFinalize correctly
-#pragma warning disable SMA0040  // Missing Using Statement
-#pragma warning disable SMA0030  // Invalid Struct Constructor
-#pragma warning disable CA1861   // Avoid constant arrays as arguments
-#pragma warning disable SMA0020  // Unchecked Cast to Enum Type
-#pragma warning disable SMA0021  // Cast from Enum Type to Other
-#pragma warning disable IDE0390  // Make method synchronous
-#pragma warning disable IDE0018  // Inline variable declaration
+#pragma warning disable SMA0024 // Enum to String
+#pragma warning disable CA1050 // Declare types in namespaces
+#pragma warning disable CS9113 // Parameter is unread.
+#pragma warning disable IDE1006 // Naming Styles
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1715 // Identifiers should have correct prefix
+#pragma warning disable CA1816 // Call GC.SuppressFinalize correctly
+#pragma warning disable SMA0040 // Missing Using Statement
+#pragma warning disable SMA0030 // Invalid Struct Constructor
+#pragma warning disable CA1861 // Avoid constant arrays as arguments
+#pragma warning disable SMA0020 // Unchecked Cast to Enum Type
+#pragma warning disable SMA0021 // Cast from Enum Type to Other
+#pragma warning disable IDE0390 // Make method synchronous
+#pragma warning disable IDE0018 // Inline variable declaration
 
 return FUnit.Run(args, describe =>
 {
@@ -35,14 +35,12 @@ return FUnit.Run(args, describe =>
 
         it("Decodes lines containing '=' and surrogate pairs", () =>
         {
-            Must.BeEqual("== value can have '=' (base64 value is allowed)", new string(EnvObfuscationTestLoader.EQUAL.Span));
+            Must.BeEqual("== value can have '=' (base64 value is allowed)",
+                new string(EnvObfuscationTestLoader.EQUAL.Span));
             Must.BeEqual("🎉 ← サロゲートペアが必要な絵文字", new string(EnvObfuscationTestLoader.SurrogatePair.Span));
         });
 
-        it("Empty value returns empty", () =>
-        {
-            Must.BeEqual(0, EnvObfuscationTestLoader.EMPTY.Length);
-        });
+        it("Empty value returns empty", () => { Must.BeEqual(0, EnvObfuscationTestLoader.EMPTY.Length); });
 
         it("Validate compares full input", () =>
         {

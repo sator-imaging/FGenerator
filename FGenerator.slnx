@@ -1,8 +1,8 @@
 <Solution>
-  <Project Path="src/FGenerator.csproj" />
-  <Project Path="cli/FGenerator.Cli.csproj" />
-  <Project Path="EnvObfuscator.Test/EnvObfuscator.Test.csproj" />
-  <Project Path="FinalEnumGenerator.Test/FinalEnumGenerator.Test.csproj" />
-  <Project Path="MacroDotNet.Test/MacroDotNet.Test.csproj" />
-  <Project Path="sandbox/FGenerator.Sandbox.csproj" />
+    <Project Path="src/FGenerator.csproj"/>
+    <Project Path="cli/FGenerator.Cli.csproj"/>
+    <Project Path="EnvObfuscator.Test/EnvObfuscator.Test.csproj"/>
+    <Project Path="FinalEnumGenerator.Test/FinalEnumGenerator.Test.csproj"/>
+    <Project Path="MacroDotNet.Test/MacroDotNet.Test.csproj"/>
+    <Project Path="sandbox/FGenerator.Sandbox.csproj"/>
 </Solution>

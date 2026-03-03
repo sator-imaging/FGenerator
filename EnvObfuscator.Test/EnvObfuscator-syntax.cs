@@ -7,63 +7,80 @@
 ///* a=b */
 //[EnvObfuscator.Obfuscate(310)] partial class zinke { }
 
-namespace EnvObfuscator.Test
+namespace EnvObfuscator.Test;
+
+public partial class EnvContainer
 {
-    public partial class EnvContainer
+    public static readonly string CacheJA = EnvObfuscationTestLoader.JA.ToString();
+
+    /* TEST: Another comment block before env & blank lines after env comment */
+
+    /*
+    # ◆ comment
+    Value=XX
+    OTHER=XX
+
+    # traling whitespace is trimmed
+    EMPTY=
+
+    JA=アメンボ赤いな HAHIFUHE FOOOOO
+
+    # leading whitespace is ignored
+       WHITE_SPACE  =      START    END   \r\n
+
+    EQUAL=== value can have '=' (base64 value is allowed)
+    SurrogatePair=🎉 ← サロゲートペアが必要な絵文字
+    */
+
+    [Obfuscate()]
+    public static class EnvObfuscationTest
     {
-        public static readonly string CacheJA = EnvObfuscationTestLoader.JA.ToString();
-
-        /* TEST: Another comment block before env & blank lines after env comment */
-
-        /*
-        # ◆ comment
-        Value=XX
-        OTHER=XX
-
-        # traling whitespace is trimmed
-        EMPTY=
-
-        JA=アメンボ赤いな HAHIFUHE FOOOOO
-
-        # leading whitespace is ignored
-           WHITE_SPACE  =      START    END   \r\n
-
-        EQUAL=== value can have '=' (base64 value is allowed)
-        SurrogatePair=🎉 ← サロゲートペアが必要な絵文字
-        */
-
-        [Obfuscate()]
-        public static partial class EnvObfuscationTest
-        {
-        }
-
-
-
-        [Obfuscate] partial class NoEnvComment { }
-
-        // TEST: Syntax (Warning)
-        [Obfuscate] partial class UnsupportedTrivia { }
-
-        /* */
-        [Obfuscate] partial class NoValidEnvEntries { }
-
-        /* a=b
-        NO_EQUAL_CAUSES_WARNING */
-        [Obfuscate] partial class InvalidEnvIgnored { }
-
-        /* a=b */
-        [Obfuscate(0)] partial class SeedZeroProducesDeterministicBuild { }
-        /* a=b */
-        [Obfuscate(seed: 0)] partial class SeedZeroProducesDeterministicBuildWithPrefix { }
-
-
-        //// TEST: ERROR
-
-        //[Obfuscate] class NotPartial { }
-
-        ///* 1foo=bar */
-        //[Obfuscate] partial class InvalidKeyName { }
-
-        // TODO: Invalid obfuscation key error cannot be tested (likely never happens...?)
     }
+
+
+    [Obfuscate]
+    private class NoEnvComment
+    {
+    }
+
+    // TEST: Syntax (Warning)
+    [Obfuscate]
+    private class UnsupportedTrivia
+    {
+    }
+
+    /* */
+    [Obfuscate]
+    private class NoValidEnvEntries
+    {
+    }
+
+    /* a=b
+    NO_EQUAL_CAUSES_WARNING */
+    [Obfuscate]
+    private class InvalidEnvIgnored
+    {
+    }
+
+    /* a=b */
+    [Obfuscate(0)]
+    private class SeedZeroProducesDeterministicBuild
+    {
+    }
+
+    /* a=b */
+    [Obfuscate(seed: 0)]
+    private class SeedZeroProducesDeterministicBuildWithPrefix
+    {
+    }
+
+
+    //// TEST: ERROR
+
+    //[Obfuscate] class NotPartial { }
+
+    ///* 1foo=bar */
+    //[Obfuscate] partial class InvalidKeyName { }
+
+    // TODO: Invalid obfuscation key error cannot be tested (likely never happens...?)
 }

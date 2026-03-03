@@ -1,563 +1,534 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
-namespace FGenerator
+namespace FGenerator;
+
+/// <summary>
+///     Helper extensions for rendering symbol names and composing generated source scaffolding.
+/// </summary>
+public static class Utils
 {
+    private const string IndexerDisplayName = "Item";
+
+
+    private const string DefaultSeparator = "_";
+
+
+    private const string DeclarationOpenBrace = " {";
+    private const int IndentSize = 0;
+    private const char IndentChar = ' ';
+
     /// <summary>
-    /// Helper extensions for rendering symbol names and composing generated source scaffolding.
+    ///     Builds a generated file hint name for the target (including ".g.cs").
     /// </summary>
-    public static class Utils
+    public static string ToHintName(this Target target)
     {
-        private const string IndexerDisplayName = "Item";
+        return target.RawSymbol.ToHintName();
+    }
 
-        /// <summary>
-        /// Builds a generated file hint name for the target (including ".g.cs").
-        /// </summary>
-        public static string ToHintName(this Target target) => ToHintName(target.RawSymbol);
+    /// <summary>
+    ///     Builds a generated file hint name (including ".g.cs") for the symbol.
+    /// </summary>
+    public static string ToHintName(this ISymbol symbol)
+    {
+        return symbol.ToAssemblyUniqueIdentifier(".") + ".g.cs";
+    }
 
-        /// <summary>
-        /// Builds a generated file hint name (including ".g.cs") for the symbol.
-        /// </summary>
-        public static string ToHintName(this ISymbol symbol) => ToAssemblyUniqueIdentifier(symbol, separator: ".") + ".g.cs";
+    /// <inheritdoc cref="ToAssemblyUniqueIdentifier(ISymbol, string)" />
+    public static string ToAssemblyUniqueIdentifier(this Target target, string separator = DefaultSeparator)
+    {
+        return target.RawSymbol.ToAssemblyUniqueIdentifier(separator);
+    }
 
+    /// <summary>
+    ///     Builds an identifier string that is intended to be unique within an assembly
+    ///     by including the symbol's containing namespace, types, and signature.
+    ///     Uses <paramref name="separator" /> to separate namespaces, types, and signature components.
+    /// </summary>
+    public static string ToAssemblyUniqueIdentifier(this ISymbol symbol, string separator = DefaultSeparator)
+    {
+        var sb = new StringBuilder(128);
 
-        const string DefaultSeparator = "_";
-
-        /// <inheritdoc cref="ToAssemblyUniqueIdentifier(ISymbol, string)"/>
-        public static string ToAssemblyUniqueIdentifier(this Target target, string separator = DefaultSeparator)
-            => ToAssemblyUniqueIdentifier(target.RawSymbol, separator);
-
-        /// <summary>
-        /// Builds an identifier string that is intended to be unique within an assembly
-        /// by including the symbol's containing namespace, types, and signature.
-        /// Uses <paramref name="separator"/> to separate namespaces, types, and signature components.
-        /// </summary>
-        public static string ToAssemblyUniqueIdentifier(this ISymbol symbol, string separator = DefaultSeparator)
+        if (symbol.ContainingNamespace != null && !symbol.ContainingNamespace.IsGlobalNamespace)
         {
-            var sb = new StringBuilder(capacity: 128);
+            sb.Append(symbol.ContainingNamespace.ToDisplayString());
+            sb.Append(separator);
+        }
 
-            if (symbol.ContainingNamespace != null && !symbol.ContainingNamespace.IsGlobalNamespace)
+        foreach (var containing in GetContainingTypes(symbol, out _))
+        {
+            AppendNameWithGenericTypeParameterCount(sb, containing);
+            sb.Append(separator);
+        }
+
+        if (GetExplicitInterfaceImplementationSymbol(symbol) is ISymbol iface)
+        {
+            AppendNameWithGenericTypeParameterCount(sb, iface);
+            sb.Append(separator);
+        }
+
+        AppendNameWithGenericTypeParameterCount(sb, symbol);
+
+        if (symbol is IPropertySymbol property &&
+            property.IsIndexer)
+            for (var i = 0; i < property.Parameters.Length; i++)
             {
-                sb.Append(symbol.ContainingNamespace.ToDisplayString());
                 sb.Append(separator);
+                AppendNameWithGenericTypeParameterCount(sb, property.Parameters[i].Type);
             }
-
-            foreach (var containing in GetContainingTypes(symbol, out _))
+        else if (symbol is IMethodSymbol method)
+            for (var i = 0; i < method.Parameters.Length; i++)
             {
-                AppendNameWithGenericTypeParameterCount(sb, containing);
                 sb.Append(separator);
-            }
 
-            if (GetExplicitInterfaceImplementationSymbol(symbol) is ISymbol iface)
-            {
-                AppendNameWithGenericTypeParameterCount(sb, iface);
-                sb.Append(separator);
-            }
-
-            AppendNameWithGenericTypeParameterCount(sb, symbol);
-
-            if (symbol is IPropertySymbol property &&
-                property.IsIndexer)
-            {
-                for (int i = 0; i < property.Parameters.Length; i++)
+                var p = method.Parameters[i];
+                if (p.RefKind != RefKind.None)
                 {
+                    sb.Append(p.RefKind.ToString().ToLowerInvariant());
                     sb.Append(separator);
-                    AppendNameWithGenericTypeParameterCount(sb, property.Parameters[i].Type);
-                }
-            }
-            else if (symbol is IMethodSymbol method)
-            {
-                for (int i = 0; i < method.Parameters.Length; i++)
-                {
-                    sb.Append(separator);
-
-                    var p = method.Parameters[i];
-                    if (p.RefKind != RefKind.None)
-                    {
-                        sb.Append(p.RefKind.ToString().ToLowerInvariant());
-                        sb.Append(separator);
-                    }
-
-                    AppendNameWithGenericTypeParameterCount(sb, p.Type);
-                }
-            }
-
-            sb.Replace(".", separator);  // namespace
-            sb.Replace("+", separator);  // nested type (maybe)
-
-            return sb.ToString();
-        }
-
-
-        internal static ImmutableStack<INamedTypeSymbol> GetContainingTypes(ISymbol target, out int numberOfTypes)
-        {
-            var result = ImmutableStack<INamedTypeSymbol>.Empty;
-
-            int count = 0;
-            for (var current = target.ContainingType; current != null; current = current.ContainingType)
-            {
-                count++;
-                result = result.Push(current);
-            }
-
-            numberOfTypes = count;
-            return result;
-        }
-
-        private static void AppendNameWithGenericTypeParameterCount(StringBuilder sb, ISymbol symbol)
-        {
-            if (symbol is IPropertySymbol { IsIndexer: true })
-            {
-                sb.Append(IndexerDisplayName);
-            }
-            else
-            {
-                sb.Append(symbol.Name);
-            }
-
-            int typeParamCount = 0;
-            if (symbol is INamedTypeSymbol nts)
-            {
-                typeParamCount = nts.TypeParameters.Length;
-            }
-            else if (symbol is IMethodSymbol ms)
-            {
-                typeParamCount = ms.TypeParameters.Length;
-            }
-
-            if (typeParamCount > 0)
-            {
-                sb.Append('T');
-                sb.Append(typeParamCount);
-            }
-        }
-
-
-        const string DeclarationOpenBrace = " {";
-        const int IndentSize = 0;
-        const char IndentChar = ' ';
-
-        /// <summary>
-        /// Builds the namespace and containing type openings for the target (partial, nested/generic aware).
-        /// </summary>
-        public static string ToNamespaceAndContainingTypeDeclarations(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
-            => ToNamespaceAndContainingTypeDeclarations(target.RawSymbol, indentSize, indentChar);
-
-        /// <summary>
-        /// Builds the namespace and containing type openings for the symbol (partial, nested/generic aware).
-        /// </summary>
-        public static string ToNamespaceAndContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
-        {
-            var sb = new StringBuilder(capacity: 256);
-
-            if (symbol is not ITypeSymbol typeSymbol)
-            {
-                typeSymbol = symbol.ContainingType;
-            }
-
-            var hasNamespace = false;
-            if (!typeSymbol.ContainingNamespace.IsGlobalNamespace)
-            {
-                sb.Append("namespace ");
-                sb.Append(typeSymbol.ContainingNamespace.ToDisplayString());
-                hasNamespace = true;
-            }
-
-            AppendContainingTypeDeclarations(sb, typeSymbol, hasNamespace, indentSize, indentChar);
-
-            return sb.ToString();
-        }
-
-
-        /// <summary>
-        /// Builds containing type openings for the target (partial, nested/generic aware).
-        /// </summary>
-        internal static string ToContainingTypeDeclarations(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
-            => ToContainingTypeDeclarations(target.RawSymbol, indentSize, indentChar);
-
-        /// <summary>
-        /// Builds containing type openings for the symbol (partial, nested/generic aware).
-        /// </summary>
-        internal static string ToContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
-        {
-            var sb = new StringBuilder(capacity: 256);
-
-            if (symbol is not ITypeSymbol typeSymbol)
-            {
-                typeSymbol = symbol.ContainingType;
-            }
-
-            AppendContainingTypeDeclarations(sb, typeSymbol, addNamespaceOpenBrace: false, indentSize, indentChar);
-
-            return sb.ToString();
-        }
-
-        private static int AppendContainingTypeDeclarations(
-            StringBuilder sb,
-            ITypeSymbol typeSymbol,
-            bool addNamespaceOpenBrace,
-            int indentSize,
-            char indentChar
-        )
-        {
-            var containingTypes = GetContainingTypes(typeSymbol, out var numContainingTypes);
-
-            int i = -1;
-            foreach (var con in containingTypes)
-            {
-                i++;
-                if (i != 0 || addNamespaceOpenBrace)
-                {
-                    sb.AppendLine(DeclarationOpenBrace);
                 }
 
-                if (indentSize > 0)
-                {
-                    sb.Append(indentChar, indentSize * (1 + i));
-                }
-
-                sb.Append("partial ");
-                sb.Append(con.ToDeclarationString());
+                AppendNameWithGenericTypeParameterCount(sb, p.Type);
             }
 
-            if (!containingTypes.IsEmpty || addNamespaceOpenBrace)
-            {
-                sb.AppendLine();
-                sb.Append('{');
-            }
+        sb.Replace(".", separator); // namespace
+        sb.Replace("+", separator); // nested type (maybe)
 
-            return numContainingTypes;
-        }
+        return sb.ToString();
+    }
 
 
-        /// <summary>
-        /// Builds closing braces for namespace/containing types opened by <see cref="ToNamespaceAndContainingTypeDeclarations(Target, int, char)"/>.
-        /// </summary>
-        public static string ToNamespaceAndContainingTypeClosingBraces(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
-            => ToNamespaceAndContainingTypeClosingBraces(target.RawSymbol, indentSize, indentChar);
+    internal static ImmutableStack<INamedTypeSymbol> GetContainingTypes(ISymbol target, out int numberOfTypes)
+    {
+        var result = ImmutableStack<INamedTypeSymbol>.Empty;
 
-        /// <summary>
-        /// Builds closing braces for namespace/containing types opened by <see cref="ToNamespaceAndContainingTypeDeclarations(ISymbol, int, char)"/>.
-        /// </summary>
-        public static string ToNamespaceAndContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
+        var count = 0;
+        for (var current = target.ContainingType; current != null; current = current.ContainingType)
         {
-            var sb = new StringBuilder(capacity: 16);
-
-            var typeSymbol = symbol is ITypeSymbol ts ? ts : symbol.ContainingType;
-            AppendContainingTypeClosingBraces(sb, typeSymbol, !typeSymbol.ContainingNamespace.IsGlobalNamespace, indentSize, indentChar);
-
-            var result = sb.ToString();
-            return result;
+            count++;
+            result = result.Push(current);
         }
 
+        numberOfTypes = count;
+        return result;
+    }
 
-        /// <summary>
-        /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(Target, int, char)"/>.
-        /// </summary>
-        internal static string ToContainingTypeClosingBraces(this Target target, int indentSize = IndentSize, char indentChar = IndentChar)
-            => ToContainingTypeClosingBraces(target.RawSymbol, indentSize, indentChar);
+    private static void AppendNameWithGenericTypeParameterCount(StringBuilder sb, ISymbol symbol)
+    {
+        if (symbol is IPropertySymbol { IsIndexer: true })
+            sb.Append(IndexerDisplayName);
+        else
+            sb.Append(symbol.Name);
 
-        /// <summary>
-        /// Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(ISymbol, int, char)"/>.
-        /// </summary>
-        internal static string ToContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize, char indentChar = IndentChar)
+        var typeParamCount = 0;
+        if (symbol is INamedTypeSymbol nts)
+            typeParamCount = nts.TypeParameters.Length;
+        else if (symbol is IMethodSymbol ms) typeParamCount = ms.TypeParameters.Length;
+
+        if (typeParamCount > 0)
         {
-            var sb = new StringBuilder(capacity: 16);
-
-            var typeSymbol = symbol is ITypeSymbol ts ? ts : symbol.ContainingType;
-            AppendContainingTypeClosingBraces(sb, typeSymbol, addNamespaceCloseBrace: false, indentSize, indentChar);
-
-            var result = sb.ToString();
-            return result;
+            sb.Append('T');
+            sb.Append(typeParamCount);
         }
+    }
 
-        private static int AppendContainingTypeClosingBraces(
-            StringBuilder sb,
-            ISymbol symbol,
-            bool addNamespaceCloseBrace,
-            int indentSize,
-            char indentChar)
+    /// <summary>
+    ///     Builds the namespace and containing type openings for the target (partial, nested/generic aware).
+    /// </summary>
+    public static string ToNamespaceAndContainingTypeDeclarations(this Target target, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        return target.RawSymbol.ToNamespaceAndContainingTypeDeclarations(indentSize, indentChar);
+    }
+
+    /// <summary>
+    ///     Builds the namespace and containing type openings for the symbol (partial, nested/generic aware).
+    /// </summary>
+    public static string ToNamespaceAndContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        var sb = new StringBuilder(256);
+
+        if (symbol is not ITypeSymbol typeSymbol) typeSymbol = symbol.ContainingType;
+
+        var hasNamespace = false;
+        if (!typeSymbol.ContainingNamespace.IsGlobalNamespace)
         {
-            var containingTypes = GetContainingTypes(symbol, out var numContainingTypes);
-
-            int indentLevel = numContainingTypes;
-
-            int i = -1;
-            foreach (var _ in containingTypes)
-            {
-                i++;
-                if (i != 0)
-                {
-                    sb.AppendLine();
-                }
-
-                if (indentSize > 0)
-                {
-                    sb.Append(indentChar, indentSize * indentLevel);
-                    indentLevel--;
-                }
-
-                sb.Append('}');
-            }
-
-            if (addNamespaceCloseBrace)
-            {
-                if (numContainingTypes != 0)
-                {
-                    sb.AppendLine();
-                }
-                sb.Append('}');
-            }
-
-            return numContainingTypes;
+            sb.Append("namespace ");
+            sb.Append(typeSymbol.ContainingNamespace.ToDisplayString());
+            hasNamespace = true;
         }
 
+        AppendContainingTypeDeclarations(sb, typeSymbol, hasNamespace, indentSize, indentChar);
 
-        /// <summary>
-        /// Renders a display name for the target with options for qualification, generics, and nullability.
-        /// When fully qualified (default), includes the 'global::' prefix.
-        /// </summary>
-        public static string ToNameString(
-            this Target target,
-            bool localName = false,
-            bool noGeneric = false,
-            bool noNullable = false)
-            => ToNameString(target.RawSymbol, localName, noGeneric, noNullable);
+        return sb.ToString();
+    }
 
-        /// <summary>
-        /// Renders a display name for the symbol with options for qualification, generics, and nullability.
-        /// When fully qualified (default), includes the 'global::' prefix.
-        /// </summary>
-        public static string ToNameString(
-            this ISymbol symbol,
-            bool localName = false,
-            bool noGeneric = false,
-            bool noNullable = false)
+
+    /// <summary>
+    ///     Builds containing type openings for the target (partial, nested/generic aware).
+    /// </summary>
+    internal static string ToContainingTypeDeclarations(this Target target, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        return target.RawSymbol.ToContainingTypeDeclarations(indentSize, indentChar);
+    }
+
+    /// <summary>
+    ///     Builds containing type openings for the symbol (partial, nested/generic aware).
+    /// </summary>
+    internal static string ToContainingTypeDeclarations(this ISymbol symbol, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        var sb = new StringBuilder(256);
+
+        if (symbol is not ITypeSymbol typeSymbol) typeSymbol = symbol.ContainingType;
+
+        AppendContainingTypeDeclarations(sb, typeSymbol, false, indentSize, indentChar);
+
+        return sb.ToString();
+    }
+
+    private static int AppendContainingTypeDeclarations(
+        StringBuilder sb,
+        ITypeSymbol typeSymbol,
+        bool addNamespaceOpenBrace,
+        int indentSize,
+        char indentChar
+    )
+    {
+        var containingTypes = GetContainingTypes(typeSymbol, out var numContainingTypes);
+
+        var i = -1;
+        foreach (var con in containingTypes)
         {
-            var format = new SymbolDisplayFormat(
-                globalNamespaceStyle:
-                    localName
-                        ? SymbolDisplayGlobalNamespaceStyle.Omitted
-                        : SymbolDisplayGlobalNamespaceStyle.Included,
-                typeQualificationStyle:
-                    localName
-                        ? SymbolDisplayTypeQualificationStyle.NameOnly
-                        : SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-                genericsOptions:
-                    noGeneric
-                        ? SymbolDisplayGenericsOptions.None
-                        : SymbolDisplayGenericsOptions.IncludeTypeParameters |
-                          SymbolDisplayGenericsOptions.IncludeVariance,
-                memberOptions: SymbolDisplayMemberOptions.None,
-                delegateStyle: SymbolDisplayDelegateStyle.NameOnly,
-                extensionMethodStyle: SymbolDisplayExtensionMethodStyle.Default,
-                parameterOptions: SymbolDisplayParameterOptions.None,
-                propertyStyle: SymbolDisplayPropertyStyle.NameOnly,
-                localOptions: SymbolDisplayLocalOptions.None,
-                kindOptions: SymbolDisplayKindOptions.None,
-                miscellaneousOptions:
-                    SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
-                    SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
-                    SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral
-                    | (noNullable
-                        ? SymbolDisplayMiscellaneousOptions.None
-                        : //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
-                          SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-                    )
-            );
+            i++;
+            if (i != 0 || addNamespaceOpenBrace) sb.AppendLine(DeclarationOpenBrace);
 
-            var result = symbol.ToDisplayString(format);
+            if (indentSize > 0) sb.Append(indentChar, indentSize * (1 + i));
 
-            if (symbol is IPropertySymbol { IsIndexer: true } && result == "this")
-            {
-                result = IndexerDisplayName;
-            }
-
-            if (!localName)
-            {
-                var eii = GetExplicitInterfaceImplementationSymbol(symbol);
-                if (eii != null)
-                {
-                    // DO NOT forward arguments!!
-                    var prefix = eii.ToNameString(localName: false, noGeneric: false, noNullable: false);
-
-                    result = $"{prefix}.{result}";
-                }
-            }
-
-            return result;
+            sb.Append("partial ");
+            sb.Append(con.ToDeclarationString());
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ISymbol? GetExplicitInterfaceImplementationSymbol(ISymbol symbol)
+        if (!containingTypes.IsEmpty || addNamespaceOpenBrace)
         {
-            if (symbol is IMethodSymbol ms && !ms.ExplicitInterfaceImplementations.IsEmpty)
-            {
-                return ms.ExplicitInterfaceImplementations.FirstOrDefault()?.ContainingType;
-            }
-            else if (symbol is IPropertySymbol ps && !ps.ExplicitInterfaceImplementations.IsEmpty)
-            {
-                return ps.ExplicitInterfaceImplementations.FirstOrDefault()?.ContainingType;
-            }
-            else if (symbol is IEventSymbol es && !es.ExplicitInterfaceImplementations.IsEmpty)
-            {
-                return es.ExplicitInterfaceImplementations.FirstOrDefault()?.ContainingType;
-            }
-            else
-            {
-                return null;
-            }
+            sb.AppendLine();
+            sb.Append('{');
         }
 
+        return numContainingTypes;
+    }
 
-        /// <summary>
-        /// Renders a declaration-style string for the target (optionally including modifiers and generic constraints).
-        /// </summary>
-        public static string ToDeclarationString(
-            this Target target,
-            bool modifiers = false,
-            bool genericConstraints = false)
-            => ToDeclarationString(target.RawSymbol, modifiers, genericConstraints);
 
-        /// <summary>
-        /// Renders a declaration-style string for the symbol (optionally including modifiers and generic constraints).
-        /// </summary>
-        public static string ToDeclarationString(
-            this ISymbol symbol,
-            bool modifiers = false,
-            bool genericConstraints = false)
+    /// <summary>
+    ///     Builds closing braces for namespace/containing types opened by
+    ///     <see cref="ToNamespaceAndContainingTypeDeclarations(Target, int, char)" />.
+    /// </summary>
+    public static string ToNamespaceAndContainingTypeClosingBraces(this Target target, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        return target.RawSymbol.ToNamespaceAndContainingTypeClosingBraces(indentSize, indentChar);
+    }
+
+    /// <summary>
+    ///     Builds closing braces for namespace/containing types opened by
+    ///     <see cref="ToNamespaceAndContainingTypeDeclarations(ISymbol, int, char)" />.
+    /// </summary>
+    public static string ToNamespaceAndContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        var sb = new StringBuilder(16);
+
+        var typeSymbol = symbol is ITypeSymbol ts ? ts : symbol.ContainingType;
+        AppendContainingTypeClosingBraces(sb, typeSymbol, !typeSymbol.ContainingNamespace.IsGlobalNamespace, indentSize,
+            indentChar);
+
+        var result = sb.ToString();
+        return result;
+    }
+
+
+    /// <summary>
+    ///     Builds closing braces for containing types opened by <see cref="ToContainingTypeDeclarations(Target, int, char)" />
+    ///     .
+    /// </summary>
+    internal static string ToContainingTypeClosingBraces(this Target target, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        return target.RawSymbol.ToContainingTypeClosingBraces(indentSize, indentChar);
+    }
+
+    /// <summary>
+    ///     Builds closing braces for containing types opened by
+    ///     <see cref="ToContainingTypeDeclarations(ISymbol, int, char)" />.
+    /// </summary>
+    internal static string ToContainingTypeClosingBraces(this ISymbol symbol, int indentSize = IndentSize,
+        char indentChar = IndentChar)
+    {
+        var sb = new StringBuilder(16);
+
+        var typeSymbol = symbol is ITypeSymbol ts ? ts : symbol.ContainingType;
+        AppendContainingTypeClosingBraces(sb, typeSymbol, false, indentSize, indentChar);
+
+        var result = sb.ToString();
+        return result;
+    }
+
+    private static int AppendContainingTypeClosingBraces(
+        StringBuilder sb,
+        ISymbol symbol,
+        bool addNamespaceCloseBrace,
+        int indentSize,
+        char indentChar)
+    {
+        var containingTypes = GetContainingTypes(symbol, out var numContainingTypes);
+
+        var indentLevel = numContainingTypes;
+
+        var i = -1;
+        foreach (var _ in containingTypes)
         {
-            // NOTE: if enabled, 'private' modifier will be emitted.
-            if (GetExplicitInterfaceImplementationSymbol(symbol) != null)
+            i++;
+            if (i != 0) sb.AppendLine();
+
+            if (indentSize > 0)
             {
-                modifiers = false;
+                sb.Append(indentChar, indentSize * indentLevel);
+                indentLevel--;
             }
 
-            var format = new SymbolDisplayFormat(
-                globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
-                typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
-                genericsOptions:
-                    SymbolDisplayGenericsOptions.IncludeTypeParameters |
-                    SymbolDisplayGenericsOptions.IncludeVariance
-                    | (!genericConstraints
-                        ? SymbolDisplayGenericsOptions.None
-                        : SymbolDisplayGenericsOptions.IncludeTypeConstraints
-                    ),
-                memberOptions:
-                    SymbolDisplayMemberOptions.IncludeConstantValue |
-                    SymbolDisplayMemberOptions.IncludeExplicitInterface |
-                    SymbolDisplayMemberOptions.IncludeParameters |
-                    SymbolDisplayMemberOptions.IncludeRef |
-                    SymbolDisplayMemberOptions.IncludeType
-                    | (!modifiers
-                        ? SymbolDisplayMemberOptions.None
-                        : SymbolDisplayMemberOptions.IncludeAccessibility |
-                          SymbolDisplayMemberOptions.IncludeModifiers
-                    ),
-                delegateStyle: SymbolDisplayDelegateStyle.NameAndSignature,
-                extensionMethodStyle: SymbolDisplayExtensionMethodStyle.InstanceMethod,
-                parameterOptions:
-                    SymbolDisplayParameterOptions.IncludeDefaultValue |
-                    SymbolDisplayParameterOptions.IncludeExtensionThis |
-                    SymbolDisplayParameterOptions.IncludeName |
-                    SymbolDisplayParameterOptions.IncludeOptionalBrackets |
-                    SymbolDisplayParameterOptions.IncludeParamsRefOut |
-                    SymbolDisplayParameterOptions.IncludeType,
-                propertyStyle: SymbolDisplayPropertyStyle.ShowReadWriteDescriptor,
-                localOptions:
-                    SymbolDisplayLocalOptions.IncludeConstantValue |
-                    SymbolDisplayLocalOptions.IncludeRef |
-                    SymbolDisplayLocalOptions.IncludeType,
-                kindOptions:
-                    SymbolDisplayKindOptions.IncludeMemberKeyword |
-                    SymbolDisplayKindOptions.IncludeNamespaceKeyword |
-                    SymbolDisplayKindOptions.IncludeTypeKeyword,
-                miscellaneousOptions:
-                    SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
-                    SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
-                    SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral |
-                    //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
-                    SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-            );
-
-            var result = symbol.ToDisplayString(format);
-
-            // TODO: support 'async' by SymbolDisplayFormat.
-            // NOTE: always include 'async' keyword as it changes actual method implementation.
-            if (//modifiers &&
-                symbol is IMethodSymbol method && method.IsAsync)
-            {
-                result = "async " + result;
-            }
-
-            if (modifiers &&
-                symbol is ITypeSymbol typeSymbol)
-            {
-                result = GetTypeModifiers(typeSymbol) + result;
-            }
-
-            // NOTE: keyword order 'partial (readonly|ref) struct' is invalid.
-            if (!modifiers)
-            {
-                result = result.Replace("readonly ", string.Empty)
-                               .Replace("ref ", string.Empty);
-            }
-
-            return result;
+            sb.Append('}');
         }
 
-        private static string GetTypeModifiers(ITypeSymbol symbol)
+        if (addNamespaceCloseBrace)
         {
-            var sb = new StringBuilder(capacity: 64);
-
-            sb.Append(symbol.ToVisibilityString());
-
-            // ===== Modifiers =====
-            // abstract (class/interface)
-            if (symbol.IsAbstract &&
-                symbol.TypeKind != TypeKind.Interface) // interfaces implied
-            {
-                sb.Append("abstract ");
-            }
-
-            // sealed
-            if (symbol.IsSealed &&
-                !symbol.IsValueType &&
-                symbol.TypeKind != TypeKind.Enum && // enums are implicitly sealed
-                symbol.TypeKind != TypeKind.Delegate)
-            {
-                sb.Append("sealed ");
-            }
-
-            // static
-            if (symbol.IsStatic)
-            {
-                sb.Append("static ");
-            }
-
-            return sb.ToString();
+            if (numContainingTypes != 0) sb.AppendLine();
+            sb.Append('}');
         }
 
+        return numContainingTypes;
+    }
 
-        /// <summary>
-        /// Converts the target's declared accessibility into a keyword string that includes a trailing space (e.g., "public ").
-        /// </summary>
-        public static string ToVisibilityString(this Target target) => ToVisibilityString(target.RawSymbol);
 
-        /// <summary>
-        /// Converts the symbol's declared accessibility into a keyword string that includes a trailing space (e.g., "public ").
-        /// </summary>
-        public static string ToVisibilityString(this ISymbol symbol)
+    /// <summary>
+    ///     Renders a display name for the target with options for qualification, generics, and nullability.
+    ///     When fully qualified (default), includes the 'global::' prefix.
+    /// </summary>
+    public static string ToNameString(
+        this Target target,
+        bool localName = false,
+        bool noGeneric = false,
+        bool noNullable = false)
+    {
+        return target.RawSymbol.ToNameString(localName, noGeneric, noNullable);
+    }
+
+    /// <summary>
+    ///     Renders a display name for the symbol with options for qualification, generics, and nullability.
+    ///     When fully qualified (default), includes the 'global::' prefix.
+    /// </summary>
+    public static string ToNameString(
+        this ISymbol symbol,
+        bool localName = false,
+        bool noGeneric = false,
+        bool noNullable = false)
+    {
+        var format = new SymbolDisplayFormat(
+            localName
+                ? SymbolDisplayGlobalNamespaceStyle.Omitted
+                : SymbolDisplayGlobalNamespaceStyle.Included,
+            localName
+                ? SymbolDisplayTypeQualificationStyle.NameOnly
+                : SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+            noGeneric
+                ? SymbolDisplayGenericsOptions.None
+                : SymbolDisplayGenericsOptions.IncludeTypeParameters |
+                  SymbolDisplayGenericsOptions.IncludeVariance,
+            SymbolDisplayMemberOptions.None,
+            SymbolDisplayDelegateStyle.NameOnly,
+            SymbolDisplayExtensionMethodStyle.Default,
+            SymbolDisplayParameterOptions.None,
+            SymbolDisplayPropertyStyle.NameOnly,
+            SymbolDisplayLocalOptions.None,
+            SymbolDisplayKindOptions.None,
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+            SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+            SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral
+            | (noNullable
+                ? SymbolDisplayMiscellaneousOptions.None
+                : //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
+                SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+            )
+        );
+
+        var result = symbol.ToDisplayString(format);
+
+        if (symbol is IPropertySymbol { IsIndexer: true } && result == "this") result = IndexerDisplayName;
+
+        if (!localName)
         {
-            var text = SyntaxFacts.GetText(symbol.DeclaredAccessibility);
-            return string.IsNullOrEmpty(text) ? string.Empty : text + " ";
+            var eii = GetExplicitInterfaceImplementationSymbol(symbol);
+            if (eii != null)
+            {
+                // DO NOT forward arguments!!
+                var prefix = eii.ToNameString();
+
+                result = $"{prefix}.{result}";
+            }
         }
+
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ISymbol? GetExplicitInterfaceImplementationSymbol(ISymbol symbol)
+    {
+        if (symbol is IMethodSymbol ms && !ms.ExplicitInterfaceImplementations.IsEmpty)
+            return ms.ExplicitInterfaceImplementations.FirstOrDefault()?.ContainingType;
+
+        if (symbol is IPropertySymbol ps && !ps.ExplicitInterfaceImplementations.IsEmpty)
+            return ps.ExplicitInterfaceImplementations.FirstOrDefault()?.ContainingType;
+
+        if (symbol is IEventSymbol es && !es.ExplicitInterfaceImplementations.IsEmpty)
+            return es.ExplicitInterfaceImplementations.FirstOrDefault()?.ContainingType;
+
+        return null;
+    }
+
+
+    /// <summary>
+    ///     Renders a declaration-style string for the target (optionally including modifiers and generic constraints).
+    /// </summary>
+    public static string ToDeclarationString(
+        this Target target,
+        bool modifiers = false,
+        bool genericConstraints = false)
+    {
+        return target.RawSymbol.ToDeclarationString(modifiers, genericConstraints);
+    }
+
+    /// <summary>
+    ///     Renders a declaration-style string for the symbol (optionally including modifiers and generic constraints).
+    /// </summary>
+    public static string ToDeclarationString(
+        this ISymbol symbol,
+        bool modifiers = false,
+        bool genericConstraints = false)
+    {
+        // NOTE: if enabled, 'private' modifier will be emitted.
+        if (GetExplicitInterfaceImplementationSymbol(symbol) != null) modifiers = false;
+
+        var format = new SymbolDisplayFormat(
+            SymbolDisplayGlobalNamespaceStyle.Omitted,
+            SymbolDisplayTypeQualificationStyle.NameOnly,
+            SymbolDisplayGenericsOptions.IncludeTypeParameters |
+            SymbolDisplayGenericsOptions.IncludeVariance
+            | (!genericConstraints
+                ? SymbolDisplayGenericsOptions.None
+                : SymbolDisplayGenericsOptions.IncludeTypeConstraints
+            ),
+            SymbolDisplayMemberOptions.IncludeConstantValue |
+            SymbolDisplayMemberOptions.IncludeExplicitInterface |
+            SymbolDisplayMemberOptions.IncludeParameters |
+            SymbolDisplayMemberOptions.IncludeRef |
+            SymbolDisplayMemberOptions.IncludeType
+            | (!modifiers
+                ? SymbolDisplayMemberOptions.None
+                : SymbolDisplayMemberOptions.IncludeAccessibility |
+                  SymbolDisplayMemberOptions.IncludeModifiers
+            ),
+            SymbolDisplayDelegateStyle.NameAndSignature,
+            SymbolDisplayExtensionMethodStyle.InstanceMethod,
+            SymbolDisplayParameterOptions.IncludeDefaultValue |
+            SymbolDisplayParameterOptions.IncludeExtensionThis |
+            SymbolDisplayParameterOptions.IncludeName |
+            SymbolDisplayParameterOptions.IncludeOptionalBrackets |
+            SymbolDisplayParameterOptions.IncludeParamsRefOut |
+            SymbolDisplayParameterOptions.IncludeType,
+            SymbolDisplayPropertyStyle.ShowReadWriteDescriptor,
+            SymbolDisplayLocalOptions.IncludeConstantValue |
+            SymbolDisplayLocalOptions.IncludeRef |
+            SymbolDisplayLocalOptions.IncludeType,
+            SymbolDisplayKindOptions.IncludeMemberKeyword |
+            SymbolDisplayKindOptions.IncludeNamespaceKeyword |
+            SymbolDisplayKindOptions.IncludeTypeKeyword,
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+            SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+            SymbolDisplayMiscellaneousOptions.AllowDefaultLiteral |
+            //SymbolDisplayMiscellaneousOptions.IncludeNotNullableReferenceTypeModifier |
+            SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+        );
+
+        var result = symbol.ToDisplayString(format);
+
+        // TODO: support 'async' by SymbolDisplayFormat.
+        // NOTE: always include 'async' keyword as it changes actual method implementation.
+        if ( //modifiers &&
+            symbol is IMethodSymbol method && method.IsAsync)
+            result = "async " + result;
+
+        if (modifiers &&
+            symbol is ITypeSymbol typeSymbol)
+            result = GetTypeModifiers(typeSymbol) + result;
+
+        // NOTE: keyword order 'partial (readonly|ref) struct' is invalid.
+        if (!modifiers)
+            result = result.Replace("readonly ", string.Empty)
+                .Replace("ref ", string.Empty);
+
+        return result;
+    }
+
+    private static string GetTypeModifiers(ITypeSymbol symbol)
+    {
+        var sb = new StringBuilder(64);
+
+        sb.Append(symbol.ToVisibilityString());
+
+        // ===== Modifiers =====
+        // abstract (class/interface)
+        if (symbol.IsAbstract &&
+            symbol.TypeKind != TypeKind.Interface) // interfaces implied
+            sb.Append("abstract ");
+
+        // sealed
+        if (symbol.IsSealed &&
+            !symbol.IsValueType &&
+            symbol.TypeKind != TypeKind.Enum && // enums are implicitly sealed
+            symbol.TypeKind != TypeKind.Delegate)
+            sb.Append("sealed ");
+
+        // static
+        if (symbol.IsStatic) sb.Append("static ");
+
+        return sb.ToString();
+    }
+
+
+    /// <summary>
+    ///     Converts the target's declared accessibility into a keyword string that includes a trailing space (e.g., "public
+    ///     ").
+    /// </summary>
+    public static string ToVisibilityString(this Target target)
+    {
+        return target.RawSymbol.ToVisibilityString();
+    }
+
+    /// <summary>
+    ///     Converts the symbol's declared accessibility into a keyword string that includes a trailing space (e.g., "public
+    ///     ").
+    /// </summary>
+    public static string ToVisibilityString(this ISymbol symbol)
+    {
+        var text = SyntaxFacts.GetText(symbol.DeclaredAccessibility);
+        return string.IsNullOrEmpty(text) ? string.Empty : text + " ";
     }
 }

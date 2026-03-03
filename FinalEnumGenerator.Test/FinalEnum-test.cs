@@ -1,33 +1,28 @@
-using FinalEnums;
-using FinalEnums.FinalEnumGenerator.Test;
-using FinalEnums.FinalEnumGenerator.Test.EnumContainer.Nest;
 using System;
 using System.Text;
 using Test = FinalEnumGenerator.Test;
 
-#pragma warning disable SMA0024  // Enum to String
-#pragma warning disable CA1050   // Declare types in namespaces
-#pragma warning disable CS9113   // Parameter is unread.
-#pragma warning disable IDE1006  // Naming Styles
-#pragma warning disable CA1707   // Identifiers should not contain underscores
-#pragma warning disable CA1715   // Identifiers should have correct prefix
-#pragma warning disable CA1816   // Call GC.SuppressFinalize correctly
-#pragma warning disable SMA0040  // Missing Using Statement
-#pragma warning disable SMA0030  // Invalid Struct Constructor
-#pragma warning disable CA1861   // Avoid constant arrays as arguments
-#pragma warning disable SMA0020  // Unchecked Cast to Enum Type
-#pragma warning disable SMA0021  // Cast from Enum Type to Other
-#pragma warning disable IDE0390  // Make method synchronous
-#pragma warning disable IDE0018  // Inline variable declaration
+#pragma warning disable SMA0024 // Enum to String
+#pragma warning disable CA1050 // Declare types in namespaces
+#pragma warning disable CS9113 // Parameter is unread.
+#pragma warning disable IDE1006 // Naming Styles
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1715 // Identifiers should have correct prefix
+#pragma warning disable CA1816 // Call GC.SuppressFinalize correctly
+#pragma warning disable SMA0040 // Missing Using Statement
+#pragma warning disable SMA0030 // Invalid Struct Constructor
+#pragma warning disable CA1861 // Avoid constant arrays as arguments
+#pragma warning disable SMA0020 // Unchecked Cast to Enum Type
+#pragma warning disable SMA0021 // Cast from Enum Type to Other
+#pragma warning disable IDE0390 // Make method synchronous
+#pragma warning disable IDE0018 // Inline variable declaration
 
 return FUnit.Run(args, describe =>
 {
     describe("FinalEnumGenerator: basic scenarios", it =>
     {
-        it("ToStringFast returns display text", () =>
-        {
-            Must.BeEqual("Seven", Test.EnumContainer.Nest.DeepNestedEnumType.Seven.ToStringFast());
-        });
+        it("ToStringFast returns display text",
+            () => { Must.BeEqual("Seven", Test.EnumContainer.Nest.DeepNestedEnumType.Seven.ToStringFast()); });
 
         it("TryParse(string) succeeds/fails as expected", () =>
         {
@@ -41,7 +36,8 @@ return FUnit.Run(args, describe =>
 
         it("TryParse honors comparison and whitespace", () =>
         {
-            Must.BeTrue(!DeepNestedEnumType.TryParse("seven", out Test.EnumContainer.Nest.DeepNestedEnumType parsed, StringComparison.Ordinal));
+            Must.BeTrue(!DeepNestedEnumType.TryParse("seven", out Test.EnumContainer.Nest.DeepNestedEnumType parsed,
+                StringComparison.Ordinal));
             Must.BeTrue(DeepNestedEnumType.TryParse("  Seven  ", out parsed, StringComparison.OrdinalIgnoreCase));
             Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Seven, parsed);
         });
@@ -54,13 +50,15 @@ return FUnit.Run(args, describe =>
 
         it("TryParse(utf8) with ignoring letter casing", () =>
         {
-            Must.BeTrue(DeepNestedEnumType.TryParse("twelve"u8, out Test.EnumContainer.Nest.DeepNestedEnumType parsed, ignoreCase: true));
+            Must.BeTrue(DeepNestedEnumType.TryParse("twelve"u8, out Test.EnumContainer.Nest.DeepNestedEnumType parsed,
+                ignoreCase: true));
             Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
 
             Must.BeTrue(DeepNestedEnumType.TryParse("TWELVE"u8, out parsed, ignoreCase: true));
             Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
 
-            Must.BeTrue(DeepNestedEnumType.TryParse("   TWELVE   "u8, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
+            Must.BeTrue(DeepNestedEnumType.TryParse("   TWELVE   "u8, out parsed, ignoreWhiteSpace: true,
+                ignoreCase: true));
             Must.BeEqual(Test.EnumContainer.Nest.DeepNestedEnumType.Twelve, parsed);
 
             Must.BeTrue(!DeepNestedEnumType.TryParse("t"u8, out parsed, ignoreWhiteSpace: true, ignoreCase: true));
@@ -87,7 +85,7 @@ return FUnit.Run(args, describe =>
             var expectedNames = new[]
             {
                 "子,丑,寅,卯,辰,巳,午,未,申,酉,戌,亥",
-                "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
+                "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"
             };
             var expectedValues = new[]
             {
@@ -102,17 +100,14 @@ return FUnit.Run(args, describe =>
                 Test.EnumContainer.Nest.DeepNestedEnumType.Nine,
                 Test.EnumContainer.Nest.DeepNestedEnumType.Ten,
                 Test.EnumContainer.Nest.DeepNestedEnumType.Eleven,
-                Test.EnumContainer.Nest.DeepNestedEnumType.Twelve,
+                Test.EnumContainer.Nest.DeepNestedEnumType.Twelve
             };
 
             var names = DeepNestedEnumType.GetNames();
             var values = DeepNestedEnumType.GetValues();
             var utf8 = DeepNestedEnumType.GetNamesUtf8();
             var utf8Text = new string[utf8.Length];
-            for (int i = 0; i < utf8.Length; i++)
-            {
-                utf8Text[i] = Encoding.UTF8.GetString(utf8[i].Span);
-            }
+            for (var i = 0; i < utf8.Length; i++) utf8Text[i] = Encoding.UTF8.GetString(utf8[i].Span);
 
             Must.HaveSameSequence(expectedNames, names);
             Must.HaveSameSequence(expectedValues, values);
@@ -205,7 +200,8 @@ return FUnit.Run(args, describe =>
 
         it("TryParse trims and parses combined flags", () =>
         {
-            Must.BeTrue(MyTestFlagsType.TryParse("   Flag2,  ひらがな \"français\" カタカナ   ", out Test.MyTestFlagsType parsed));
+            Must.BeTrue(MyTestFlagsType.TryParse("   Flag2,  ひらがな \"français\" カタカナ   ",
+                out Test.MyTestFlagsType parsed));
             Must.BeEqual(Test.MyTestFlagsType.Flag2 | Test.MyTestFlagsType.Flag3, parsed);
         });
 
@@ -280,7 +276,7 @@ return FUnit.Run(args, describe =>
             Must.BeTrue(FlagsNoZero.IsDefined(1));
             Must.BeTrue(FlagsNoZero.IsDefined(3));
 
-            Must.BeTrue(!MyTestFlagsType.IsDefined(int.MaxValue));  // OK: unknown
+            Must.BeTrue(!MyTestFlagsType.IsDefined(int.MaxValue)); // OK: unknown
         });
 
         it("IsDefined uses correct numeric width for unsigned/signed enums", () =>

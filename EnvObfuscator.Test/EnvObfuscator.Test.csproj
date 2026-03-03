@@ -1,33 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
 
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-  </PropertyGroup>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-  </PropertyGroup>
+    <PropertyGroup>
+        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Analyzer Include="../.z__merged_dll__/FGenerator.dll" Condition=" Exists('../.z__merged_dll__/FGenerator.dll') " />
-    <Analyzer Include="../.z__merged_dll__/EnvObfuscator.dll" />
-  </ItemGroup>
+    <ItemGroup>
+        <Analyzer Include="../.z__merged_dll__/FGenerator.dll" Condition=" Exists('../.z__merged_dll__/FGenerator.dll') "/>
+        <Analyzer Include="../.z__merged_dll__/EnvObfuscator.dll"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FUnit" Version="*-*" />
-    <PackageReference Include="SatorImaging.PragmaAnalyzer" Version="*-*">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="SatorImaging.StaticMemberAnalyzer" Version="*-*">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="FUnit" Version="*-*"/>
+        <PackageReference Include="SatorImaging.PragmaAnalyzer" Version="*-*">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="SatorImaging.StaticMemberAnalyzer" Version="*-*">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
 </Project>

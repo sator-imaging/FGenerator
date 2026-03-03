@@ -1,8 +1,10 @@
-using MacroDotNet.Test;
+using System;
 using System.Collections.Generic;
+using System.Reflection;
+using MacroDotNet.Test;
 
-#pragma warning disable CA1050   // Declare types in namespaces
-#pragma warning disable IDE1006  // Naming Styles
+#pragma warning disable CA1050 // Declare types in namespaces
+#pragma warning disable IDE1006 // Naming Styles
 
 return FUnit.Run(args, describe =>
 {
@@ -10,7 +12,8 @@ return FUnit.Run(args, describe =>
     {
         it("Replaces field/type/visibility/static tokens", () =>
         {
-            var privateProp = typeof(MacroSyntaxFixture).GetProperty("FieldValue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            var privateProp =
+                typeof(MacroSyntaxFixture).GetProperty("FieldValue", BindingFlags.NonPublic | BindingFlags.Static);
             Must.BeTrue(privateProp != null);
             Must.BeEqual(12, (int)privateProp!.GetValue(null)!);
             Must.BeEqual(12, MacroSyntaxFixture.PublicFieldValue);
@@ -79,8 +82,8 @@ return FUnit.Run(args, describe =>
             var fixture = new MacroSyntaxFixture();
             fixture.SetBar(123);
 
-            var fooField = typeof(MacroSyntaxFixture).GetField("_foo", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            var barField = typeof(MacroSyntaxFixture).GetField("_bar", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fooField = typeof(MacroSyntaxFixture).GetField("_foo", BindingFlags.NonPublic | BindingFlags.Static);
+            var barField = typeof(MacroSyntaxFixture).GetField("_bar", BindingFlags.NonPublic | BindingFlags.Instance);
             Must.BeEqual(10, (int)fooField!.GetValue(null)!);
             Must.BeEqual(123, (int)barField!.GetValue(fixture)!);
             Must.BeEqual("_bar", MacroSyntaxFixture.LatestChangedField);
@@ -89,10 +92,10 @@ return FUnit.Run(args, describe =>
         it("Supports injected validation and throws", () =>
         {
             var fixture = new MacroSyntaxFixture();
-            Must.Throw<System.ArgumentOutOfRangeException>(
+            Must.Throw<ArgumentOutOfRangeException>(
                 "Specified argument was out of the range of valid values. (Parameter '_valueMustBePositive')",
                 () => fixture.SetValueMustBePositive(0));
-            Must.Throw<System.ArgumentOutOfRangeException>(
+            Must.Throw<ArgumentOutOfRangeException>(
                 "Specified argument was out of the range of valid values. (Parameter '_valueMustBePositive')",
                 () => fixture.SetValueMustBePositiveWithoutNotify(-1));
             fixture.SetValueMustBePositive(1);
@@ -104,7 +107,8 @@ return FUnit.Run(args, describe =>
         it("Strips trailing ? from generated type tokens", () =>
         {
             var fieldType = typeof(MacroSyntaxFixture).GetField(nameof(MacroSyntaxFixture._nullableInt))!.FieldType;
-            var propertyType = typeof(MacroSyntaxFixture).GetProperty(nameof(MacroSyntaxFixture.NonNullableNullableInt))!.PropertyType;
+            var propertyType =
+                typeof(MacroSyntaxFixture).GetProperty(nameof(MacroSyntaxFixture.NonNullableNullableInt))!.PropertyType;
 
             Must.BeEqual("Nullable`1", fieldType.Name);
             Must.BeEqual("Int32", propertyType.Name);
@@ -116,7 +120,8 @@ return FUnit.Run(args, describe =>
         it("Resolves generic-aware full name in $containerType.$fieldName", () =>
         {
             var fixture = new OuterClass.NestedClass.MacroGenericFixture<int>();
-            Must.BeEqual("global::MacroDotNet.Test.OuterClass.NestedClass.MacroGenericFixture<T>._value", fixture.FullName);
+            Must.BeEqual("global::MacroDotNet.Test.OuterClass.NestedClass.MacroGenericFixture<T>._value",
+                fixture.FullName);
         });
     });
 
@@ -129,8 +134,10 @@ return FUnit.Run(args, describe =>
             Must.BeEqual("where TItem : class?", fixture.TypeConstraintsNullableText);
             Must.BeEqual("where TItem : class", fixture.TypeConstraintsClassText);
             Must.BeEqual("where TItem : global::MacroDotNet.Test.MyClass", fixture.TypeConstraintsBaseClassText);
-            Must.BeEqual("where TItem : global::MacroDotNet.Test.MyClass?", fixture.TypeConstraintsNullableBaseClassText);
-            Must.BeEqual("where TItem : class?, global::System.IDisposable, new() where TValue : notnull", fixture.TypeConstraintsComplexText);
+            Must.BeEqual("where TItem : global::MacroDotNet.Test.MyClass?",
+                fixture.TypeConstraintsNullableBaseClassText);
+            Must.BeEqual("where TItem : class?, global::System.IDisposable, new() where TValue : notnull",
+                fixture.TypeConstraintsComplexText);
             Must.BeEqual("where T : TOther", fixture.TypeConstraintsTypeParameterText);
             Must.BeEqual(string.Empty, fixture.TypeConstraintsNonGenericText);
         });
@@ -154,8 +161,12 @@ return FUnit.Run(args, describe =>
             Must.BeEqual("5", fixture.TokenInitialValue);
             Must.BeEqual("<int?>", fixture.TokenTypeArgs);
             Must.BeEqual("global::MacroDotNet.Test.MacroTokenFixture", fixture.TokenContainerType);
-            Must.BeEqual("[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]", fixture.TokenInline);
-            Must.BeEqual("[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]", fixture.TokenNoInline);
+            Must.BeEqual(
+                "[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]",
+                fixture.TokenInline);
+            Must.BeEqual(
+                "[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]",
+                fixture.TokenNoInline);
 
             Must.BeEqual(string.Empty, fixture.TokenArg1Missing);
             Must.BeEqual("A", fixture.TokenArg0);

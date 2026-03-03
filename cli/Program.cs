@@ -1,414 +1,393 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
+using System.CommandLine;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
-using System.CommandLine;
 
-namespace FGenerator.Cli
+namespace FGenerator.Cli;
+
+internal static class Program
 {
-    static class Program
+    private const int CleanupRetryCount = 3;
+    private const int CleanupRetryDelayMs = 500;
+
+    private static async Task<int> Main(string[] args)
     {
-        private const int CleanupRetryCount = 3;
-        private const int CleanupRetryDelayMs = 500;
+        if (!EnsureRequiredDotnetVersion()) return 1;
 
-        static async Task<int> Main(string[] args)
+        var outputOption = new Option<DirectoryInfo>("--output", "-o")
         {
-            if (!EnsureRequiredDotnetVersion())
-            {
-                return 1;
-            }
+            Description = "Output directory (defaults to current directory)"
+        };
 
-            var outputOption = new Option<DirectoryInfo>(name: "--output", "-o")
-            {
-                Description = "Output directory (defaults to current directory)",
-            };
-
-            var debugOption = new Option<bool>(name: "--debug")
-            {
-                Description = "Build using Debug configuration (defaults to Release)",
-            };
-
-            var mergeOption = new Option<bool>(name: "--merge")
-            {
-                Description = "Merge resulting .DLL files into one",
-            };
-
-            var unityOption = new Option<bool>(name: "--unity")
-            {
-                Description = "Enable Unity .meta file generation (Unity 2022.3.12 or newer)",
-            };
-
-            var forceOption = new Option<bool>(name: "--force", "-f")
-            {
-                Description = "Force overwrite existing files without prompting",
-            };
-
-            var inputArgument = new Argument<string[]>(name: "input")
-            {
-                Description = "Input .cs files or glob patterns to process. Supports * (match files) and ** (recursive). e.g., file.cs, **/*.cs",
-                Arity = ArgumentArity.OneOrMore,
-            };
-
-
-            var buildCmd = new Command("build")
-            {
-                outputOption,
-                unityOption,
-                mergeOption,
-                forceOption,
-                debugOption,
-                inputArgument
-            };
-
-            buildCmd.SetAction(parseResult =>
-            {
-                var input = parseResult.GetRequiredValue(inputArgument);
-                var output = parseResult.GetValue(outputOption) ?? new DirectoryInfo(Directory.GetCurrentDirectory());
-                var unity = parseResult.GetValue(unityOption);
-                var merge = parseResult.GetValue(mergeOption);
-                var force = parseResult.GetValue(forceOption);
-                var debug = parseResult.GetValue(debugOption);
-
-                return RunBuildWithGlobPattern(input, output, unity, merge, force, debug);
-            });
-
-
-            var rootCommand = new RootCommand("FGenerator Build Tool")
-            {
-                buildCmd,
-            };
-
-            return await rootCommand.Parse(args).InvokeAsync();
-        }
-
-
-        static int RunBuildWithGlobPattern(string[] inputPatterns, DirectoryInfo output, bool unity, bool merge, bool force, bool debug)
+        var debugOption = new Option<bool>("--debug")
         {
-            // Resolve glob pattern to list of files (also works with single file paths)
-            var matcher = new Matcher();
-            var baseDirectory = Directory.GetCurrentDirectory();
+            Description = "Build using Debug configuration (defaults to Release)"
+        };
 
-            foreach (var pattern in inputPatterns)
-            {
-                matcher.AddInclude(pattern);
-            }
+        var mergeOption = new Option<bool>("--merge")
+        {
+            Description = "Merge resulting .DLL files into one"
+        };
 
-            // Execute the glob pattern match
-            var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(baseDirectory)));
-            var matchedFiles = result.Files
+        var unityOption = new Option<bool>("--unity")
+        {
+            Description = "Enable Unity .meta file generation (Unity 2022.3.12 or newer)"
+        };
+
+        var forceOption = new Option<bool>("--force", "-f")
+        {
+            Description = "Force overwrite existing files without prompting"
+        };
+
+        var inputArgument = new Argument<string[]>("input")
+        {
+            Description =
+                "Input .cs files or glob patterns to process. Supports * (match files) and ** (recursive). e.g., file.cs, **/*.cs",
+            Arity = ArgumentArity.OneOrMore
+        };
+
+
+        var buildCmd = new Command("build")
+        {
+            outputOption,
+            unityOption,
+            mergeOption,
+            forceOption,
+            debugOption,
+            inputArgument
+        };
+
+        buildCmd.SetAction(parseResult =>
+        {
+            var input = parseResult.GetRequiredValue(inputArgument);
+            var output = parseResult.GetValue(outputOption) ?? new DirectoryInfo(Directory.GetCurrentDirectory());
+            var unity = parseResult.GetValue(unityOption);
+            var merge = parseResult.GetValue(mergeOption);
+            var force = parseResult.GetValue(forceOption);
+            var debug = parseResult.GetValue(debugOption);
+
+            return RunBuildWithGlobPattern(input, output, unity, merge, force, debug);
+        });
+
+
+        var rootCommand = new RootCommand("FGenerator Build Tool")
+        {
+            buildCmd
+        };
+
+        return await rootCommand.Parse(args).InvokeAsync();
+    }
+
+
+    private static int RunBuildWithGlobPattern(string[] inputPatterns, DirectoryInfo output, bool unity, bool merge,
+        bool force, bool debug)
+    {
+        // Resolve glob pattern to list of files (also works with single file paths)
+        var matcher = new Matcher();
+        var baseDirectory = Directory.GetCurrentDirectory();
+
+        foreach (var pattern in inputPatterns) matcher.AddInclude(pattern);
+
+        // Execute the glob pattern match
+        var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(baseDirectory)));
+        var matchedFiles = result.Files
                 .Select(f => new FileInfo(Path.Combine(baseDirectory, f.Path)))
                 .Where(x => File.Exists(x.FullName))
                 // Filter to only .cs files
                 .Where(f => f.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
                 .ToArray()
-                ;
+            ;
 
-            if (matchedFiles.Length == 0)
-            {
-                WriteFailure($"No .cs files matched the pattern(s): {string.Join(", ", inputPatterns)}");
-                return 1;
-            }
-
-            Console.WriteLine($"Found {matchedFiles.Length} file(s) matching pattern(s): {string.Join(", ", inputPatterns)}");
-            Console.WriteLine();
-
-            int successCount = 0;
-            int failureCount = 0;
-            var failedFiles = new List<string>();
-
-            // Process each matched file
-            for (int i = 0; i < matchedFiles.Length; i++)
-            {
-                var file = matchedFiles[i];
-                Console.WriteLine($"[{i + 1}/{matchedFiles.Length}] Processing: {file.Name}");
-
-                int exitCode = RunBuild(file, output, unity, merge, force, debug);
-
-                if (exitCode == 0)
-                {
-                    successCount++;
-                }
-                else
-                {
-                    failureCount++;
-                    failedFiles.Add(file.Name);
-                }
-
-                // Add separator between files
-                if (i < matchedFiles.Length - 1)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine(new string('=', 42));
-                    Console.WriteLine();
-                }
-            }
-
-            // Print summary
-            Console.WriteLine();
-            Console.WriteLine(new string('=', 42));
-            Console.WriteLine("SUMMARY");
-            Console.WriteLine(new string('=', 42));
-            Console.WriteLine($"Total files: {matchedFiles.Length}");
-            WriteSuccess($"Succeeded: {successCount}");
-            if (failureCount > 0)
-            {
-                WriteFailure($"Failed: {failureCount}");
-                Console.WriteLine("Failed files:");
-                foreach (var failedFile in failedFiles)
-                {
-                    Console.WriteLine($"  - {failedFile}");
-                }
-            }
-
-            return failureCount > 0 ? 1 : 0;
+        if (matchedFiles.Length == 0)
+        {
+            WriteFailure($"No .cs files matched the pattern(s): {string.Join(", ", inputPatterns)}");
+            return 1;
         }
 
-        static int RunBuild(FileInfo input, DirectoryInfo output, bool unity, bool merge, bool force, bool debug)
+        Console.WriteLine(
+            $"Found {matchedFiles.Length} file(s) matching pattern(s): {string.Join(", ", inputPatterns)}");
+        Console.WriteLine();
+
+        var successCount = 0;
+        var failureCount = 0;
+        var failedFiles = new List<string>();
+
+        // Process each matched file
+        for (var i = 0; i < matchedFiles.Length; i++)
         {
-            Console.WriteLine(new string('-', 42));
-            Console.WriteLine($"Input File: {input.FullName}");
-            Console.WriteLine($"Output Directory: {output.FullName}");
-            Console.WriteLine($"Unity Mode: {unity}");
-            Console.WriteLine($"Merge Mode: {merge}");
-            Console.WriteLine($"Force Overwrite: {force}");
-            var configuration = debug ? "Debug" : "Release";
-            Console.WriteLine($"Configuration: {configuration}");
-            Console.WriteLine(new string('-', 42));
+            var file = matchedFiles[i];
+            Console.WriteLine($"[{i + 1}/{matchedFiles.Length}] Processing: {file.Name}");
 
-            if (!input.Exists)
+            var exitCode = RunBuild(file, output, unity, merge, force, debug);
+
+            if (exitCode == 0)
             {
-                WriteFailure($"Input file does not exist: {input.FullName}");
-                return 1;
+                successCount++;
+            }
+            else
+            {
+                failureCount++;
+                failedFiles.Add(file.Name);
             }
 
-            // Always use temp directory for build output
-            var tempDir = new DirectoryInfo(Path.Combine(Path.GetTempPath(), $"{nameof(FGenerator)}.{nameof(Cli)}_{Guid.NewGuid():N}"));
-            tempDir.Create();
-            Console.WriteLine($"Build output directory (temp): {tempDir.FullName}");
-
-            try
+            // Add separator between files
+            if (i < matchedFiles.Length - 1)
             {
-                // Run dotnet build on input file
-                Console.WriteLine($"Building {input.Name}...");
-
-                var args = $"build --no-incremental \"{input.FullName}\" -c {configuration} -o \"{tempDir.FullName}\"";
-
-                var exitCode = Utils.ExecuteProcess("dotnet", args);
-                if (exitCode != 0)
-                {
-                    WriteFailure($"Build failed with exit code {exitCode}");
-                    return exitCode;
-                }
-
-                Console.WriteLine("Build succeeded.");
-
-                var generatedFiles = new List<FileInfo>();
-
-                if (merge)
-                {
-                    int mergeResult = PerformMerge(input, tempDir, output, force, out var mergedFile);
-                    if (mergeResult != 0)
-                    {
-                        return mergeResult;
-                    }
-                    if (mergedFile != null)
-                    {
-                        generatedFiles.Add(mergedFile);
-                    }
-                }
-                else
-                {
-                    // Move .dll files from temp to output directory
-                    int moveResult = MoveDllFiles(tempDir, output, force, out var movedFiles);
-                    if (moveResult != 0)
-                    {
-                        return moveResult;
-                    }
-                    generatedFiles.AddRange(movedFiles);
-                }
-
-                if (unity)
-                {
-                    Console.WriteLine("Unity mode enabled. Generating .meta files...");
-                    // Generate .meta files only for the files we just created/moved
-                    foreach (var file in generatedFiles)
-                    {
-                        Utils.GenerateUnityMeta(file, force);
-                    }
-                }
-            }
-            finally
-            {
-                // Clean up temp directory
-                if (tempDir.Exists)
-                {
-                    // Force garbage collection to release any file handles
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-
-                    // Retry cleanup with delays to allow file handles to be released
-                    for (int i = 0; i < CleanupRetryCount; i++)
-                    {
-                        try
-                        {
-                            Console.WriteLine($"Cleaning up temporary directory: {tempDir.FullName}");
-                            tempDir.Delete(recursive: true);
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            if (i < CleanupRetryCount - 1)
-                            {
-                                Console.WriteLine($"Cleanup attempt {i + 1} failed, retrying in {CleanupRetryDelayMs}ms...");
-                                Thread.Sleep(CleanupRetryDelayMs);
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Warning: Failed to delete temporary directory after {CleanupRetryCount} attempts: {ex.Message}");
-                                Console.WriteLine($"Please manually delete: {tempDir.FullName}");
-                            }
-                        }
-                    }
-                }
-            }
-
-            WriteSuccess("Build completed successfully.");
-            return 0;
-        }
-
-        static int PerformMerge(FileInfo input, DirectoryInfo buildOutputDir, DirectoryInfo finalOutputDir, bool force, out FileInfo? resultFile)
-        {
-            resultFile = null;
-            try
-            {
-                Console.WriteLine("Merge mode enabled.");
-
-                // Use input filename for merged DLL
-                var mergedFileName = Path.GetFileNameWithoutExtension(input.Name) + ".dll";
-                var mergedDllPath = Path.Combine(buildOutputDir.FullName, mergedFileName);
-                var destPath = Path.Combine(finalOutputDir.FullName, mergedFileName);
-
-                var mergedDll = DllMerger.Merge(input, buildOutputDir);
-
-                // Rename Merged.dll to input filename
-                if (mergedDll?.Exists != true)
-                {
-                    WriteFailure("Merged.dll was not created.");
-                    return 1;
-                }
-
-                mergedDll.MoveTo(mergedDllPath, overwrite: true);
-
-                // Check if destination exists and handle force flag
-                if (!Utils.PromptOverwrite(destPath, force))
-                {
-                    return 0;
-                }
-
-                // Copy to actual output directory
-                Console.WriteLine($"Copying {mergedFileName} to {finalOutputDir.FullName}");
-                finalOutputDir.Create();
-                File.Copy(mergedDllPath, destPath, overwrite: true);
-
-                resultFile = new FileInfo(destPath);
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                WriteFailure($"Error during merge: {ex.Message}");
-                return 1;
+                Console.WriteLine();
+                Console.WriteLine(new string('=', 42));
+                Console.WriteLine();
             }
         }
 
-        static int MoveDllFiles(DirectoryInfo sourceDir, DirectoryInfo destDir, bool force, out List<FileInfo> movedFiles)
+        // Print summary
+        Console.WriteLine();
+        Console.WriteLine(new string('=', 42));
+        Console.WriteLine("SUMMARY");
+        Console.WriteLine(new string('=', 42));
+        Console.WriteLine($"Total files: {matchedFiles.Length}");
+        WriteSuccess($"Succeeded: {successCount}");
+        if (failureCount > 0)
         {
-            movedFiles = new List<FileInfo>();
-            try
-            {
-                Console.WriteLine($"Moving .dll files to {destDir.FullName}...");
-
-                var dllFiles = sourceDir.GetFiles("*.dll");
-                if (dllFiles.Length == 0)
-                {
-                    WriteFailure("No .dll files found in build output.");
-                    return 1;
-                }
-
-                // Ensure destination directory exists
-                destDir.Create();
-
-                foreach (var dllFile in dllFiles)
-                {
-                    var destPath = Path.Combine(destDir.FullName, dllFile.Name);
-
-                    // Check if destination exists and handle force flag
-                    if (!Utils.PromptOverwrite(destPath, force))
-                    {
-                        continue;
-                    }
-
-                    Console.WriteLine($"Moving: {dllFile.Name}");
-                    File.Copy(dllFile.FullName, destPath, overwrite: true);
-                    movedFiles.Add(new FileInfo(destPath));
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                WriteFailure($"Error moving .dll files: {ex.Message}");
-                return 1;
-            }
+            WriteFailure($"Failed: {failureCount}");
+            Console.WriteLine("Failed files:");
+            foreach (var failedFile in failedFiles) Console.WriteLine($"  - {failedFile}");
         }
 
-        static void WriteSuccess(string message)
+        return failureCount > 0 ? 1 : 0;
+    }
+
+    private static int RunBuild(FileInfo input, DirectoryInfo output, bool unity, bool merge, bool force, bool debug)
+    {
+        Console.WriteLine(new string('-', 42));
+        Console.WriteLine($"Input File: {input.FullName}");
+        Console.WriteLine($"Output Directory: {output.FullName}");
+        Console.WriteLine($"Unity Mode: {unity}");
+        Console.WriteLine($"Merge Mode: {merge}");
+        Console.WriteLine($"Force Overwrite: {force}");
+        var configuration = debug ? "Debug" : "Release";
+        Console.WriteLine($"Configuration: {configuration}");
+        Console.WriteLine(new string('-', 42));
+
+        if (!input.Exists)
         {
-            var previousColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"✓ {message}");
-            Console.ForegroundColor = previousColor;
+            WriteFailure($"Input file does not exist: {input.FullName}");
+            return 1;
         }
 
-        static void WriteFailure(string message)
-        {
-            var previousColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine($"× {message}");
-            Console.ForegroundColor = previousColor;
-        }
+        // Always use temp directory for build output
+        var tempDir = new DirectoryInfo(Path.Combine(Path.GetTempPath(),
+            $"{nameof(FGenerator)}.{nameof(Cli)}_{Guid.NewGuid():N}"));
+        tempDir.Create();
+        Console.WriteLine($"Build output directory (temp): {tempDir.FullName}");
 
-        static bool EnsureRequiredDotnetVersion()
+        try
         {
-            var exitCode = Utils.ExecuteProcessAndCapture("dotnet", "--version", out var stdout, out var stderr);
+            // Run dotnet build on input file
+            Console.WriteLine($"Building {input.Name}...");
+
+            var args = $"build --no-incremental \"{input.FullName}\" -c {configuration} -o \"{tempDir.FullName}\"";
+
+            var exitCode = Utils.ExecuteProcess("dotnet", args);
             if (exitCode != 0)
             {
-                var message = string.IsNullOrWhiteSpace(stderr) ? "Unable to determine .NET SDK version." : stderr.Trim();
-                WriteFailure($"{message} Install .NET 10 or newer from https://dotnet.microsoft.com/download.");
-                return false;
+                WriteFailure($"Build failed with exit code {exitCode}");
+                return exitCode;
             }
 
-            var versionString = stdout.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(versionString))
+            Console.WriteLine("Build succeeded.");
+
+            var generatedFiles = new List<FileInfo>();
+
+            if (merge)
             {
-                WriteFailure("Unable to determine .NET SDK version. Install .NET 10 or newer from https://dotnet.microsoft.com/download.");
-                return false;
+                var mergeResult = PerformMerge(input, tempDir, output, force, out var mergedFile);
+                if (mergeResult != 0) return mergeResult;
+                if (mergedFile != null) generatedFiles.Add(mergedFile);
             }
-
-            var normalized = versionString.Split('-')[0];
-            if (!Version.TryParse(normalized, out var version))
+            else
             {
-                WriteFailure($"Unable to parse .NET SDK version: {versionString}");
-                return false;
+                // Move .dll files from temp to output directory
+                var moveResult = MoveDllFiles(tempDir, output, force, out var movedFiles);
+                if (moveResult != 0) return moveResult;
+                generatedFiles.AddRange(movedFiles);
             }
 
-            if (version.Major < 10)
+            if (unity)
             {
-                WriteFailure($".NET SDK 10 or newer is required. Detected {version}.");
-                return false;
+                Console.WriteLine("Unity mode enabled. Generating .meta files...");
+                // Generate .meta files only for the files we just created/moved
+                foreach (var file in generatedFiles) Utils.GenerateUnityMeta(file, force);
             }
-
-            return true;
         }
+        finally
+        {
+            // Clean up temp directory
+            if (tempDir.Exists)
+            {
+                // Force garbage collection to release any file handles
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                // Retry cleanup with delays to allow file handles to be released
+                for (var i = 0; i < CleanupRetryCount; i++)
+                    try
+                    {
+                        Console.WriteLine($"Cleaning up temporary directory: {tempDir.FullName}");
+                        tempDir.Delete(true);
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (i < CleanupRetryCount - 1)
+                        {
+                            Console.WriteLine(
+                                $"Cleanup attempt {i + 1} failed, retrying in {CleanupRetryDelayMs}ms...");
+                            Thread.Sleep(CleanupRetryDelayMs);
+                        }
+                        else
+                        {
+                            Console.WriteLine(
+                                $"Warning: Failed to delete temporary directory after {CleanupRetryCount} attempts: {ex.Message}");
+                            Console.WriteLine($"Please manually delete: {tempDir.FullName}");
+                        }
+                    }
+            }
+        }
+
+        WriteSuccess("Build completed successfully.");
+        return 0;
+    }
+
+    private static int PerformMerge(FileInfo input, DirectoryInfo buildOutputDir, DirectoryInfo finalOutputDir,
+        bool force, out FileInfo? resultFile)
+    {
+        resultFile = null;
+        try
+        {
+            Console.WriteLine("Merge mode enabled.");
+
+            // Use input filename for merged DLL
+            var mergedFileName = Path.GetFileNameWithoutExtension(input.Name) + ".dll";
+            var mergedDllPath = Path.Combine(buildOutputDir.FullName, mergedFileName);
+            var destPath = Path.Combine(finalOutputDir.FullName, mergedFileName);
+
+            var mergedDll = DllMerger.Merge(input, buildOutputDir);
+
+            // Rename Merged.dll to input filename
+            if (mergedDll?.Exists != true)
+            {
+                WriteFailure("Merged.dll was not created.");
+                return 1;
+            }
+
+            mergedDll.MoveTo(mergedDllPath, true);
+
+            // Check if destination exists and handle force flag
+            if (!Utils.PromptOverwrite(destPath, force)) return 0;
+
+            // Copy to actual output directory
+            Console.WriteLine($"Copying {mergedFileName} to {finalOutputDir.FullName}");
+            finalOutputDir.Create();
+            File.Copy(mergedDllPath, destPath, true);
+
+            resultFile = new FileInfo(destPath);
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            WriteFailure($"Error during merge: {ex.Message}");
+            return 1;
+        }
+    }
+
+    private static int MoveDllFiles(DirectoryInfo sourceDir, DirectoryInfo destDir, bool force,
+        out List<FileInfo> movedFiles)
+    {
+        movedFiles = new List<FileInfo>();
+        try
+        {
+            Console.WriteLine($"Moving .dll files to {destDir.FullName}...");
+
+            var dllFiles = sourceDir.GetFiles("*.dll");
+            if (dllFiles.Length == 0)
+            {
+                WriteFailure("No .dll files found in build output.");
+                return 1;
+            }
+
+            // Ensure destination directory exists
+            destDir.Create();
+
+            foreach (var dllFile in dllFiles)
+            {
+                var destPath = Path.Combine(destDir.FullName, dllFile.Name);
+
+                // Check if destination exists and handle force flag
+                if (!Utils.PromptOverwrite(destPath, force)) continue;
+
+                Console.WriteLine($"Moving: {dllFile.Name}");
+                File.Copy(dllFile.FullName, destPath, true);
+                movedFiles.Add(new FileInfo(destPath));
+            }
+
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            WriteFailure($"Error moving .dll files: {ex.Message}");
+            return 1;
+        }
+    }
+
+    private static void WriteSuccess(string message)
+    {
+        var previousColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"✓ {message}");
+        Console.ForegroundColor = previousColor;
+    }
+
+    private static void WriteFailure(string message)
+    {
+        var previousColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Error.WriteLine($"× {message}");
+        Console.ForegroundColor = previousColor;
+    }
+
+    private static bool EnsureRequiredDotnetVersion()
+    {
+        var exitCode = Utils.ExecuteProcessAndCapture("dotnet", "--version", out var stdout, out var stderr);
+        if (exitCode != 0)
+        {
+            var message = string.IsNullOrWhiteSpace(stderr) ? "Unable to determine .NET SDK version." : stderr.Trim();
+            WriteFailure($"{message} Install .NET 10 or newer from https://dotnet.microsoft.com/download.");
+            return false;
+        }
+
+        var versionString = stdout.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(versionString))
+        {
+            WriteFailure(
+                "Unable to determine .NET SDK version. Install .NET 10 or newer from https://dotnet.microsoft.com/download.");
+            return false;
+        }
+
+        var normalized = versionString.Split('-')[0];
+        if (!Version.TryParse(normalized, out var version))
+        {
+            WriteFailure($"Unable to parse .NET SDK version: {versionString}");
+            return false;
+        }
+
+        if (version.Major < 10)
+        {
+            WriteFailure($".NET SDK 10 or newer is required. Detected {version}.");
+            return false;
+        }
+
+        return true;
     }
 }
