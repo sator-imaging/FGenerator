@@ -162,7 +162,7 @@ namespace MacroDotNet
 
                         if (!args.IsEmpty())
                         {
-                            if (!args.IsValid())
+                            if (args.Count > MaxArgCount)
                             {
                                 diagnostic = new AnalyzeResult(
                                     "003",
@@ -534,10 +534,10 @@ namespace MacroDotNet
     {
         if (attr.ConstructorArguments.Length <= 1)
         {
-            return new MacroArgs(isEmpty: true);
+            return default;
         }
 
-        var result = new MacroArgs(isEmpty: false);
+        var result = new MacroArgs();
 
         for (int i = 1; i < attr.ConstructorArguments.Length; i++)
         {
@@ -556,6 +556,10 @@ namespace MacroDotNet
             else if (arg.Value is string s)
             {
                 result.Add(s);
+            }
+            else
+            {
+                result.Add("/* This message must not apear. Please report an issue to https://github.com/sator-imaging/FGenerator, thanks. */");
             }
         }
 
@@ -837,8 +841,10 @@ using System.Threading.Tasks;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear() => consumed = 0;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Append(string value) => Append(value.AsSpan());
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Append<T>(T value) where T : struct, IFormattable
         {
             var text = value.ToString(format: null, CultureInfo.InvariantCulture);
@@ -934,10 +940,10 @@ using System.Threading.Tasks;
         object argsOrFirstItem;
         sbyte consumed;
 
-        public MacroArgs(bool isEmpty)
+        public MacroArgs()
         {
             argsOrFirstItem = string.Empty;
-            consumed = (sbyte)(isEmpty ? -1 : 0);
+            consumed = 0;
         }
 
         public void Add(string value)
@@ -968,10 +974,7 @@ using System.Threading.Tasks;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        readonly public bool IsValid() => unchecked((byte)consumed <= MaxArgCount);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        readonly public bool IsEmpty() => consumed < 0;
+        readonly public bool IsEmpty() => argsOrFirstItem == null;  // `return default` to bypass ctor
 
         readonly public int Count
         {
