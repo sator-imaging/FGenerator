@@ -40,7 +40,7 @@ jobs:
         with:
           upload-result: true
           pr-mode: false
-          args: --apply-fixes
+          args: --apply-fixes,--solution,${{ env.solution }}
           push-fixes: pull-request
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
