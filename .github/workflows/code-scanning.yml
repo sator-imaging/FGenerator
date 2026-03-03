@@ -1,0 +1,61 @@
+name: Code Scanning
+
+# How to call this workflow
+# NOTE: DO NOT forget to set permissions
+#jobs:
+#  code-scanning:
+#    uses: your-org/.github/.github/workflows/code-scanning.yml@main
+
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+  push:
+    branches:
+      - 'main'
+      - 'releases/*'
+
+jobs:
+
+  qodana:
+    name: Qodana
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: JetBrains/qodana-action@v2025.3
+        with:
+          upload-result: true
+          pr-mode: false
+          args: --apply-fixes
+          push-fixes: pull-request
+
+  inspectcode:
+    name: ReSharper InspectCode
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: JetBrains/ReSharper-InspectCode@v0.11
+        with:
+          output: inspectcode.sarif
+          format: sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: inspectcode.sarif
