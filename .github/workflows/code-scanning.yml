@@ -16,6 +16,9 @@ on:
       - 'main'
       - 'releases/*'
 
+env:
+  solution: ./FGenerator.slnx  # Cannot recognize **/*.slnx
+
 jobs:
 
   qodana:
@@ -61,7 +64,7 @@ jobs:
 
       - uses: JetBrains/ReSharper-InspectCode@v0.11
         with:
-          solution: **/*.slnx
+          solution: ${{ env.solution }}
           output: inspectcode.sarif
           format: sarif
 
