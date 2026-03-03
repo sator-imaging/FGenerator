@@ -63,6 +63,9 @@ jobs:
   inspectcode:
     name: ReSharper InspectCode
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     permissions:
       contents: read
       security-events: write
