@@ -52,7 +52,7 @@ jobs:
 
       - uses: JetBrains/ReSharper-InspectCode@v0.11
         with:
-          solution: '**/*.sln*'
+          solution: '**/*.slnx'
           output: inspectcode.sarif
           format: sarif
 
