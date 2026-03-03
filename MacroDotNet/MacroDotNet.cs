@@ -559,7 +559,7 @@ namespace MacroDotNet
             }
             else
             {
-                result.Add("/* This message must not apear. Please report an issue to https://github.com/sator-imaging/FGenerator, thanks. */");
+                result.Add("/* This message must not appear. Please report an issue to https://github.com/sator-imaging/FGenerator, thanks. */");
             }
         }
 
