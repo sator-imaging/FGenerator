@@ -20,7 +20,7 @@
     <tags>string, UTF-8, Extensions, Enum, Enums</tags>
     <id>FinalEnumGenerator</id>
     <title>FinalEnumGenerator</title>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
   </metadata>
   <files>
     <file src="FinalEnumGenerator.dll" target="analyzers/dotnet/cs" />
