@@ -29,6 +29,11 @@ namespace FGenerator.Cli
                 Description = "Build using Debug configuration (defaults to Release)",
             };
 
+            var configOption = new Option<string>(name: "--configuration", "-c")
+            {
+                Description = "Build configuration (defaults to Release)",
+            };
+
             var mergeOption = new Option<bool>(name: "--merge")
             {
                 Description = "Merge resulting .DLL files into one",
@@ -58,6 +63,7 @@ namespace FGenerator.Cli
                 mergeOption,
                 forceOption,
                 debugOption,
+                configOption,
                 inputArgument
             };
 
@@ -68,9 +74,44 @@ namespace FGenerator.Cli
                 var unity = parseResult.GetValue(unityOption);
                 var merge = parseResult.GetValue(mergeOption);
                 var force = parseResult.GetValue(forceOption);
-                var debug = parseResult.GetValue(debugOption);
 
-                return RunBuildWithGlobPattern(input, output, unity, merge, force, debug);
+                // Determine configuration: last one wins
+                var configuration = "Release";
+                var config = parseResult.GetValue(configOption);
+
+                var debugAliases = debugOption.Aliases;
+                var configAliases = configOption.Aliases;
+
+                int debugIndex = -1;
+                int configIndex = -1;
+
+                for (int i = 0; i < parseResult.Tokens.Count; i++)
+                {
+                    var token = parseResult.Tokens[i];
+                    if (debugAliases.Any(a => token.Value == a))
+                    {
+                        debugIndex = i;
+                    }
+                    if (configAliases.Any(a => token.Value == a || token.Value.StartsWith(a + "=") || token.Value.StartsWith(a + ":")))
+                    {
+                        configIndex = i;
+                    }
+                }
+
+                if (configIndex != -1 && configIndex > debugIndex)
+                {
+                    configuration = config ?? "Release";
+                }
+                else if (debugIndex != -1)
+                {
+                    configuration = "Debug";
+                }
+                else
+                {
+                    configuration = config ?? "Release";
+                }
+
+                return RunBuildWithGlobPattern(input, output, unity, merge, force, configuration);
             });
 
 
@@ -83,7 +124,7 @@ namespace FGenerator.Cli
         }
 
 
-        static int RunBuildWithGlobPattern(string[] inputPatterns, DirectoryInfo output, bool unity, bool merge, bool force, bool debug)
+        static int RunBuildWithGlobPattern(string[] inputPatterns, DirectoryInfo output, bool unity, bool merge, bool force, string configuration)
         {
             // Resolve glob pattern to list of files (also works with single file paths)
             var matcher = new Matcher();
@@ -123,7 +164,7 @@ namespace FGenerator.Cli
                 var file = matchedFiles[i];
                 Console.WriteLine($"[{i + 1}/{matchedFiles.Length}] Processing: {file.Name}");
 
-                int exitCode = RunBuild(file, output, unity, merge, force, debug);
+                int exitCode = RunBuild(file, output, unity, merge, force, configuration);
 
                 if (exitCode == 0)
                 {
@@ -164,7 +205,7 @@ namespace FGenerator.Cli
             return failureCount > 0 ? 1 : 0;
         }
 
-        static int RunBuild(FileInfo input, DirectoryInfo output, bool unity, bool merge, bool force, bool debug)
+        static int RunBuild(FileInfo input, DirectoryInfo output, bool unity, bool merge, bool force, string configuration)
         {
             Console.WriteLine(new string('-', 42));
             Console.WriteLine($"Input File: {input.FullName}");
@@ -172,7 +213,6 @@ namespace FGenerator.Cli
             Console.WriteLine($"Unity Mode: {unity}");
             Console.WriteLine($"Merge Mode: {merge}");
             Console.WriteLine($"Force Overwrite: {force}");
-            var configuration = debug ? "Debug" : "Release";
             Console.WriteLine($"Configuration: {configuration}");
             Console.WriteLine(new string('-', 42));
 
