@@ -76,11 +76,8 @@ namespace FGenerator.Cli
                 var force = parseResult.GetValue(forceOption);
 
                 // Determine configuration: last one wins
-                var configuration = "Release";
+                var debug = parseResult.GetValue(debugOption);
                 var config = parseResult.GetValue(configOption);
-
-                var debugAliases = debugOption.Aliases;
-                var configAliases = configOption.Aliases;
 
                 int debugIndex = -1;
                 int configIndex = -1;
@@ -88,27 +85,28 @@ namespace FGenerator.Cli
                 for (int i = 0; i < parseResult.Tokens.Count; i++)
                 {
                     var token = parseResult.Tokens[i];
-                    if (debugAliases.Any(a => token.Value == a))
+                    if (debugOption.Aliases.Contains(token.Value))
                     {
                         debugIndex = i;
                     }
-                    if (configAliases.Any(a => token.Value == a || token.Value.StartsWith(a + "=") || token.Value.StartsWith(a + ":")))
+                    if (configOption.Aliases.Any(a => token.Value == a || token.Value.StartsWith(a + "=") || token.Value.StartsWith(a + ":")))
                     {
                         configIndex = i;
                     }
                 }
 
-                if (configIndex != -1 && configIndex > debugIndex)
+                string configuration;
+                if (debugIndex > configIndex)
+                {
+                    configuration = debug ? "Debug" : "Release";
+                }
+                else if (configIndex > debugIndex)
                 {
                     configuration = config ?? "Release";
-                }
-                else if (debugIndex != -1)
-                {
-                    configuration = "Debug";
                 }
                 else
                 {
-                    configuration = config ?? "Release";
+                    configuration = config ?? (debug ? "Debug" : "Release");
                 }
 
                 return RunBuildWithGlobPattern(input, output, unity, merge, force, configuration);
