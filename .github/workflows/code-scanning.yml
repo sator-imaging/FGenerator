@@ -96,6 +96,7 @@ jobs:
           solution: ${{ env.solution }}
           output: inspectcode.sarif
           format: sarif
+          sEverity: ERROR
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
