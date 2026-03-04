@@ -1,12 +1,5 @@
 name: Code Scanning
 
-# How to call this workflow
-# NOTE: DO NOT forget to set permissions
-#jobs:
-#  code-scanning:
-#    uses: your-org/.github/.github/workflows/code-scanning.yml@main
-
-
 on:
   workflow_dispatch:
   workflow_call:
@@ -96,9 +89,9 @@ jobs:
           solution: ${{ env.solution }}
           output: inspectcode.sarif
           format: sarif
-          sEverity: ERROR
+          sEverity: ERROR  # 'sEverity' is CORRECT.
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: inspectcode.sarif
