@@ -75,38 +75,12 @@ namespace FGenerator.Cli
                 var merge = parseResult.GetValue(mergeOption);
                 var force = parseResult.GetValue(forceOption);
 
-                // Determine configuration: last one wins
-                var debug = parseResult.GetValue(debugOption);
-                var config = parseResult.GetValue(configOption);
-
-                int debugIndex = -1;
-                int configIndex = -1;
-
-                for (int i = 0; i < parseResult.Tokens.Count; i++)
+                // Determine configuration: '-c' wins over '--debug'
+                var configuration = parseResult.GetValue(debugOption) ? "Debug" : "Release";
+                var configValue = parseResult.GetValue(configOption);
+                if (!string.IsNullOrEmpty(configValue))
                 {
-                    var token = parseResult.Tokens[i];
-                    if (debugOption.Aliases.Contains(token.Value))
-                    {
-                        debugIndex = i;
-                    }
-                    if (configOption.Aliases.Any(a => token.Value == a || token.Value.StartsWith(a + "=") || token.Value.StartsWith(a + ":")))
-                    {
-                        configIndex = i;
-                    }
-                }
-
-                string configuration;
-                if (debugIndex > configIndex)
-                {
-                    configuration = debug ? "Debug" : "Release";
-                }
-                else if (configIndex > debugIndex)
-                {
-                    configuration = config ?? "Release";
-                }
-                else
-                {
-                    configuration = config ?? (debug ? "Debug" : "Release");
+                    configuration = configValue;
                 }
 
                 return RunBuildWithGlobPattern(input, output, unity, merge, force, configuration);
