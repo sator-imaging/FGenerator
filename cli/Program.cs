@@ -78,7 +78,7 @@ namespace FGenerator.Cli
                 // Determine configuration: '-c' wins over '--debug'
                 var configuration = parseResult.GetValue(debugOption) ? "Debug" : "Release";
                 var configValue = parseResult.GetValue(configOption);
-                if (!string.IsNullOrEmpty(configValue))
+                if (!string.IsNullOrWhiteSpace(configValue))
                 {
                     configuration = configValue;
                 }
