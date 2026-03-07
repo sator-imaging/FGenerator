@@ -222,6 +222,9 @@ internal static class MyMacroTemplates
 
 - Positional $-token for generic type arguments and parameters.
     - `$typeArg0`..`9` returns `T`, `int`, `string?` (no angled brackets).
+        - Optionally allow `$typeArg*` that does NOT include `<` and `>` fence for the ability to "Upgrade" type parameter:
+            - `Dictionary<int, string>` -> `MyClass<float, $typeArg*>`
+            - Generated code: `MyClass<float, int, string>`
     - `$typeConstraint0`..`9` returns `T : ...` (no `where` keyword).
     - > Find `$typeArg` or `$typeConstraint` then check next char: `s` or `0`..`9`.
 - Configuration for DEBUG-only features.
