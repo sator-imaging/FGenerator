@@ -19,7 +19,7 @@ using System.Text.RegularExpressions;
 [Generator]
 public sealed class MacroDotNetGenerator : FGeneratorBase
 {
-    private const byte MaxArgCount = 10;
+    private const sbyte MaxArgCount = 10;
     private const string DebugSymbol = "DEBUG";
     private static readonly Regex DisplayPrefixRegex = new Regex(@"^[^_]*_", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
@@ -974,7 +974,8 @@ using System.Threading.Tasks;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        readonly public bool IsEmpty() => argsOrFirstItem == null;  // `return default` to bypass ctor
+        readonly public bool IsEmpty() =>
+            argsOrFirstItem == null;  // Don't check 'consumed'. Need to distinguish `default` and `new()`.
 
         readonly public int Count
         {
