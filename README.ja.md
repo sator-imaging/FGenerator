@@ -10,7 +10,7 @@
 &nbsp;
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sator-imaging/FGenerator)
 <br/>
-[![MacroDotNet](https://img.shields.io/nuget/vpre/MacroDotNet?label=MacroDotNet)](https://github.com/sator-imaging/FGenerator/tree/main/MacroDotNet)
+[![MacroDotNet](https://img.shields.io/nuget/vpre/MacroDotNet?label=MacroDotNet)](https://github.com/sator-imaging/MacroDotNet)
 [![EnvObfuscator](https://img.shields.io/nuget/vpre/EnvObfuscator?label=EnvObfuscator)](https://github.com/sator-imaging/FGenerator/tree/main/EnvObfuscator)
 [![FinalEnumGenerator](https://img.shields.io/nuget/vpre/FinalEnumGenerator?label=FinalEnumGenerator)](https://github.com/sator-imaging/FGenerator/tree/main/FinalEnumGenerator)
 

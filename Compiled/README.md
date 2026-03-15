@@ -1,7 +1,7 @@
 Compiled source generators for .NET / Unity. Built with [FGenerator SDK](https://github.com/sator-imaging/FGenerator).
 
 - **MacroDotNet**  
-https://github.com/sator-imaging/FGenerator/tree/main/MacroDotNet
+https://github.com/sator-imaging/MacroDotNet
 
 - **EnvObfuscator**  
 https://github.com/sator-imaging/FGenerator/tree/main/EnvObfuscator
