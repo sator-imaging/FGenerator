@@ -6,7 +6,6 @@ on:
     paths:
       - "EnvObfuscator/**/*.cs"
       - "FinalEnumGenerator/**/*.cs"
-      - "MacroDotNet/**/*.cs"
   #pull_request:
   #  branches: [ "main" ]
   #release:
@@ -49,7 +48,7 @@ jobs:
           dotnet run --project cli -c Release -- build \
             --unity --merge \
             --force --output $OUTDIR \
-            "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs" "MacroDotNet/*.cs"  # enquote to prevent expanding
+            "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
 
 
           ### Git work ####
@@ -96,7 +95,6 @@ jobs:
         run: |
           dotnet pack Compiled/EnvObfuscator.nuspec      -o nuget-pack
           dotnet pack Compiled/FinalEnumGenerator.nuspec -o nuget-pack
-          dotnet pack Compiled/MacroDotNet.nuspec        -o nuget-pack
 
       - name: Push to NuGet
         run: |

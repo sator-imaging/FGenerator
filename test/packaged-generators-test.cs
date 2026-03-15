@@ -1,12 +1,10 @@
 #:package FUnit@*
 #:package FinalEnumGenerator@3.0.1
 #:package EnvObfuscator@3.0.1
-#:package MacroDotNet@3.0.1
-//                    ~~~~~~~~~~~~ Push AFTER compiled generators are published
+//                      ~~~~~~~~~~ Push AFTER compiled generators are published
 
 using EnvObfuscator;
 using FinalEnumGenerator;
-using MacroDotNet;
 
 #pragma warning disable SMA0026 // Enum Obfuscation
 
@@ -27,12 +25,6 @@ return FUnit.Run(args, describe =>
         {
             Must.BeTrue(FinalEnums.Test.TryParse("Foo", out var result));
             Must.BeEqual(Test.Foo, result);
-        });
-
-        it("MacroDotNet", () =>
-        {
-            var ex = new MacroExample();
-            Must.BeEqual(1, ex.IncrementCounter());
         });
     });
 });
@@ -55,11 +47,4 @@ enum Test
     Default,
     Foo,
     Bar,
-}
-
-
-public partial class MacroExample
-{
-    [Macro("public int Increment$displayName() => ++$fieldName;")]
-    private int _counter;
 }

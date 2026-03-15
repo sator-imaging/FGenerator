@@ -38,7 +38,7 @@ jobs:
         run: |
           dotnet run  --project cli -c Release -- build \
             --force --output  ./.z__merged_dll__ \
-            "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs" "MacroDotNet/*.cs"
+            "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"
           dotnet tool exec -y FGenerator.Cli -- build \
             "test/*.cs" -f -o ./.z__merged_dll__
           dotnet tool exec -y FGenerator.Cli -- build \
@@ -78,7 +78,7 @@ jobs:
         run: |
           dotnet run  --project cli -c Release -- build \
             --force --output  ./.z__merged_dll__ \
-            "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs" "MacroDotNet/*.cs"
+            "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"
           dotnet tool exec -y FGenerator.Cli -- build \
             "test/*.cs" -f -o ./.z__merged_dll__
           dotnet tool exec -y FGenerator.Cli -- build \
