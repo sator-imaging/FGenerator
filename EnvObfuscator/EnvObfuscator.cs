@@ -40,7 +40,7 @@ namespace EnvObfuscator
     internal sealed class ObfuscateAttribute : Attribute
     {
         /// <inheritdoc cref=""ObfuscateAttribute""/>
-        /// <param name=""seed"">Seed for deterministic obfuscation output; omit the parameter to use a random seed. 0 is allowed and deterministic.</param>
+        /// <param name=""seed"">Seed for deterministic obfuscation output; omit the parameter or use 0 to use a random seed.</param>
         public ObfuscateAttribute(int seed = 0)
         {
             // The seed value is read by the source generator from the attribute's syntax tree.
@@ -144,22 +144,16 @@ namespace EnvObfuscator
                 }
             }
 
-            if (hasExplicitSeed && seedValueFromAttribute == 0 && warning == null)
-            {
-                warning = new AnalyzeResult("009", "Seed is zero", DiagnosticSeverity.Warning, "Seed value 0 is valid but deterministic. To use a random seed, omit the seed argument.");
-            }
-
             if (warning != null)
             {
                 diagnostic = warning;
             }
 
-            int seed = hasExplicitSeed
-                ? seedValueFromAttribute
-                : GenerateRandomSeed();
-            int effectiveSeed = MixSeed(seed ^ StableHash(target.ToAssemblyUniqueIdentifier()));
+            int seed = (hasExplicitSeed && seedValueFromAttribute != 0)
+                ? MixSeed(seedValueFromAttribute ^ StableHash(target.ToAssemblyUniqueIdentifier()))
+                : 0;
 
-            var source = GenerateSource(target, entries, effectiveSeed);
+            var source = GenerateSource(target, entries, seed);
             return new CodeGeneration(target.ToHintName(), source);
         }
         catch (EnvKeyValidationException ex)
@@ -269,11 +263,15 @@ namespace EnvObfuscator
     {
         var baseChars = BuildBaseChars(entries);
 
-        IRandomSource random = new SeededRandomSource(seed);
+        IRandomSource random = seed == 0
+            ? (IRandomSource)new CryptoRandomSource()
+            : new SeededRandomSource(seed);
 
         // Ensure obfuscated names are produced immediately after random instantiation to avoid
         // accidental reuse of identical internal seeds across types (compile error as a result).
-        var nameRandom = new SeededRandomSource(seed ^ unchecked(0x6D2B79F5));
+        IRandomSource nameRandom = seed == 0
+            ? (IRandomSource)new CryptoRandomSource()
+            : new SeededRandomSource(seed ^ unchecked(0x6D2B79F5));
         string oddKeyNamespace = CreateHexName(nameRandom);
         string evenKeyNamespace = CreateHexName(nameRandom);
         string ocNamespace = CreateHexName(nameRandom);
@@ -1388,9 +1386,12 @@ namespace EnvObfuscator
         public int Seed { get; }
     }
 
-    private static int GenerateRandomSeed()
+    private sealed class CryptoRandomSource : IRandomSource
     {
-        return NextCryptoRangeInt32(1, int.MaxValue);
+        public int NextInt(int maxExclusive) => NextCryptoRangeInt32(0, maxExclusive);
+        public int NextInt(int minInclusive, int maxExclusive) => NextCryptoRangeInt32(minInclusive, maxExclusive);
+        public bool NextBool() => NextCryptoRangeInt32(0, 2) == 0;
+        public int Seed => 0;
     }
 
     private static int NextCryptoRangeInt32(int minInclusive, int maxExclusive)
