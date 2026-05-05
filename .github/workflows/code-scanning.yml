@@ -36,12 +36,12 @@ jobs:
       # BUILD REQUIRED 
       - name: Build
         run: |
-          dnx -y FGenerator.Cli -- build \
+          dotnet run  --project cli -c Release -- build \
             --force --output  ./.z__merged_dll__ \
             "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"
-          dnx -y FGenerator.Cli -- build \
+          dotnet run --project cli -c Release -- build \
             "test/*.cs" -f -o ./.z__merged_dll__
-          dnx -y FGenerator.Cli -- build \
+          dotnet run --project cli -c Release -- build \
             "Unity/*.cs" -f -o ./.z__merged_dll__
 
       - uses: JetBrains/qodana-action@v2025.3
@@ -76,12 +76,12 @@ jobs:
       # BUILD REQUIRED 
       - name: Build
         run: |
-          dnx -y FGenerator.Cli -- build \
+          dotnet run  --project cli -c Release -- build \
             --force --output  ./.z__merged_dll__ \
             "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"
-          dnx -y FGenerator.Cli -- build \
+          dotnet run --project cli -c Release -- build \
             "test/*.cs" -f -o ./.z__merged_dll__
-          dnx -y FGenerator.Cli -- build \
+          dotnet run --project cli -c Release -- build \
             "Unity/*.cs" -f -o ./.z__merged_dll__
 
       - uses: JetBrains/ReSharper-InspectCode@v0.11

@@ -269,11 +269,11 @@ namespace EnvObfuscator
     {
         var baseChars = BuildBaseChars(entries);
 
-        IRandomSource random = useCrypto ? (IRandomSource)new CryptoRandomSource() : new SeededRandomSource(seed);
+        IRandomSource random = useCrypto ? (IRandomSource)new CryptoRandomSource() : (IRandomSource)new SeededRandomSource(seed);
 
         // Ensure obfuscated names are produced immediately after random instantiation to avoid
         // accidental reuse of identical internal seeds across types (compile error as a result).
-        var nameRandom = useCrypto ? (IRandomSource)new CryptoRandomSource() : new SeededRandomSource(seed ^ unchecked(0x6D2B79F5));
+        var nameRandom = useCrypto ? (IRandomSource)new CryptoRandomSource() : (IRandomSource)new SeededRandomSource(seed ^ unchecked(0x6D2B79F5));
         string oddKeyNamespace = CreateHexName(nameRandom);
         string evenKeyNamespace = CreateHexName(nameRandom);
         string ocNamespace = CreateHexName(nameRandom);
