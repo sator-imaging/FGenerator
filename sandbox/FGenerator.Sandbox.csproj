@@ -17,8 +17,8 @@
     <!-- Reference the generator project -->
     <!-- OutputItemType="Analyzer" makes it work as a source generator -->
     <!--
-    <ProjectReference Include="../AutoNotifyGenerator/AutoNotifyGenerator.csproj" 
-                      OutputItemType="Analyzer" 
+    <ProjectReference Include="../AutoNotifyGenerator/AutoNotifyGenerator.csproj"
+                      OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     -->
 

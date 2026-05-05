@@ -36,13 +36,13 @@ jobs:
           --force --output  ./.z__merged_dll__ \
           "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
 
-        dnx -y FGenerator.Cli -- build \
+        dotnet run --project cli ${{ matrix.configuration }} -- build \
           ${{ matrix.unity }} \
           ${{ matrix.merge }} \
           ${{ matrix.configuration }} \
           "test/*.cs" -f -o ./.z__merged_dll__
 
-        dnx -y FGenerator.Cli -- build \
+        dotnet run --project cli ${{ matrix.configuration }} -- build \
           ${{ matrix.unity }} \
           ${{ matrix.merge }} \
           ${{ matrix.configuration }} \
