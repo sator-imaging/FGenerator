@@ -8,6 +8,7 @@ using FGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Buffers.Binary;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -159,7 +160,7 @@ namespace EnvObfuscator
                 : GenerateRandomSeed();
             int effectiveSeed = MixSeed(seed ^ StableHash(target.ToAssemblyUniqueIdentifier()));
 
-            var source = GenerateSource(target, entries, effectiveSeed);
+            var source = GenerateSource(target, entries, effectiveSeed, !hasExplicitSeed);
             return new CodeGeneration(target.ToHintName(), source);
         }
         catch (EnvKeyValidationException ex)
@@ -265,15 +266,15 @@ namespace EnvObfuscator
         }
     }
 
-    private static string GenerateSource(Target target, List<EnvEntry> entries, int seed)
+    private static string GenerateSource(Target target, List<EnvEntry> entries, int seed, bool useCrypto)
     {
         var baseChars = BuildBaseChars(entries);
 
-        IRandomSource random = new SeededRandomSource(seed);
+        IRandomSource random = new EnvRandomSource(seed, useCrypto);
 
         // Ensure obfuscated names are produced immediately after random instantiation to avoid
         // accidental reuse of identical internal seeds across types (compile error as a result).
-        var nameRandom = new SeededRandomSource(seed ^ unchecked(0x6D2B79F5));
+        var nameRandom = new EnvRandomSource(seed ^ unchecked(0x6D2B79F5), useCrypto);
         string oddKeyNamespace = CreateHexName(nameRandom);
         string evenKeyNamespace = CreateHexName(nameRandom);
         string ocNamespace = CreateHexName(nameRandom);
@@ -1371,20 +1372,25 @@ namespace EnvObfuscator
         int Seed { get; }
     }
 
-    private sealed class SeededRandomSource : IRandomSource
+    private sealed class EnvRandomSource : IRandomSource
     {
-        private readonly Random _random;
+        private readonly Random? _random;
+        private readonly bool _useCrypto;
 
-        public SeededRandomSource(int seed)
+        public EnvRandomSource(int seed, bool useCrypto)
         {
+            _useCrypto = useCrypto;
             Seed = MixSeed(seed);
-            _random = new Random(Seed);
-            _random.Next(); // one spin-up
+            if (!_useCrypto)
+            {
+                _random = new Random(Seed);
+                _random.Next(); // one spin-up
+            }
         }
 
-        public int NextInt(int maxExclusive) => _random.Next(maxExclusive);
-        public int NextInt(int minInclusive, int maxExclusive) => _random.Next(minInclusive, maxExclusive);
-        public bool NextBool() => _random.Next(2) == 0;
+        public int NextInt(int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(0, maxExclusive) : _random!.Next(maxExclusive);
+        public int NextInt(int minInclusive, int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(minInclusive, maxExclusive) : _random!.Next(minInclusive, maxExclusive);
+        public bool NextBool() => _useCrypto ? NextCryptoRangeInt32(0, 2) == 0 : _random!.Next(2) == 0;
         public int Seed { get; }
     }
 
@@ -1392,6 +1398,8 @@ namespace EnvObfuscator
     {
         return NextCryptoRangeInt32(1, int.MaxValue);
     }
+
+    private static readonly RandomNumberGenerator rng_crypto = RandomNumberGenerator.Create();
 
     private static int NextCryptoRangeInt32(int minInclusive, int maxExclusive)
     {
@@ -1403,14 +1411,13 @@ namespace EnvObfuscator
         uint range = (uint)(maxExclusive - minInclusive);
         uint limit = uint.MaxValue - (uint.MaxValue % range);
         uint value;
-
-        using var rng = RandomNumberGenerator.Create();
-        var buffer = new byte[4];
+        var buffer = new byte[sizeof(uint)];  // TODO: Cannot cache because concurrent execution is enabled
         do
         {
-            rng.GetBytes(buffer);
-            value = BitConverter.ToUInt32(buffer, 0);
-        } while (value >= limit);
+            rng_crypto.GetBytes(buffer);
+            value = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
+        }
+        while (value >= limit);
 
         return unchecked((int)(minInclusive + (value % range)));
     }
