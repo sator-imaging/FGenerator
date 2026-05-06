@@ -1399,6 +1399,8 @@ namespace EnvObfuscator
         return NextCryptoRangeInt32(1, int.MaxValue);
     }
 
+    private static readonly RandomNumberGenerator rng_crypto = RandomNumberGenerator.Create();
+
     private static int NextCryptoRangeInt32(int minInclusive, int maxExclusive)
     {
         if (minInclusive >= maxExclusive)
@@ -1409,10 +1411,10 @@ namespace EnvObfuscator
         uint range = (uint)(maxExclusive - minInclusive);
         uint limit = uint.MaxValue - (uint.MaxValue % range);
         uint value;
-        var buffer = new byte[sizeof(uint)];  // Cannot cache because concurrent execution is enabled
+        var buffer = new byte[sizeof(uint)];  // TODO: Cannot cache because concurrent execution is enabled
         do
         {
-            RandomNumberGenerator.GetBytes(buffer);
+            rng_crypto.GetBytes(buffer);
             value = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
         }
         while (value >= limit);
