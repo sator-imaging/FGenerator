@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   workflow_call:
   ###pull_request:
-  push:
-    branches:
-      - 'main'
-      - 'releases/*'
+  #push:
+  #  branches:
+  #    - 'main'
+  #    - 'releases/*'
 
 env:
   solution: ./FGenerator.slnx  # Cannot recognize **/*.slnx
