@@ -39,9 +39,9 @@ jobs:
           dotnet run  --project cli -c Release -- build \
             --force --output  ./.z__merged_dll__ \
             "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"
-          dotnet tool exec -y FGenerator.Cli -- build \
+          dotnet tool exec -y FGenerator.Cli -c Release -- build \
             "test/*.cs" -f -o ./.z__merged_dll__
-          dotnet tool exec -y FGenerator.Cli -- build \
+          dotnet tool exec -y FGenerator.Cli -c Release -- build \
             "Unity/*.cs" -f -o ./.z__merged_dll__
 
       - uses: JetBrains/qodana-action@v2025.3
