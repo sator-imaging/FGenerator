@@ -8,6 +8,7 @@ using FGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Buffers.Binary;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -1409,13 +1410,13 @@ namespace EnvObfuscator
         uint limit = uint.MaxValue - (uint.MaxValue % range);
         uint value;
 
-        using var rng = RandomNumberGenerator.Create();
-        var buffer = new byte[4];
+        var buffer =  stackalloc byte[4];
         do
         {
-            rng.GetBytes(buffer);
-            value = BitConverter.ToUInt32(buffer, 0);
-        } while (value >= limit);
+            RandomNumberGenerator.GetBytes(buffer);
+            value = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
+        }
+        while (value >= limit);
 
         return unchecked((int)(minInclusive + (value % range)));
     }
