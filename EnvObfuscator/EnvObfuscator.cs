@@ -1409,8 +1409,7 @@ namespace EnvObfuscator
         uint range = (uint)(maxExclusive - minInclusive);
         uint limit = uint.MaxValue - (uint.MaxValue % range);
         uint value;
-
-        Span<byte> buffer = (stackalloc byte[4]);
+        var buffer = new byte[sizeof(uint)];  // Cannot cache because concurrent execution is enabled
         do
         {
             RandomNumberGenerator.GetBytes(buffer);
