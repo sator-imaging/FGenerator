@@ -269,11 +269,11 @@ namespace EnvObfuscator
     {
         var baseChars = BuildBaseChars(entries);
 
-        IRandomSource random = useCrypto ? (IRandomSource)new CryptoRandomSource() : (IRandomSource)new SeededRandomSource(seed);
+        IRandomSource random = new EnvRandomSource(seed, useCrypto);
 
         // Ensure obfuscated names are produced immediately after random instantiation to avoid
         // accidental reuse of identical internal seeds across types (compile error as a result).
-        var nameRandom = useCrypto ? (IRandomSource)new CryptoRandomSource() : (IRandomSource)new SeededRandomSource(seed ^ unchecked(0x6D2B79F5));
+        var nameRandom = new EnvRandomSource(seed ^ unchecked(0x6D2B79F5), useCrypto);
         string oddKeyNamespace = CreateHexName(nameRandom);
         string evenKeyNamespace = CreateHexName(nameRandom);
         string ocNamespace = CreateHexName(nameRandom);
@@ -309,19 +309,12 @@ namespace EnvObfuscator
         string ocRef = BuildNamespacePrefix(ocNamespace) + ocClass + "." + ocField;
         string ecRef = BuildNamespacePrefix(ecNamespace) + ecClass + "." + ecField;
 
-        if (useCrypto)
-        {
-            sb.AppendLine("// seed: <CSPRNG>");
-        }
-        else
-        {
-            int actualSeed = random.Seed;
-            sb.Append("// seed: ");
-            AppendSeedBinary(sb, actualSeed);
-            sb.Append(" (");
-            sb.Append(actualSeed.ToString(CultureInfo.InvariantCulture));
-            sb.AppendLine(")");
-        }
+        int actualSeed = random.Seed;
+        sb.Append("// seed: ");
+        AppendSeedBinary(sb, actualSeed);
+        sb.Append(" (");
+        sb.Append(actualSeed.ToString(CultureInfo.InvariantCulture));
+        sb.AppendLine(")");
         sb.AppendLine();
         AppendKeyClass(sb, oddKeyNamespace, oddKeyClass, oddKeyField, oddKey);
         sb.AppendLine();
@@ -1378,29 +1371,26 @@ namespace EnvObfuscator
         int Seed { get; }
     }
 
-    private sealed class SeededRandomSource : IRandomSource
+    private sealed class EnvRandomSource : IRandomSource
     {
-        private readonly Random _random;
+        private readonly Random? _random;
+        private readonly bool _useCrypto;
 
-        public SeededRandomSource(int seed)
+        public EnvRandomSource(int seed, bool useCrypto)
         {
+            _useCrypto = useCrypto;
             Seed = MixSeed(seed);
-            _random = new Random(Seed);
-            _random.Next(); // one spin-up
+            if (!_useCrypto)
+            {
+                _random = new Random(Seed);
+                _random.Next(); // one spin-up
+            }
         }
 
-        public int NextInt(int maxExclusive) => _random.Next(maxExclusive);
-        public int NextInt(int minInclusive, int maxExclusive) => _random.Next(minInclusive, maxExclusive);
-        public bool NextBool() => _random.Next(2) == 0;
+        public int NextInt(int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(0, maxExclusive) : _random!.Next(maxExclusive);
+        public int NextInt(int minInclusive, int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(minInclusive, maxExclusive) : _random!.Next(minInclusive, maxExclusive);
+        public bool NextBool() => _useCrypto ? NextCryptoRangeInt32(0, 2) == 0 : _random!.Next(2) == 0;
         public int Seed { get; }
-    }
-
-    private sealed class CryptoRandomSource : IRandomSource
-    {
-        public int NextInt(int maxExclusive) => NextCryptoRangeInt32(0, maxExclusive);
-        public int NextInt(int minInclusive, int maxExclusive) => NextCryptoRangeInt32(minInclusive, maxExclusive);
-        public bool NextBool() => NextCryptoRangeInt32(0, 2) == 0;
-        public int Seed => 0;
     }
 
     private static int GenerateRandomSeed()
