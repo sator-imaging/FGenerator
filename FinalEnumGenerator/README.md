@@ -40,8 +40,7 @@ public enum MyEnum
 {
     None = 0,
 
-    // Customize name by Category attribute from System.ComponentModel
-    // to avoid unnecessary dependency to FinalEnum
+    // Customize name by Category attribute from System.ComponentModel (Avoiding unnecessary dependency on FinalEnum)
     [Category("日本語")]
     Flag1 = 1,
     Flag2 = 2,
