@@ -154,7 +154,7 @@ namespace FGenerator.Cli
 
             Console.WriteLine($"Generating empty {csFile.Name}...");
 
-            var args = $"build \"{csFile.FullName}\" -o \"{outputDir.FullName}\"";
+            var args = $"build \"{csFile.FullName}\" -o \"{outputDir.FullName}\" -p:PublishAot=false -p:AssemblyName=\"{assemblyName}\"";
 
             var exitCode = Utils.ExecuteProcess("dotnet", args, disableSucceededBuildStdout: true);
             if (exitCode != 0)
