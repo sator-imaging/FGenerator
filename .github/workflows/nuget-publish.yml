@@ -30,6 +30,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.203  # 10.0.300 has regression  #10.x.x
+          cache: false
 
       - name: Pack (release)
         run: |
