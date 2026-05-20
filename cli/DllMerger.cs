@@ -25,7 +25,7 @@ namespace FGenerator.Cli
 
             var primaryDll = tempDllFileList
                 .FirstOrDefault(f => Path.GetFileName(f) == outputDllFileName)
-                ?? throw new Exception("Primary DLL not found.");
+                ?? throw new Exception($"Primary DLL not found: {outputDllFileName}. Found: {string.Join(", ", tempDllFileList.Select(Path.GetFileName))}");
 
             var otherDlls = tempDllFileList.Where(f => f != primaryDll).ToArray();
 
