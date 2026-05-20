@@ -232,7 +232,7 @@ namespace FGenerator.Cli
                 else
                 {
                     // Move .dll files from temp to output directory
-                    int moveResult = MoveDllFiles(tempDir, output, force, out var movedFiles);
+                    int moveResult = MoveDllFiles(input, tempDir, output, force, out var movedFiles);
                     if (moveResult != 0)
                     {
                         return moveResult;
@@ -333,7 +333,7 @@ namespace FGenerator.Cli
             }
         }
 
-        static int MoveDllFiles(DirectoryInfo sourceDir, DirectoryInfo destDir, bool force, out List<FileInfo> movedFiles)
+        static int MoveDllFiles(FileInfo input, DirectoryInfo sourceDir, DirectoryInfo destDir, bool force, out List<FileInfo> movedFiles)
         {
             movedFiles = new List<FileInfo>();
             try
@@ -350,9 +350,16 @@ namespace FGenerator.Cli
                 // Ensure destination directory exists
                 destDir.Create();
 
+                var primaryBaseName = Path.GetFileNameWithoutExtension(input.Name);
                 foreach (var dllFile in dllFiles)
                 {
-                    var destPath = Path.Combine(destDir.FullName, dllFile.Name);
+                    var name = dllFile.Name;
+                    if (name == primaryBaseName + ".cs.dll")
+                    {
+                        name = primaryBaseName + ".dll";
+                    }
+
+                    var destPath = Path.Combine(destDir.FullName, name);
 
                     // Check if destination exists and handle force flag
                     if (!Utils.PromptOverwrite(destPath, force))
