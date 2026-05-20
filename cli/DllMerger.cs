@@ -11,6 +11,8 @@ namespace FGenerator.Cli
     {
         public static FileInfo? Merge(FileInfo input, DirectoryInfo outputDir)
         {
+            Utils.RenameFullnameDllToBasename(input, outputDir);
+
             var tempDllFileList = outputDir.GetFiles("*.dll")
                 .Select(f => f.FullName)
                 .ToArray();
@@ -162,6 +164,8 @@ namespace FGenerator.Cli
                 Console.Error.WriteLine($"Build failed with exit code {exitCode}");
                 return;
             }
+
+            Utils.RenameFullnameDllToBasename(csFile, outputDir);
 
             Console.WriteLine($"Empty dll generation succeeded: {assemblyName}");
         }

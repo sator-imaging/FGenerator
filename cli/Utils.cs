@@ -64,6 +64,16 @@ namespace FGenerator.Cli
             return exitCode != 0 ? exitCode : 0;
         }
 
+        public static void RenameFullnameDllToBasename(FileInfo input, DirectoryInfo directory)
+        {
+            var fullnameDll = Path.Combine(directory.FullName, input.Name + ".dll");
+            var basenameDll = Path.Combine(directory.FullName, Path.GetFileNameWithoutExtension(input.Name) + ".dll");
+
+            if (File.Exists(fullnameDll) && !File.Exists(basenameDll))
+            {
+                File.Move(fullnameDll, basenameDll);
+            }
+        }
 
         public static bool PromptOverwrite(string filePath, bool force)
         {

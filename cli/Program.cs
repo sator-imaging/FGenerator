@@ -215,6 +215,8 @@ namespace FGenerator.Cli
 
                 Console.WriteLine("Build succeeded.");
 
+                Utils.RenameFullnameDllToBasename(input, tempDir);
+
                 var generatedFiles = new List<FileInfo>();
 
                 if (merge)
