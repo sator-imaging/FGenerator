@@ -21,9 +21,10 @@ namespace FGenerator.Cli
                 return null;
             }
 
-            var assemblyName = Path.GetFileNameWithoutExtension(input.Name);
+            var outputDllFileName = $"{Path.GetFileNameWithoutExtension(input.Name)}.dll";
+
             var primaryDll = tempDllFileList
-                .FirstOrDefault(f => Path.GetFileName(f) == $"{assemblyName}.dll" || Path.GetFileName(f) == $"{assemblyName}.cs.dll")
+                .FirstOrDefault(f => Path.GetFileName(f) == outputDllFileName)
                 ?? throw new Exception("Primary DLL not found.");
 
             var otherDlls = tempDllFileList.Where(f => f != primaryDll).ToArray();
@@ -39,7 +40,7 @@ namespace FGenerator.Cli
                 return new(primaryDll);
             }
 
-            var outputPath = Path.Combine(outputDir.FullName, "__merged__", Path.GetFileName(primaryDll));
+            var outputPath = Path.Combine(outputDir.FullName, "__merged__", outputDllFileName);
             Console.WriteLine($"Merging {tempDllFileList.Length} assemblies into {outputPath}...");
             Console.WriteLine($"- [MAIN] {primaryDll}");
             Console.WriteLine($"- {string.Join("\n- ", otherDlls)}");

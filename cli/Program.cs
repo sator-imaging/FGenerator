@@ -204,7 +204,8 @@ namespace FGenerator.Cli
                 // Run dotnet build on input file
                 Console.WriteLine($"Building {input.Name}...");
 
-                var args = $"build --no-incremental \"{input.FullName}\" -c {configuration} -o \"{tempDir.FullName}\"";
+                var assemblyName = Path.GetFileNameWithoutExtension(input.Name);
+                var args = $"build --no-incremental \"{input.FullName}\" -c {configuration} -o \"{tempDir.FullName}\" -p:AssemblyName=\"{assemblyName}\"";
 
                 var exitCode = Utils.ExecuteProcess("dotnet", args);
                 if (exitCode != 0)
@@ -232,7 +233,7 @@ namespace FGenerator.Cli
                 else
                 {
                     // Move .dll files from temp to output directory
-                    int moveResult = MoveDllFiles(input, tempDir, output, force, out var movedFiles);
+                    int moveResult = MoveDllFiles(tempDir, output, force, out var movedFiles);
                     if (moveResult != 0)
                     {
                         return moveResult;
@@ -333,7 +334,7 @@ namespace FGenerator.Cli
             }
         }
 
-        static int MoveDllFiles(FileInfo input, DirectoryInfo sourceDir, DirectoryInfo destDir, bool force, out List<FileInfo> movedFiles)
+        static int MoveDllFiles(DirectoryInfo sourceDir, DirectoryInfo destDir, bool force, out List<FileInfo> movedFiles)
         {
             movedFiles = new List<FileInfo>();
             try
@@ -350,16 +351,9 @@ namespace FGenerator.Cli
                 // Ensure destination directory exists
                 destDir.Create();
 
-                var primaryBaseName = Path.GetFileNameWithoutExtension(input.Name);
                 foreach (var dllFile in dllFiles)
                 {
-                    var name = dllFile.Name;
-                    if (name == primaryBaseName + ".cs.dll")
-                    {
-                        name = primaryBaseName + ".dll";
-                    }
-
-                    var destPath = Path.Combine(destDir.FullName, name);
+                    var destPath = Path.Combine(destDir.FullName, dllFile.Name);
 
                     // Check if destination exists and handle force flag
                     if (!Utils.PromptOverwrite(destPath, force))
