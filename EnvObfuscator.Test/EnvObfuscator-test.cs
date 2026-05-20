@@ -14,6 +14,8 @@ using EnvObfuscator.Test;
 #pragma warning disable SMA0021  // Cast from Enum Type to Other
 #pragma warning disable IDE0390  // Make method synchronous
 #pragma warning disable IDE0018  // Inline variable declaration
+#pragma warning disable SMA8000  // Literal argument
+#pragma warning disable SMA0050  // Missing file header
 
 return FUnit.Run(args, describe =>
 {
@@ -46,22 +48,22 @@ return FUnit.Run(args, describe =>
 
         it("Validate compares full input", () =>
         {
-            Must.BeTrue(EnvObfuscationTestLoader.Validate_Value("XX"));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_Value("XX "));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_Value("X"));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_Value("XY"));
-            Must.BeTrue(EnvObfuscationTestLoader.Validate_OTHER("XX"));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_OTHER("XX "));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_OTHER("X"));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_OTHER("XY"));
-            Must.BeTrue(EnvObfuscationTestLoader.Validate_WHITE_SPACE("START    END   \\r\\n"));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_WHITE_SPACE("START   END   \\r\\n"));
-            Must.BeTrue(EnvObfuscationTestLoader.Validate_JA("アメンボ赤いな HAHIFUHE FOOOOO"));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_JA("アメンボ赤いな HAHIFUHE FOOOO"));
-            Must.BeTrue(EnvObfuscationTestLoader.Validate_SurrogatePair("🎉 ← サロゲートペアが必要な絵文字"));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_SurrogatePair("🎉 ← サロゲートペアが必要な絵文"));
-            Must.BeTrue(EnvObfuscationTestLoader.Validate_EMPTY(""));
-            Must.BeTrue(!EnvObfuscationTestLoader.Validate_EMPTY(" "));
+            Must.BeTrue(EnvObfuscationTestLoader.Validate_Value(value: "XX"));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_Value(value: "XX "));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_Value(value: "X"));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_Value(value: "XY"));
+            Must.BeTrue(EnvObfuscationTestLoader.Validate_OTHER(value: "XX"));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_OTHER(value: "XX "));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_OTHER(value: "X"));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_OTHER(value: "XY"));
+            Must.BeTrue(EnvObfuscationTestLoader.Validate_WHITE_SPACE(value: "START    END   \\r\\n"));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_WHITE_SPACE(value: "START   END   \\r\\n"));
+            Must.BeTrue(EnvObfuscationTestLoader.Validate_JA(value: "アメンボ赤いな HAHIFUHE FOOOOO"));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_JA(value: "アメンボ赤いな HAHIFUHE FOOOO"));
+            Must.BeTrue(EnvObfuscationTestLoader.Validate_SurrogatePair(value: "🎉 ← サロゲートペアが必要な絵文字"));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_SurrogatePair(value: "🎉 ← サロゲートペアが必要な絵文"));
+            Must.BeTrue(EnvObfuscationTestLoader.Validate_EMPTY(value: ""));
+            Must.BeTrue(!EnvObfuscationTestLoader.Validate_EMPTY(value: " "));
         });
     });
 });

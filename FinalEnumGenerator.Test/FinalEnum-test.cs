@@ -1,3 +1,6 @@
+#pragma warning disable SMA8000  // Literal argument
+#pragma warning disable SMA0050  // Missing file header
+
 using FinalEnums;
 using FinalEnums.FinalEnumGenerator.Test;
 using FinalEnums.FinalEnumGenerator.Test.EnumContainer.Nest;
@@ -36,7 +39,7 @@ return FUnit.Run(args, describe =>
             Must.BeTrue(!DeepNestedEnumType.TryParse("Value_Not_Found", out parsed));
             Must.BeTrue(!DeepNestedEnumType.TryParse(string.Empty, out parsed));
             Must.BeTrue(!DeepNestedEnumType.TryParse("  ", out parsed));
-            Must.BeTrue(!DeepNestedEnumType.TryParse((string?)null, out parsed));
+            Must.BeTrue(!DeepNestedEnumType.TryParse(s: (string?)null, out parsed));
         });
 
         it("TryParse honors comparison and whitespace", () =>
@@ -121,10 +124,10 @@ return FUnit.Run(args, describe =>
 
         it("IsDefined matches declared numeric values", () =>
         {
-            Must.BeTrue(DeepNestedEnumType.IsDefined(0));
-            Must.BeTrue(DeepNestedEnumType.IsDefined(6));
-            Must.BeTrue(DeepNestedEnumType.IsDefined(11));
-            Must.BeTrue(!DeepNestedEnumType.IsDefined(99));
+            Must.BeTrue(DeepNestedEnumType.IsDefined(value: 0));
+            Must.BeTrue(DeepNestedEnumType.IsDefined(value: 6));
+            Must.BeTrue(DeepNestedEnumType.IsDefined(value: 11));
+            Must.BeTrue(!DeepNestedEnumType.IsDefined(value: 99));
         });
 
         it("ToStringFast/Utf8 return empty or throw for unknown non-flags", () =>
@@ -270,25 +273,25 @@ return FUnit.Run(args, describe =>
 
         it("IsDefined only accepts single defined flags", () =>
         {
-            Must.BeTrue(MyTestFlagsType.IsDefined(1));
-            Must.BeTrue(MyTestFlagsType.IsDefined(3));
-            Must.BeTrue(MyTestFlagsType.IsDefined(8));
+            Must.BeTrue(MyTestFlagsType.IsDefined(value: 1));
+            Must.BeTrue(MyTestFlagsType.IsDefined(value: 3));
+            Must.BeTrue(MyTestFlagsType.IsDefined(value: 8));
 
-            Must.BeTrue(MyTestFlagsType.IsDefined(0));
-            Must.BeTrue(!FlagsNoZero.IsDefined(0));
+            Must.BeTrue(MyTestFlagsType.IsDefined(value: 0));
+            Must.BeTrue(!FlagsNoZero.IsDefined(value: 0));
 
-            Must.BeTrue(FlagsNoZero.IsDefined(1));
-            Must.BeTrue(FlagsNoZero.IsDefined(3));
+            Must.BeTrue(FlagsNoZero.IsDefined(value: 1));
+            Must.BeTrue(FlagsNoZero.IsDefined(value: 3));
 
             Must.BeTrue(!MyTestFlagsType.IsDefined(int.MaxValue));  // OK: unknown
         });
 
         it("IsDefined uses correct numeric width for unsigned/signed enums", () =>
         {
-            Must.BeTrue(UnderlyingValueUInt.IsDefined(0UL));
-            Must.BeTrue(!UnderlyingValueUInt.IsDefined(1UL));
-            Must.BeTrue(UnderlyingValueShort.IsDefined(0));
-            Must.BeTrue(!UnderlyingValueShort.IsDefined(1));
+            Must.BeTrue(UnderlyingValueUInt.IsDefined(value: 0UL));
+            Must.BeTrue(!UnderlyingValueUInt.IsDefined(value: 1UL));
+            Must.BeTrue(UnderlyingValueShort.IsDefined(value: 0));
+            Must.BeTrue(!UnderlyingValueShort.IsDefined(value: 1));
         });
 
         it("TryParse rejects missing delimiters or substrings for flags", () =>

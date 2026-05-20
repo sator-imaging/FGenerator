@@ -1,3 +1,6 @@
+#pragma warning disable SMA8000  // Literal argument
+#pragma warning disable SMA0050  // Missing file header
+
 using System;
 using System.ComponentModel;
 

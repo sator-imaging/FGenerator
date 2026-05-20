@@ -7,6 +7,8 @@
 ///* a=b */
 //[EnvObfuscator.Obfuscate(310)] partial class zinke { }
 
+#pragma warning disable SMA8000  // Literal argument
+
 namespace EnvObfuscator.Test
 {
     public partial class EnvContainer
@@ -52,7 +54,7 @@ namespace EnvObfuscator.Test
         [Obfuscate] partial class InvalidEnvIgnored { }
 
         /* a=b */
-        [Obfuscate(0)] partial class SeedZeroProducesDeterministicBuild { }
+        [Obfuscate(seed: 0)] partial class SeedZeroProducesDeterministicBuild { }
         /* a=b */
         [Obfuscate(seed: 0)] partial class SeedZeroProducesDeterministicBuildWithPrefix { }
 
