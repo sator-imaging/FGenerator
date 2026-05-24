@@ -1,7 +1,7 @@
 // Licensed under the Apache-2.0 License
 // https://github.com/sator-imaging/FGenerator
 
-#:sdk FGenerator.Sdk@3.1.2
+#:sdk FGenerator.Sdk@3.1.9
 //                   ~~~~~ Push to origin AFTER new NUGET package is available
 
 using FGenerator;
