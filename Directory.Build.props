@@ -10,7 +10,6 @@
 
   <PropertyGroup Label="NuGetPublishSettings">
     <NuGetPublishVersion>3.1.0</NuGetPublishVersion>
-    <NuGetPublishVersionSuffix></NuGetPublishVersionSuffix>
     <!-- relative path from .csproj files, without trailing slash -->
     <NuGetPublishProjectRootRelPath>..</NuGetPublishProjectRootRelPath>
     <NuGetPublishIconFile>icon-128px.png</NuGetPublishIconFile>
@@ -52,10 +51,10 @@
 
     <PackageIcon>$(NuGetPublishIconFile)</PackageIcon>
     <PackageReadmeFile>$(NuGetPublishReadmeFile)</PackageReadmeFile>
-    <AssemblyVersion>$(NuGetPublishVersion)</AssemblyVersion>
-    <FileVersion>$(NuGetPublishVersion)</FileVersion>
-    <PackageVersion>$(NuGetPublishVersion)$(NuGetPublishVersionSuffix)</PackageVersion>
-    <Version>$(NuGetPublishVersion)$(NuGetPublishVersionSuffix)</Version>
+    <AssemblyVersion>$([System.String]::Copy('$(NuGetPublishVersion)').Split('-')[0]).0</AssemblyVersion>
+    <FileVersion>$([System.String]::Copy('$(NuGetPublishVersion)').Split('-')[0]).0</FileVersion>
+    <PackageVersion>$(NuGetPublishVersion)</PackageVersion>
+    <Version>$(NuGetPublishVersion)</Version>
 
     <AssemblyName>$(NuGetPublishID)</AssemblyName>
     <PackageId>$(NuGetPublishID)</PackageId>
