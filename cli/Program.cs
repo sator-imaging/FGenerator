@@ -194,13 +194,24 @@ namespace FGenerator.Cli
                 return 1;
             }
 
+            var propsFile = new FileInfo(Path.Combine(input.DirectoryName ?? ".", "Directory.Build.props"));
+            if (propsFile.Exists)
+            {
+                WriteFailure($"Directory.Build.props already exists next to input file: {propsFile.FullName}");
+                return 1;
+            }
+
             // Always use temp directory for build output
             var tempDir = new DirectoryInfo(Path.Combine(Path.GetTempPath(), $"{nameof(FGenerator)}.{nameof(Cli)}_{Guid.NewGuid():N}"));
             tempDir.Create();
             Console.WriteLine($"Build output directory (temp): {tempDir.FullName}");
 
+            bool propsCreated = false;
             try
             {
+                File.WriteAllText(propsFile.FullName, "<Project>\n</Project>");
+                propsCreated = true;
+
                 // Run dotnet build on input file
                 Console.WriteLine($"Building {input.Name}...");
 
@@ -252,6 +263,11 @@ namespace FGenerator.Cli
             }
             finally
             {
+                if (propsCreated)
+                {
+                    try { File.Delete(propsFile.FullName); } catch { }
+                }
+
                 // Clean up temp directory
                 if (tempDir.Exists)
                 {
