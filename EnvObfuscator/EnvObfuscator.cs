@@ -270,11 +270,11 @@ namespace EnvObfuscator
     {
         var baseChars = BuildBaseChars(entries);
 
-        IRandomSource random = new EnvRandomSource(seed, useCrypto);
+        using IRandomSource random = new EnvRandomSource(seed, useCrypto);
 
         // Ensure obfuscated names are produced immediately after random instantiation to avoid
         // accidental reuse of identical internal seeds across types (compile error as a result).
-        var nameRandom = new EnvRandomSource(seed ^ unchecked(0x6D2B79F5), useCrypto);
+        using var nameRandom = new EnvRandomSource(seed ^ unchecked(0x6D2B79F5), useCrypto);
         string oddKeyNamespace = CreateHexName(nameRandom);
         string evenKeyNamespace = CreateHexName(nameRandom);
         string ocNamespace = CreateHexName(nameRandom);
@@ -1364,7 +1364,7 @@ namespace EnvObfuscator
         public string Value { get; }
     }
 
-    private interface IRandomSource
+    private interface IRandomSource : global::System.IDisposable
     {
         int NextInt(int maxExclusive);
         int NextInt(int minInclusive, int maxExclusive);
@@ -1376,12 +1376,19 @@ namespace EnvObfuscator
     {
         private readonly Random? _random;
         private readonly bool _useCrypto;
+        private readonly RandomNumberGenerator? _rng;
+        private readonly byte[]? _buffer;
 
         public EnvRandomSource(int seed, bool useCrypto)
         {
             _useCrypto = useCrypto;
             Seed = MixSeed(seed);
-            if (!_useCrypto)
+            if (_useCrypto)
+            {
+                _rng = RandomNumberGenerator.Create();
+                _buffer = new byte[sizeof(uint)];
+            }
+            else
             {
                 _random = new Random(Seed);
                 _random.Next(); // one spin-up
@@ -1392,35 +1399,39 @@ namespace EnvObfuscator
         public int NextInt(int minInclusive, int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(minInclusive, maxExclusive) : _random!.Next(minInclusive, maxExclusive);
         public bool NextBool() => _useCrypto ? NextCryptoRangeInt32(0, 2) == 0 : _random!.Next(2) == 0;
         public int Seed { get; }
+
+        public void Dispose()
+        {
+            _rng?.Dispose();
+        }
+
+        private int NextCryptoRangeInt32(int minInclusive, int maxExclusive)
+        {
+            if (minInclusive >= maxExclusive)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxExclusive), "maxExclusive must be greater than minInclusive.");
+            }
+
+            uint range = (uint)(maxExclusive - minInclusive);
+            uint limit = uint.MaxValue - (uint.MaxValue % range);
+            uint value;
+            do
+            {
+                _rng!.GetBytes(_buffer!);
+                value = BinaryPrimitives.ReadUInt32LittleEndian(_buffer!);
+            }
+            while (value >= limit);
+
+            return unchecked((int)(minInclusive + (value % range)));
+        }
     }
 
     private static int GenerateRandomSeed()
     {
-        return NextCryptoRangeInt32(1, int.MaxValue);
+        using var random = new EnvRandomSource(0, true);
+        return random.NextInt(1, int.MaxValue);
     }
 
-    private static readonly RandomNumberGenerator rng_crypto = RandomNumberGenerator.Create();
-
-    private static int NextCryptoRangeInt32(int minInclusive, int maxExclusive)
-    {
-        if (minInclusive >= maxExclusive)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maxExclusive), "maxExclusive must be greater than minInclusive.");
-        }
-
-        uint range = (uint)(maxExclusive - minInclusive);
-        uint limit = uint.MaxValue - (uint.MaxValue % range);
-        uint value;
-        var buffer = new byte[sizeof(uint)];  // TODO: Cannot cache because concurrent execution is enabled
-        do
-        {
-            rng_crypto.GetBytes(buffer);
-            value = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
-        }
-        while (value >= limit);
-
-        return unchecked((int)(minInclusive + (value % range)));
-    }
 
     private static int MixSeed(int seed)
     {
