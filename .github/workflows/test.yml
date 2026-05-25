@@ -36,17 +36,17 @@ jobs:
             --force --output  ./.z__merged_dll__ \
             "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
 
-          dnx -y FGenerator.Cli -- build \
-            ${{ matrix.unity }} \
-            ${{ matrix.merge }} \
-            ${{ matrix.configuration }} \
-            "test/*.cs" -f -o ./.z__merged_dll__
+          #dnx -y FGenerator.Cli --prerelease -- build \
+          #  ${{ matrix.unity }} \
+          #  ${{ matrix.merge }} \
+          #  ${{ matrix.configuration }} \
+          #  "test/*.cs" -f -o ./.z__merged_dll__
 
-          dnx -y FGenerator.Cli -- build \
-            ${{ matrix.unity }} \
-            ${{ matrix.merge }} \
-            ${{ matrix.configuration }} \
-            "Unity/*.cs" -f -o ./.z__merged_dll__
+          #dnx -y FGenerator.Cli --prerelease -- build \
+          #  ${{ matrix.unity }} \
+          #  ${{ matrix.merge }} \
+          #  ${{ matrix.configuration }} \
+          #  "Unity/*.cs" -f -o ./.z__merged_dll__
 
       - name: Pathfinder
         run: |
