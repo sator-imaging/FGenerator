@@ -1,0 +1,4 @@
+[*.cs]
+
+# Escape hatch
+dotnet_diagnostic.SMA8000.severity = warning
