@@ -50,6 +50,8 @@ jobs:
 
           ### Tests: Separate build and run to exclude unnecessary warnings from STDOUT ###
 
+          ls -al ./.z__merged_dll__
+
           dotnet build         EnvObfuscator.Test   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
           dotnet run --project EnvObfuscator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
