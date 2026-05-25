@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.1.1-rc.2](https://github.com/sator-imaging/FGenerator/releases/tag/v3.1.1-rc.2) (2026-05-25)
+
+### 📚 Other Changes
+* Add Directory.Build.props protection to CLI build by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#116](https://github.com/sator-imaging/FGenerator/pull/116)
+
+
+**Full Changelog**: https://github.com/sator-imaging/FGenerator/compare/v3.1.1-rc.1...v3.1.1-rc.2
+
+
 ## [3.1.1-rc.1](https://github.com/sator-imaging/FGenerator/releases/tag/v3.1.1-rc.1) (2026-05-25)
 
 ### 📚 Other Changes
