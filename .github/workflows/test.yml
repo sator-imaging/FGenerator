@@ -27,7 +27,7 @@ jobs:
         with:
           dotnet-version: 10.x.x
 
-      - name: Test (release)
+      - name: Build
         run: |
           dotnet run  --project cli ${{ matrix.configuration }} -- build \
             ${{ matrix.unity }} \
@@ -48,22 +48,26 @@ jobs:
             ${{ matrix.configuration }} \
             "Unity/*.cs" -f -o ./.z__merged_dll__
 
-          ### Tests: Separate build and run to exclude unnecessary warnings from STDOUT ###
-
+      - name: Pathfinder
+        run: |
           ls -al ./.z__merged_dll__
 
-          dotnet build         EnvObfuscator.Test   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+      - name: Test
+        run: |
+          dotnet build         EnvObfuscator.Test   ${{ matrix.configuration }} \
+            -p:EmitCompilerGeneratedFiles=true \
+            -p:CompilerGeneratedFilesOutputPath="../.generated"
           dotnet run --project EnvObfuscator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
-          dotnet build         FinalEnumGenerator.Test   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+          dotnet build         FinalEnumGenerator.Test   ${{ matrix.configuration }} \
+            -p:EmitCompilerGeneratedFiles=true \
+            -p:CompilerGeneratedFilesOutputPath="../.generated"
           dotnet run --project FinalEnumGenerator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
-          dotnet build         sandbox   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
-          dotnet run --project sandbox   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
-
-      - name: Pathfinder
-        run:
-          ls -al
+          #dotnet build         sandbox   ${{ matrix.configuration }} \
+          #  -p:EmitCompilerGeneratedFiles=true \
+          #  -p:CompilerGeneratedFilesOutputPath="../.generated"
+          #dotnet run --project sandbox   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
       - name: Artifact
         uses: actions/upload-artifact@v4
