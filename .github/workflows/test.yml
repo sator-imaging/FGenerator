@@ -21,9 +21,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.x.x
 
@@ -34,19 +32,21 @@ jobs:
             ${{ matrix.merge }} \
             ${{ matrix.configuration }} \
             --force --output  ./.z__merged_dll__ \
-            "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
+            "sample/*.cs"  # enquote to prevent expanding
 
-          #dnx -y FGenerator.Cli --prerelease -- build \
-          #  ${{ matrix.unity }} \
-          #  ${{ matrix.merge }} \
-          #  ${{ matrix.configuration }} \
-          #  "test/*.cs" -f -o ./.z__merged_dll__
+          dotnet run  --project cli ${{ matrix.configuration }} -- build \
+            ${{ matrix.unity }} \
+            ${{ matrix.merge }} \
+            ${{ matrix.configuration }} \
+            -f -o ./.z__merged_dll__ \
+            "test/*.cs"
 
-          #dnx -y FGenerator.Cli --prerelease -- build \
-          #  ${{ matrix.unity }} \
-          #  ${{ matrix.merge }} \
-          #  ${{ matrix.configuration }} \
-          #  "Unity/*.cs" -f -o ./.z__merged_dll__
+          dotnet run  --project cli ${{ matrix.configuration }} -- build \
+            ${{ matrix.unity }} \
+            ${{ matrix.merge }} \
+            ${{ matrix.configuration }} \
+            -f -o ./.z__merged_dll__ \
+            "Unity/*.cs"
 
       - name: Pathfinder
         run: |
@@ -54,23 +54,12 @@ jobs:
 
       - name: Test
         run: |
-          dotnet build         EnvObfuscator.Test   ${{ matrix.configuration }} \
+          dotnet build         sandbox   ${{ matrix.configuration }} \
             -p:EmitCompilerGeneratedFiles=true \
             -p:CompilerGeneratedFilesOutputPath="../.generated"
-          dotnet run --project EnvObfuscator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
+          dotnet run --project sandbox   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
-          dotnet build         FinalEnumGenerator.Test   ${{ matrix.configuration }} \
-            -p:EmitCompilerGeneratedFiles=true \
-            -p:CompilerGeneratedFilesOutputPath="../.generated"
-          dotnet run --project FinalEnumGenerator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
-
-          #dotnet build         sandbox   ${{ matrix.configuration }} \
-          #  -p:EmitCompilerGeneratedFiles=true \
-          #  -p:CompilerGeneratedFilesOutputPath="../.generated"
-          #dotnet run --project sandbox   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
-
-      - name: Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: generated-sources${{ matrix.unity }}${{ matrix.merge }}${{ matrix.configuration }}
           path: ./.generated/**

@@ -25,13 +25,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.x.x
 
-      - name: Pack (release)
+      - name: Pack (Release)
         run: |
           cd ./${{ matrix.package }}
           dotnet pack  -c Release -p:ContinuousIntegrationBuild=true

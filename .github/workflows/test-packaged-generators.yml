@@ -1,0 +1,39 @@
+name: Test (NuGet-Published Generators)
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        unity: ["--unity", ""]
+        merge: ["", "--merge"]
+        configuration: ["", "-c Release"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.x.x
+
+      - name: Test
+        run: |
+          dnx -y FGenerator.Cli --prerelease -- build \
+            ${{ matrix.unity }} \
+            ${{ matrix.merge }} \
+            ${{ matrix.configuration }} \
+            "test-integration/test-packaged-generators.cs" -f -o ./.z__merged_dll__
+
+      - name: Pathfinder
+        run: |
+          ls -al ./.z__merged_dll__
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-sources${{ matrix.unity }}${{ matrix.merge }}${{ matrix.configuration }}
+          path: ./.generated/**
+          include-hidden-files: true

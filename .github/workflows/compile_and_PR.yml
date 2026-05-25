@@ -1,4 +1,4 @@
-name: "[push.paths] Compile & PR & NuGet"
+name: "[push.paths] Packaging Test"
 
 on:
   push:
@@ -24,17 +24,13 @@ env:
 jobs:
 
   test:
-    uses: ./.github/workflows/test.yml
-
-  compile:
-    needs: test
-    if: success()
-
-    #strategy:
-    #  matrix:
-    #    configuration: [Debug, Release]
-
     runs-on: ubuntu-latest   # tip: runs-on can use ${{ matrix.<name> }}
+
+    strategy:
+      matrix:
+        unity: ["--unity", ""]
+        merge: ["", "--merge"]
+        configuration: ["", "-c Release"]
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5      # v4.3.1
@@ -42,14 +38,57 @@ jobs:
         with:
           dotnet-version: 10.x.x
 
-      - run: |
+      - name: Build
+        run: |
+          dnx -y FGenerator.Cli --prerelease -- build \
+            ${{ matrix.unity }} \
+            ${{ matrix.merge }} \
+            ${{ matrix.configuration }} \
+            --force --output  ./.z__merged_dll__ \
+            "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
+
+          dnx -y FGenerator.Cli --prerelease -- build \
+            ${{ matrix.unity }} \
+            ${{ matrix.merge }} \
+            ${{ matrix.configuration }} \
+            "test-integration/build-with-sdk.cs" -f -o ./.z__merged_dll__
+
+      - name: Pathfinder
+        run: |
+          ls -al ./.z__merged_dll__
+
+      - name: Test
+        run: |
+          dotnet build         EnvObfuscator.Test   ${{ matrix.configuration }} \
+            -p:EmitCompilerGeneratedFiles=true \
+            -p:CompilerGeneratedFilesOutputPath="../.generated"
+          dotnet run --project EnvObfuscator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
+
+          dotnet build         FinalEnumGenerator.Test   ${{ matrix.configuration }} \
+            -p:EmitCompilerGeneratedFiles=true \
+            -p:CompilerGeneratedFilesOutputPath="../.generated"
+          dotnet run --project FinalEnumGenerator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-sources${{ matrix.unity }}${{ matrix.merge }}${{ matrix.configuration }}
+          path: ./.generated/**
+          include-hidden-files: true
+
+  build-and-publish:
+    needs: test
+    if: success()
+
+    runs-on: ubuntu-latest   # tip: runs-on can use ${{ matrix.<name> }}
+    steps:
+      - name: Build and Publish
+        run: |
           OUTDIR=./Compiled
 
-          dotnet run --project cli -c Release -- build \
+          dnx -y FGenerator.Cli --prerelease -- build \
             --unity --merge \
             --force --output $OUTDIR \
             "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
-
 
           ### Git work ####
 
