@@ -1,3 +1,6 @@
+// Licensed under the Apache-2.0 License
+// https://github.com/sator-imaging/FGenerator
+
 using EnvObfuscator.Test;
 
 #pragma warning disable SMA0024  // Enum to String
@@ -14,6 +17,8 @@ using EnvObfuscator.Test;
 #pragma warning disable SMA0021  // Cast from Enum Type to Other
 #pragma warning disable IDE0390  // Make method synchronous
 #pragma warning disable IDE0018  // Inline variable declaration
+#pragma warning disable SMA8000 // Literal argument
+#pragma warning disable SMA0050 // File header
 
 return FUnit.Run(args, describe =>
 {

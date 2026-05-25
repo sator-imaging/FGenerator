@@ -1,7 +1,12 @@
+// Licensed under the Apache-2.0 License
+// https://github.com/sator-imaging/FGenerator
+
 using System;
 using System.ComponentModel;
 
 #pragma warning disable SMA0026  // Enum Obfuscation
+#pragma warning disable SMA8000 // Literal argument
+#pragma warning disable SMA0050 // File header
 #pragma warning disable CA1707   // Identifiers should not contain underscores
 #pragma warning disable SMA0027  // Unusual Enum Definition
 

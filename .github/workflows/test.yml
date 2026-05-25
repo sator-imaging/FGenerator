@@ -20,29 +20,29 @@ jobs:
         configuration: ["", "-c Release"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.x.x
 
       - name: Test (release)
         run: |
-          dotnet run  --project cli ${{ matrix.configuration }} -- build \
+          dotnet run --project cli ${{ matrix.configuration }} -- build \
             ${{ matrix.unity }} \
             ${{ matrix.merge }} \
             ${{ matrix.configuration }} \
             --force --output  ./.z__merged_dll__ \
             "sample/*.cs" "FinalEnumGenerator/*.cs" "EnvObfuscator/*.cs"  # enquote to prevent expanding
 
-          dnx -y FGenerator.Cli -- build \
+          dotnet run --project cli ${{ matrix.configuration }} -- build \
             ${{ matrix.unity }} \
             ${{ matrix.merge }} \
             ${{ matrix.configuration }} \
             "test/*.cs" -f -o ./.z__merged_dll__
 
-          dnx -y FGenerator.Cli -- build \
+          dotnet run --project cli ${{ matrix.configuration }} -- build \
             ${{ matrix.unity }} \
             ${{ matrix.merge }} \
             ${{ matrix.configuration }} \
@@ -50,13 +50,13 @@ jobs:
 
           ### Tests: Separate build and run to exclude unnecessary warnings from STDOUT ###
 
-          dotnet build         EnvObfuscator.Test   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+          dotnet build         EnvObfuscator.Test   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated" -p:NoWarn=SMA8000%2CSMA0050
           dotnet run --project EnvObfuscator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
-          dotnet build         FinalEnumGenerator.Test   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+          dotnet build         FinalEnumGenerator.Test   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated" -p:NoWarn=SMA8000%2CSMA0050
           dotnet run --project FinalEnumGenerator.Test   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
-          dotnet build         sandbox   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated"
+          dotnet build         sandbox   ${{ matrix.configuration }} -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath="../.generated" -p:NoWarn=SMA8000%2CSMA0050
           dotnet run --project sandbox   ${{ matrix.configuration }} --no-build -v:q -- -md >> $GITHUB_STEP_SUMMARY
 
       - name: Pathfinder

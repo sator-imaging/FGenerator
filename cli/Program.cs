@@ -204,7 +204,7 @@ namespace FGenerator.Cli
                 // Run dotnet build on input file
                 Console.WriteLine($"Building {input.Name}...");
 
-                var args = $"build --no-incremental \"{input.FullName}\" -c {configuration} -o \"{tempDir.FullName}\" -p:AssemblyName={Path.GetFileNameWithoutExtension(input.Name)}";
+                var args = $"build --no-incremental \"{input.FullName}\" -c {configuration} -o \"{tempDir.FullName}\" -p:AssemblyName=\"{Path.GetFileNameWithoutExtension(input.Name)}\"";
 
                 var exitCode = Utils.ExecuteProcess("dotnet", args);
                 if (exitCode != 0)

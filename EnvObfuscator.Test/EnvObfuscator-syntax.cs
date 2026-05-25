@@ -1,3 +1,9 @@
+// Licensed under the Apache-2.0 License
+// https://github.com/sator-imaging/FGenerator
+
+#pragma warning disable SMA8000 // Literal argument
+#pragma warning disable SMA0050 // File header
+
 //// TEST: The actual seed is calculated by `userSeed ^ fnv1aHash(typeFullName)`.
 ////       Thus the following 2 known FNV-1a 32bit collision pair CAN/MUST produce
 ////       the same internal seed and causes compile error, as expected.
