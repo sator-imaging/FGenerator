@@ -14,6 +14,7 @@ obj
 !sdk
 !src
 !test
+!test-*
 !Unity
 
 !.gitignore
