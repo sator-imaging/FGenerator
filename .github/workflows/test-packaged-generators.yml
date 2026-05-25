@@ -1,4 +1,4 @@
-name: Test (NuGet-Published Generators)
+name: 'Test Phase 3: NuGet-Published Generators'
 
 on:
   workflow_dispatch:

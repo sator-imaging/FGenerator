@@ -1,4 +1,4 @@
-name: "Test (Packaging) [push.paths]"
+name: "Test Phase 2: Packaging [push.paths]"
 
 on:
   push:
