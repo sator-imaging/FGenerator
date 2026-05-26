@@ -892,15 +892,19 @@ namespace EnvObfuscator
     {
         ReadOnlySpan<char> hex = "0123456789abcdef".AsSpan();
         Span<char> buffer = stackalloc char[32];
-        for (int i = 0; i < hex.Length; i++)
+
+        // Keep names lowercase for identifiers.
+        byte b0 = (byte)random.NextInt(256);
+        buffer[0] = (char)('a' + random.NextInt(6));
+        buffer[1] = hex[b0 & 0xF];
+
+        for (int i = 1; i < hex.Length; i++)
         {
             byte b = (byte)random.NextInt(256);
             buffer[i * 2] = hex[b >> 4];
             buffer[(i * 2) + 1] = hex[b & 0xF];
         }
 
-        // Keep names lowercase for identifiers.
-        buffer[0] = (char)('a' + random.NextInt(6));
         return buffer.ToString();
     }
 
