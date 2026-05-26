@@ -893,11 +893,10 @@ namespace EnvObfuscator
         var hex = "0123456789abcdef".AsSpan();
         var buffer = new char[32];
 
-        // Keep names lowercase for identifiers.
+        // The first character must be a letter because C# identifiers cannot start with a digit.
         buffer[0] = (char)('a' + random.NextInt(6));
-        buffer[1] = hex[random.NextInt(16)];
 
-        for (int i = 2; i < buffer.Length; i++)
+        for (int i = 1; i < buffer.Length; i++)
         {
             buffer[i] = hex[random.NextInt(16)];
         }
