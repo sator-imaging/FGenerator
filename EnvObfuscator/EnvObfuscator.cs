@@ -8,7 +8,9 @@ using FGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -270,7 +272,7 @@ namespace EnvObfuscator
     {
         var baseChars = BuildBaseChars(entries);
 
-        using IRandomSource random = new EnvRandomSource(seed, useCrypto);
+        using var random = new EnvRandomSource(seed, useCrypto);
 
         // Ensure obfuscated names are produced immediately after random instantiation to avoid
         // accidental reuse of identical internal seeds across types (compile error as a result).
@@ -717,7 +719,7 @@ namespace EnvObfuscator
 
     private static List<char> BuildBaseChars(List<EnvEntry> entries)
     {
-        var list = new List<char>();
+        var list = new List<char>(entries.Count * 4);
         var seen = new HashSet<char>();
 
         foreach (var entry in entries)
@@ -748,7 +750,7 @@ namespace EnvObfuscator
         return "global::" + namespaceName + ".";
     }
 
-    private static string AppendDecodeHelper(StringBuilder sb, IRandomSource nameRandom, int flagsBitWindow, bool lowerInLowBits, bool oddInUpperHalf)
+    private static string AppendDecodeHelper(StringBuilder sb, EnvRandomSource nameRandom, int flagsBitWindow, bool lowerInLowBits, bool oddInUpperHalf)
     {
         string decodeNamespace = CreateHexName(nameRandom);
         string decodeClass = CreateHexName(nameRandom);
@@ -886,22 +888,20 @@ namespace EnvObfuscator
         return "((" + decodeDelegateRef + ")" + decodeWrapperRef + "." + decodeWrapperField + ")";
     }
 
-    private static string CreateHexName(IRandomSource random)
+    private static string CreateHexName(EnvRandomSource random)
     {
-        var buffer = new byte[16];
-        for (int i = 0; i < buffer.Length; i++)
+        var hex = "0123456789abcdef".AsSpan();
+        var buffer = new char[32];
+
+        // The first character must be a letter because C# identifiers cannot start with a digit.
+        buffer[0] = (char)('a' + random.NextInt(6));
+
+        for (int i = 1; i < buffer.Length; i++)
         {
-            buffer[i] = (byte)random.NextInt(256);
+            buffer[i] = hex[random.NextInt(16)];
         }
 
-        var sb = new StringBuilder(32);
-        for (int i = 0; i < buffer.Length; i++)
-        {
-            sb.Append(buffer[i].ToString("x2", CultureInfo.InvariantCulture));
-        }
-        // "x2" produces lowercase hex; keep names lowercase for identifiers.
-        sb[0] = (char)('a' + random.NextInt(6));
-        return sb.ToString();
+        return new string(buffer);
     }
 
     private static void AppendKeyClass(StringBuilder sb, string namespaceName, string className, string fieldName, ushort key)
@@ -956,7 +956,7 @@ namespace EnvObfuscator
         sb.AppendLine("}");
     }
 
-    private static ushort CreateRandomUShortNonZero(IRandomSource random)
+    private static ushort CreateRandomUShortNonZero(EnvRandomSource random)
     {
         while (true)
         {
@@ -989,7 +989,7 @@ namespace EnvObfuscator
         return count is >= 3 and <= 5;
     }
 
-    private static void Shuffle(List<ByteSource> list, IRandomSource random)
+    private static void Shuffle(List<ByteSource> list, EnvRandomSource random)
     {
         for (int i = list.Count - 1; i > 0; i--)
         {
@@ -1010,7 +1010,7 @@ namespace EnvObfuscator
         return result;
     }
 
-    private static byte[] BuildByteTableFromBaseChars(List<char> baseChars, ushort key, IRandomSource random, out ByteSource[] sources)
+    private static byte[] BuildByteTableFromBaseChars(List<char> baseChars, ushort key, EnvRandomSource random, out ByteSource[] sources)
     {
         var distinct = new List<ByteSource>(baseChars.Count * 2);
         var seen = new HashSet<byte>();
@@ -1118,7 +1118,7 @@ namespace EnvObfuscator
         return c.ToString();
     }
 
-    private static string BuildDecodeCallExpression(string decodeMethodRef, IRandomSource random, int flagsBitWindow, bool lowerInLowBits, int ocLength, int ecLength, bool isAscii, bool lowerIsEven, bool upperIsEven, int lowerIndex, int upperIndex)
+    private static string BuildDecodeCallExpression(string decodeMethodRef, EnvRandomSource random, int flagsBitWindow, bool lowerInLowBits, int ocLength, int ecLength, bool isAscii, bool lowerIsEven, bool upperIsEven, int lowerIndex, int upperIndex)
     {
         string lowerBytesRef = lowerIsEven ? "ecb" : "ocb";
         string upperBytesRef = upperIsEven ? "ecb" : "ocb";
@@ -1209,37 +1209,12 @@ namespace EnvObfuscator
 
         ValidateEnvKeyOrThrow(key);
 
-        var builder = new StringBuilder(key.Length + 2);
-        for (int i = 0; i < key.Length; i++)
+        if (!usedNames.Add(key))
         {
-            var ch = key[i];
-            if (i == 0)
-            {
-                builder.Append(ch);
-            }
-            else
-            {
-                builder.Append(ch);
-            }
+            throw new EnvKeyValidationException($"Env key '{key}' duplicates another generated identifier.");
         }
 
-        var candidate = builder.ToString();
-        if (candidate.Length == 0)
-        {
-            return false;
-        }
-
-        if (!SyntaxFacts.IsValidIdentifier(candidate))
-        {
-            throw new EnvKeyValidationException($"Env key '{key}' is not a valid C# identifier.");
-        }
-
-        if (!usedNames.Add(candidate))
-        {
-            throw new EnvKeyValidationException($"Env key '{key}' duplicates another generated identifier '{candidate}'.");
-        }
-
-        identifier = candidate;
+        identifier = key;
         return true;
     }
 
@@ -1364,15 +1339,7 @@ namespace EnvObfuscator
         public string Value { get; }
     }
 
-    private interface IRandomSource : global::System.IDisposable
-    {
-        int NextInt(int maxExclusive);
-        int NextInt(int minInclusive, int maxExclusive);
-        bool NextBool();
-        int Seed { get; }
-    }
-
-    private sealed class EnvRandomSource : IRandomSource
+    private sealed class EnvRandomSource : IDisposable
     {
         private readonly Random? _random;
         private readonly bool _useCrypto;
