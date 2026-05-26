@@ -61,7 +61,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: generated-sources${{ matrix.unity }}${{ matrix.merge }}${{ matrix.configuration }}
+          name: ${{ github.job }}${{ matrix.unity }}${{ matrix.merge }}${{ matrix.configuration }}
           path: ./.generated/**
           include-hidden-files: true
 
@@ -119,6 +119,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: generated-sources${{ matrix.unity }}${{ matrix.merge }}${{ matrix.configuration }}
+          name: ${{ github.job }}${{ matrix.unity }}${{ matrix.merge }}${{ matrix.configuration }}
           path: ./.generated/**
           include-hidden-files: true
