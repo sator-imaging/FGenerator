@@ -9,6 +9,8 @@ jobs:
 
   test:
     uses: ./.github/workflows/test.yml
+    with:
+      skip-integration-test: true
 
   publish:
     needs: test

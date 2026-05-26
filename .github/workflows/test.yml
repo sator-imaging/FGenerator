@@ -7,6 +7,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      skip-integration-test:
+        type: boolean
 
 jobs:
 
@@ -71,7 +74,9 @@ jobs:
     # Don't run on push to main
     # --> It can fail while waiting for new FGenerator packages available.
     #     * Test still run on PR event.
-    if: github.event_name != 'push'
+    if: |
+      github.event_name != 'push'
+      && !inputs.skip-integration-test
 
     strategy:
       matrix:
