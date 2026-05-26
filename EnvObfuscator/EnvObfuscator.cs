@@ -890,22 +890,19 @@ namespace EnvObfuscator
 
     private static string CreateHexName(EnvRandomSource random)
     {
-        ReadOnlySpan<char> hex = "0123456789abcdef".AsSpan();
-        Span<char> buffer = stackalloc char[32];
+        var hex = "0123456789abcdef".AsSpan();
+        var buffer = new char[32];
 
         // Keep names lowercase for identifiers.
-        byte b0 = (byte)random.NextInt(256);
         buffer[0] = (char)('a' + random.NextInt(6));
-        buffer[1] = hex[b0 & 0xF];
+        buffer[1] = hex[random.NextInt(16)];
 
-        for (int i = 1; i < hex.Length; i++)
+        for (int i = 2; i < buffer.Length; i++)
         {
-            byte b = (byte)random.NextInt(256);
-            buffer[i * 2] = hex[b >> 4];
-            buffer[(i * 2) + 1] = hex[b & 0xF];
+            buffer[i] = hex[random.NextInt(16)];
         }
 
-        return buffer.ToString();
+        return new string(buffer);
     }
 
     private static void AppendKeyClass(StringBuilder sb, string namespaceName, string className, string fieldName, ushort key)
@@ -1212,11 +1209,6 @@ namespace EnvObfuscator
         identifier = string.Empty;
 
         ValidateEnvKeyOrThrow(key);
-
-        if (!SyntaxFacts.IsValidIdentifier(key))
-        {
-            throw new EnvKeyValidationException($"Env key '{key}' is not a valid C# identifier.");
-        }
 
         if (!usedNames.Add(key))
         {
