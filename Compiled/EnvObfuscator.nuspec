@@ -20,7 +20,7 @@
     <tags>Obfuscate, Properties, env, File</tags>
     <id>EnvObfuscator</id>
     <title>EnvObfuscator</title>
-    <version>3.1.1-rc.2</version>
+    <version>3.2.0</version>
   </metadata>
   <files>
     <file src="EnvObfuscator.dll" target="analyzers/dotnet/cs" />
