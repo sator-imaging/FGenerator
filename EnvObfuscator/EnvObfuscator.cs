@@ -892,7 +892,7 @@ namespace EnvObfuscator
     {
         ReadOnlySpan<char> hex = "0123456789abcdef".AsSpan();
         Span<char> buffer = stackalloc char[32];
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < hex.Length; i++)
         {
             byte b = (byte)random.NextInt(256);
             buffer[i * 2] = hex[b >> 4];
@@ -1209,6 +1209,11 @@ namespace EnvObfuscator
 
         ValidateEnvKeyOrThrow(key);
 
+        if (!SyntaxFacts.IsValidIdentifier(key))
+        {
+            throw new EnvKeyValidationException($"Env key '{key}' is not a valid C# identifier.");
+        }
+
         if (!usedNames.Add(key))
         {
             throw new EnvKeyValidationException($"Env key '{key}' duplicates another generated identifier.");
@@ -1339,7 +1344,7 @@ namespace EnvObfuscator
         public string Value { get; }
     }
 
-    private sealed class EnvRandomSource : global::System.IDisposable
+    private sealed class EnvRandomSource : IDisposable
     {
         private readonly Random? _random;
         private readonly bool _useCrypto;
