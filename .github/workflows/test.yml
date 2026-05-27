@@ -3,8 +3,9 @@ name: Test
 on:
   push:
     branches: [ "main" ]
+    paths: [ "**/*.cs", "**/*.csproj", "**/*.props", "**/*.slnx" ]
   pull_request:
-    branches: [ "main" ]
+    paths: [ "**/*.cs", "**/*.csproj", "**/*.props", "**/*.slnx" ]
   workflow_dispatch:
   workflow_call:
     inputs:
