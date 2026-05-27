@@ -16,7 +16,7 @@ on:
       auto-bump:
         type: string
         description: |
-          Auto Bump & CHANGELOG: Enter 'v'-starting semver. Leave empty to Sync.
+          Auto Bump & CHANGELOG: 'v'-starting semver or leave empty to Sync
       auto-bump-args:
         type: string
         # DEBUG
