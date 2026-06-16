@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.2.1](https://github.com/sator-imaging/FGenerator/releases/tag/v3.2.1) (2026-06-16)
+
+### 📚 Other Changes
+* test: ci events by [@sator-imaging](https://github.com/sator-imaging) in [#132](https://github.com/sator-imaging/FGenerator/pull/132)
+* ci: props by [@sator-imaging](https://github.com/sator-imaging) in [#134](https://github.com/sator-imaging/FGenerator/pull/134)
+
+
+**Full Changelog**: https://github.com/sator-imaging/FGenerator/compare/v3.2.0...v3.2.1
+
+
 ## [3.2.0](https://github.com/sator-imaging/FGenerator/releases/tag/v3.2.0) (2026-05-26)
 
 ### 🚀 Features

@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGetPublishSettings">
-    <NuGetPublishVersion>3.2.0</NuGetPublishVersion>
+    <NuGetPublishVersion>3.2.1</NuGetPublishVersion>
     <!-- relative path from .csproj files, without trailing slash -->
     <NuGetPublishProjectRootRelPath>..</NuGetPublishProjectRootRelPath>
     <NuGetPublishIconFile>icon-128px.png</NuGetPublishIconFile>
