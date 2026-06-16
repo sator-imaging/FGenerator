@@ -37,7 +37,7 @@ jobs:
         with:
           dotnet-version: 10.x.x
 
-      - name: Build and Publish
+      - name: 'Build, PR and Publish'
         run: |
           OUTDIR=./Compiled
 

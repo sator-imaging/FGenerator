@@ -5,7 +5,7 @@ on:
 
 jobs:
 
-  test:
+  test-packaged-generators:
     runs-on: ubuntu-latest
 
     strategy:
@@ -26,7 +26,7 @@ jobs:
             ${{ matrix.unity }} \
             ${{ matrix.merge }} \
             ${{ matrix.configuration }} \
-            "test-integration/test-packaged-generators.cs" -f -o ./.z__merged_dll__
+            "test-integration/${{ github.job }}.cs" -f -o ./.z__merged_dll__
 
       - name: Pathfinder
         run: |
