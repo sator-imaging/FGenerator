@@ -21,7 +21,7 @@ public class DiscoverTestGenerator : FGeneratorBase
     protected override string? PostInitializationOutput =>
 @"using System;
 [AttributeUsage(AttributeTargets.All)]
-internal sealed class DiscoverAttribute : Attribute { }
+public sealed class DiscoverAttribute : Attribute { }
 ";
 
     protected override CodeGeneration? Generate(Target target, out AnalyzeResult? diagnostic)

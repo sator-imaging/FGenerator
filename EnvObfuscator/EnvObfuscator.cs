@@ -40,7 +40,7 @@ namespace EnvObfuscator
     /// multiline <c>.env</c> format comment.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
-    internal sealed class ObfuscateAttribute : Attribute
+    public sealed class ObfuscateAttribute : Attribute
     {
         /// <inheritdoc cref=""ObfuscateAttribute""/>
         /// <param name=""seed"">Seed for deterministic obfuscation output; omit the parameter to use a random seed. 0 is allowed and deterministic.</param>

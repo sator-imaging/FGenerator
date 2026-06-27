@@ -32,12 +32,14 @@ namespace FGenerator.Cli
                 }
             };
 
+            int exitCode = -1;
             try
             {
                 process.Start();
                 stdout = process.StandardOutput.ReadToEnd();
                 stderr = process.StandardError.ReadToEnd();
                 process.WaitForExit();
+                exitCode = process.ExitCode;
             }
             finally
             {
@@ -56,6 +58,11 @@ namespace FGenerator.Cli
                             }
                         }
                     }
+
+                    if (exitCode == -1 && process.HasExited)
+                    {
+                        exitCode = process.ExitCode;
+                    }
                 }
                 catch (InvalidOperationException) { }
             }
@@ -63,7 +70,7 @@ namespace FGenerator.Cli
             stdout = Colorize(stdout);
             stderr = Colorize(stderr);
 
-            return process.ExitCode;
+            return exitCode;
         }
 
         public static int ExecuteProcess(string exe, string arguments, bool disableSucceededBuildStdout = false)

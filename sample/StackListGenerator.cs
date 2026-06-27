@@ -34,7 +34,7 @@ namespace StackListGenerator
 namespace StackListGenerator
 {
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
-    internal sealed class StackListAttribute : Attribute
+    public sealed class StackListAttribute : Attribute
     {
         public StackListAttribute(int length) => Length = length;
 
