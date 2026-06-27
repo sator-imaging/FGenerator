@@ -50,7 +50,7 @@ namespace AutoNotifyGenerator
     /// Eligible private instance fields get corresponding properties with change notification.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public sealed class AutoNotifyAttribute : Attribute
+    internal sealed class AutoNotifyAttribute : Attribute
     {
     }
 }

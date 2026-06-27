@@ -24,7 +24,7 @@ namespace FGeneratorDebugger
 namespace FGeneratorDebugger
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public sealed class FGDebugAttribute : Attribute
+    internal sealed class FGDebugAttribute : Attribute
     {
     }
 }

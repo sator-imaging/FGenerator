@@ -32,7 +32,7 @@ namespace StackArrayGenerator
 namespace StackArrayGenerator
 {
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
-    public sealed class StackArrayAttribute : Attribute
+    internal sealed class StackArrayAttribute : Attribute
     {
         public StackArrayAttribute(int length, Type fieldType)
         {

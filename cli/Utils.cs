@@ -47,11 +47,11 @@ namespace FGenerator.Cli
                 {
                     if (!process.HasExited)
                     {
-                        Thread.Sleep(310);
+                        System.Threading.Thread.Sleep(310);
                         if (!process.HasExited)
                         {
                             process.Kill(entireProcessTree: true);
-                            Thread.Sleep(310);
+                            System.Threading.Thread.Sleep(310);
                             if (!process.HasExited)
                             {
                                 throw new Exception($"Process failed to exit: {exe} {arguments}");
@@ -64,7 +64,10 @@ namespace FGenerator.Cli
                         exitCode = process.ExitCode;
                     }
                 }
-                catch (InvalidOperationException) { }
+                catch (InvalidOperationException)
+                {
+                    // The process might have already exited or not been started yet when accessing its properties.
+                }
             }
 
             stdout = Colorize(stdout);

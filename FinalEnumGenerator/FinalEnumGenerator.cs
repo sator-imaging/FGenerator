@@ -27,7 +27,7 @@ namespace FinalEnumGenerator
     /// TryParse, and Utf8 methods in the static partial class <c>FinalEnums.&lt;TargetTypeName&gt;</c>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
-    public sealed class FinalEnumAttribute : Attribute { }
+    internal sealed class FinalEnumAttribute : Attribute { }
 }
 
 namespace FinalEnums
@@ -35,15 +35,15 @@ namespace FinalEnums
     /// <summary>
     /// Shared helpers used by FinalEnumGenerator-generated code.
     /// </summary>
-    public static class FinalEnumUtility
+    internal static class FinalEnumUtility
     {
-        public static T ThrowArgumentOutOfRange<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
-        public static ReadOnlyMemory<T> ThrowArgumentOutOfRangeRoMemory<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
+        internal static T ThrowArgumentOutOfRange<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
+        internal static ReadOnlyMemory<T> ThrowArgumentOutOfRangeRoMemory<T>(string paramName) => throw new ArgumentOutOfRangeException(paramName);
 
         /// <summary>
         /// Shared helper used by generated code for boundary-aware token checks on strings.
         /// </summary>
-        public static bool ContainsToken(ReadOnlySpan<char> source, ReadOnlySpan<char> token, StringComparison comparison)
+        internal static bool ContainsToken(ReadOnlySpan<char> source, ReadOnlySpan<char> token, StringComparison comparison)
         {
             // Walk all occurrences to catch later matches that align with delimiters.
             int index = source.IndexOf(token, comparison);
@@ -64,7 +64,7 @@ namespace FinalEnums
         /// <summary>
         /// Shared helper used by generated code for boundary-aware token checks on UTF-8 bytes.
         /// </summary>
-        public static bool ContainsToken(ReadOnlySpan<byte> source, ReadOnlySpan<byte> token)
+        internal static bool ContainsToken(ReadOnlySpan<byte> source, ReadOnlySpan<byte> token)
         {
             // Walk all occurrences to catch later matches that align with delimiters.
             int index = source.IndexOf(token);
@@ -85,7 +85,7 @@ namespace FinalEnums
         /// <summary>
         /// Blazing fast, boundary-aware token checks on UTF-8 bytes (ASCII-only case-insensitive).
         /// </summary>
-        public static bool ContainsTokenIgnoreCase(
+        internal static bool ContainsTokenIgnoreCase(
             ReadOnlySpan<byte> source,
             ReadOnlySpan<byte> token)
         {
@@ -175,7 +175,7 @@ namespace FinalEnums
         /// <summary>
         /// Trims leading/trailing spaces from a UTF-8 span without allocations.
         /// </summary>
-        public static ReadOnlySpan<byte> TrimWhiteSpaces(ReadOnlySpan<byte> source)
+        internal static ReadOnlySpan<byte> TrimWhiteSpaces(ReadOnlySpan<byte> source)
         {
             int start = 0;
             int end = source.Length;
