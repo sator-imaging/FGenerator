@@ -2,6 +2,7 @@
 // https://github.com/sator-imaging/FGenerator
 
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FGenerator.Cli
@@ -14,6 +15,8 @@ namespace FGenerator.Cli
 
         public static int ExecuteProcessAndCapture(string exe, string arguments, out string stdout, out string stderr)
         {
+            stdout = "";
+            stderr = "";
             using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -23,14 +26,39 @@ namespace FGenerator.Cli
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    StandardErrorEncoding = Encoding.UTF8,
+                    StandardOutputEncoding = Encoding.UTF8,
                 }
             };
 
-            process.Start();
-            stdout = process.StandardOutput.ReadToEnd();
-            stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+            try
+            {
+                process.Start();
+                stdout = process.StandardOutput.ReadToEnd();
+                stderr = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+            }
+            finally
+            {
+                try
+                {
+                    if (!process.HasExited)
+                    {
+                        Thread.Sleep(310);
+                        if (!process.HasExited)
+                        {
+                            process.Kill(entireProcessTree: true);
+                            Thread.Sleep(310);
+                            if (!process.HasExited)
+                            {
+                                throw new Exception($"Process failed to exit: {exe} {arguments}");
+                            }
+                        }
+                    }
+                }
+                catch (InvalidOperationException) { }
+            }
 
             stdout = Colorize(stdout);
             stderr = Colorize(stderr);
