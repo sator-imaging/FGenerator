@@ -29,7 +29,7 @@ jobs:
         with:
           dotnet-version: 10.x.x
 
-      - run: dotnet restore
+      - run: dotnet restore --verbose
 
       - name: Build
         run: |
@@ -116,7 +116,7 @@ jobs:
         run: |
           ls -al ./.z__merged_dll__
 
-      - run: dotnet restore
+      - run: dotnet restore --verbose
 
       - name: Test
         run: |
