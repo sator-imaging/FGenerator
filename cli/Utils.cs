@@ -64,9 +64,9 @@ namespace FGenerator.Cli
                         exitCode = process.ExitCode;
                     }
                 }
+                // Ignore exception: The process might have already exited or not been started yet when accessing its properties.
                 catch (InvalidOperationException)
                 {
-                    // The process might have already exited or not been started yet when accessing its properties.
                 }
             }
 
