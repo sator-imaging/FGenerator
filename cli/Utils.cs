@@ -13,23 +13,34 @@ namespace FGenerator.Cli
         const string AnsiColorYellow = "\u001b[97;43m";
         const string AnsiColorReset = "\u001b[0m";
 
+        private static void SetupUtf8Environment(ProcessStartInfo procInfo)
+        {
+            // No effect prior to net11.0
+            procInfo.EnvironmentVariables["DOTNET_CLI_FORCE_UTF8_ENCODING"] = "true";
+            procInfo.Environment["DOTNET_CLI_FORCE_UTF8_ENCODING"] = "true";
+        }
+
         public static int ExecuteProcessAndCapture(string exe, string arguments, out string stdout, out string stderr)
         {
             stdout = "";
             stderr = "";
+
+            var procInfo = new ProcessStartInfo
+            {
+                FileName = exe,
+                Arguments = arguments,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                StandardErrorEncoding = Encoding.UTF8,
+                StandardOutputEncoding = Encoding.UTF8,
+            };
+            SetupUtf8Environment(procInfo);
+
             using var process = new Process
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = exe,
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    StandardErrorEncoding = Encoding.UTF8,
-                    StandardOutputEncoding = Encoding.UTF8,
-                }
+                StartInfo = procInfo
             };
 
             int exitCode = -1;
@@ -178,7 +189,7 @@ PluginImporter:
             Console.WriteLine($"Generated meta for: {dllFile.Name}");
         }
 
-        // https://github.com/sator-imaging/FUnit/blob/v1.8.1/cli/Program.cs#L562-L606
+        // https://github.com/sator-imaging/FGenerator/blob/main/cli/Utils.cs
         static string Colorize(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
