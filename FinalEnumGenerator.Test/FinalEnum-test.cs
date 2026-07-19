@@ -138,6 +138,7 @@ return FUnit.Run(args, describe =>
                 _ = unknown.ToStringFast(throwOnUnknown: true);
                 Must.BeTrue(false);
             }
+            // Ignore exception: Test exception property
             catch (ArgumentOutOfRangeException ex)
             {
                 Must.BeEqual("value", ex.ParamName);
@@ -148,6 +149,7 @@ return FUnit.Run(args, describe =>
                 _ = unknown.ToStringUtf8(throwOnUnknown: true);
                 Must.BeTrue(false);
             }
+            // Ignore exception: Test exception property
             catch (ArgumentOutOfRangeException ex)
             {
                 Must.BeEqual("value", ex.ParamName);
@@ -245,6 +247,7 @@ return FUnit.Run(args, describe =>
                 _ = unknown.ToStringFast(throwOnUnknown: true);
                 Must.BeTrue(false);
             }
+            // Ignore exception: Test exception property
             catch (ArgumentOutOfRangeException ex)
             {
                 Must.BeEqual("value", ex.ParamName);
@@ -262,6 +265,7 @@ return FUnit.Run(args, describe =>
                 _ = unknown.ToStringUtf8(throwOnUnknown: true);
                 Must.BeTrue(false);
             }
+            // Ignore exception: Test exception property
             catch (ArgumentOutOfRangeException ex)
             {
                 Must.BeEqual("value", ex.ParamName);
@@ -386,6 +390,7 @@ return FUnit.Run(args, describe =>
                 _ = value.ToStringFast(throwOnUnknown: true);
                 Must.BeTrue(false);
             }
+            // Ignore exception: Test exception property
             catch (ArgumentOutOfRangeException ex)
             {
                 Must.BeEqual("value", ex.ParamName);
@@ -402,6 +407,7 @@ return FUnit.Run(args, describe =>
                 _ = value.ToStringUtf8(throwOnUnknown: true);
                 Must.BeTrue(false);
             }
+            // Ignore exception: Test exception property
             catch (ArgumentOutOfRangeException ex)
             {
                 Must.BeEqual("value", ex.ParamName);

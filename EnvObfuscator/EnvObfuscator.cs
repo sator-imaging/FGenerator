@@ -165,21 +165,25 @@ namespace EnvObfuscator
             var source = GenerateSource(target, entries, effectiveSeed, !hasExplicitSeed);
             return new CodeGeneration(target.ToHintName(), source);
         }
+        // Ignore exception: Report diagnostic instead
         catch (EnvKeyValidationException ex)
         {
             diagnostic = new AnalyzeResult("011", "Invalid env key", DiagnosticSeverity.Error, ex.Message);
             return null;
         }
+        // Ignore exception: Report diagnostic instead
         catch (ObfuscationKeyException ex)
         {
             diagnostic = new AnalyzeResult("012", "Invalid obfuscation key", DiagnosticSeverity.Error, ex.Message);
             return null;
         }
+#pragma warning disable SMA8011  // Report diagnostic instead
         catch (Exception ex)
         {
             diagnostic = new AnalyzeResult("013", "Unhandled generator error", DiagnosticSeverity.Error, ex.Message);
             return null;
         }
+#pragma warning restore SMA8011
     }
 
     private static bool TryGetEnvComment(AttributeListSyntax attributeList, out string envText, out EnvCommentStatus status)
