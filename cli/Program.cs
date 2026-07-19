@@ -265,7 +265,16 @@ namespace FGenerator.Cli
             {
                 if (propsCreated)
                 {
-                    try { File.Delete(propsFile.FullName); } catch { }
+                    try
+                    {
+                        File.Delete(propsFile.FullName);
+                    }
+#pragma warning disable SMA8011  // Write console error instead
+                    catch (Exception ex)
+                    {
+                        WriteFailure($"Failed to delete temporary file '{propsFile.FullName}': {ex.Message}");
+                    }
+#pragma warning restore SMA8011
                 }
 
                 // Clean up temp directory
@@ -284,6 +293,7 @@ namespace FGenerator.Cli
                             tempDir.Delete(recursive: true);
                             break;
                         }
+#pragma warning disable SMA8011  // Write console error instead
                         catch (Exception ex)
                         {
                             if (i < CleanupRetryCount - 1)
@@ -297,6 +307,7 @@ namespace FGenerator.Cli
                                 Console.WriteLine($"Please manually delete: {tempDir.FullName}");
                             }
                         }
+#pragma warning restore SMA8011
                     }
                 }
             }
@@ -342,11 +353,13 @@ namespace FGenerator.Cli
                 resultFile = new FileInfo(destPath);
                 return 0;
             }
+#pragma warning disable SMA8011  // Write console error instead
             catch (Exception ex)
             {
                 WriteFailure($"Error during merge: {ex.Message}");
                 return 1;
             }
+#pragma warning restore SMA8011
         }
 
         static int MoveDllFiles(DirectoryInfo sourceDir, DirectoryInfo destDir, bool force, out List<FileInfo> movedFiles)
@@ -383,11 +396,13 @@ namespace FGenerator.Cli
 
                 return 0;
             }
+#pragma warning disable SMA8011  // Write console error instead
             catch (Exception ex)
             {
                 WriteFailure($"Error moving .dll files: {ex.Message}");
                 return 1;
             }
+#pragma warning restore SMA8011
         }
 
         static void WriteSuccess(string message)

@@ -126,11 +126,13 @@ namespace FGenerator.Cli
 
                 return names;
             }
+#pragma warning disable SMA8011  // Write console error instead
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to read assembly references from {assemblyFile.Name}: {ex.Message}");
                 return Array.Empty<string>();
             }
+#pragma warning restore SMA8011
         }
 
         private static void GenerateEmptyDll(DirectoryInfo outputDir, string assemblyName)
