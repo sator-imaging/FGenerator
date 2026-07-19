@@ -270,9 +270,9 @@ namespace FGenerator.Cli
                         File.Delete(propsFile.FullName);
                     }
 #pragma warning disable SMA8011  // Write console error instead
-                    catch
+                    catch (Exception ex)
                     {
-                        Console.Error.WriteLine("Failed to delete temporary file: " + propsFile.FullName);
+                        WriteFailure($"Failed to delete temporary file '{propsFile.FullName}': {ex.Message}");
                     }
 #pragma warning restore SMA8011
                 }
