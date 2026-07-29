@@ -4,6 +4,7 @@
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using System.CommandLine;
+using System.Text;
 
 namespace FGenerator.Cli
 {
@@ -14,6 +15,15 @@ namespace FGenerator.Cli
 
         static async Task<int> Main(string[] args)
         {
+            try
+            {
+                Console.OutputEncoding = Encoding.UTF8;
+            }
+            // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
+            catch
+            {
+            }
+
             if (!EnsureRequiredDotnetVersion())
             {
                 return 1;
