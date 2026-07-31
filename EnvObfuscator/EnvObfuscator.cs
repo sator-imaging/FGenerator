@@ -1343,9 +1343,111 @@ namespace EnvObfuscator
         public string Value { get; }
     }
 
+    private sealed class Xoshiro256PlusPlus
+    {
+        private ulong _s0;
+        private ulong _s1;
+        private ulong _s2;
+        private ulong _s3;
+
+        public Xoshiro256PlusPlus(ulong seed)
+        {
+            ulong x = seed;
+
+            ulong NextSplitMix()
+            {
+                x = unchecked(x + 0x9E3779B97F4A7C15UL);
+                ulong z = x;
+                z = unchecked((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL);
+                z = unchecked((z ^ (z >> 27)) * 0x94D049BB133111EBUL);
+                return z ^ (z >> 31);
+            }
+
+            _s0 = NextSplitMix();
+            _s1 = NextSplitMix();
+            _s2 = NextSplitMix();
+            _s3 = NextSplitMix();
+
+            if (_s0 == 0 && _s1 == 0 && _s2 == 0 && _s3 == 0)
+            {
+                _s0 = 0x9E3779B97F4A7C15UL;
+            }
+        }
+
+        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static ulong Rotl(ulong x, int k)
+        {
+            return (x << k) | (x >> (64 - k));
+        }
+
+        public ulong Next()
+        {
+            unchecked
+            {
+                ulong result = Rotl(_s0 + _s3, 23) + _s0;
+
+                ulong t = _s1 << 17;
+
+                _s2 ^= _s0;
+                _s3 ^= _s1;
+                _s1 ^= _s2;
+                _s0 ^= _s3;
+
+                _s2 ^= t;
+
+                _s3 = Rotl(_s3, 45);
+
+                return result;
+            }
+        }
+
+        public int NextInt(int maxExclusive)
+        {
+            if (maxExclusive <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxExclusive), "maxExclusive must be positive.");
+            }
+
+            unchecked
+            {
+                uint max = (uint)maxExclusive;
+                uint r = (uint)(Next() & 0xFFFFFFFFUL);
+                ulong product = (ulong)r * (ulong)max;
+                uint lsb = (uint)product;
+                if (lsb < max)
+                {
+                    uint threshold = unchecked((uint)-(int)max) % max;
+                    while (lsb < threshold)
+                    {
+                        r = (uint)(Next() & 0xFFFFFFFFUL);
+                        product = (ulong)r * (ulong)max;
+                        lsb = (uint)product;
+                    }
+                }
+                return (int)(product >> 32);
+            }
+        }
+
+        public int NextInt(int minInclusive, int maxExclusive)
+        {
+            if (minInclusive >= maxExclusive)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxExclusive), "maxExclusive must be greater than minInclusive.");
+            }
+
+            int range = maxExclusive - minInclusive;
+            return minInclusive + NextInt(range);
+        }
+
+        public bool NextBool()
+        {
+            return (Next() & 1UL) == 0UL;
+        }
+    }
+
     private sealed class EnvRandomSource : IDisposable
     {
-        private readonly Random? _random;
+        private readonly Xoshiro256PlusPlus? _xoshiro;
         private readonly bool _useCrypto;
         private readonly RandomNumberGenerator? _rng;
         private readonly byte[]? _buffer;
@@ -1361,14 +1463,13 @@ namespace EnvObfuscator
             }
             else
             {
-                _random = new Random(Seed);
-                _random.Next(); // one spin-up
+                _xoshiro = new Xoshiro256PlusPlus((ulong)(uint)Seed);
             }
         }
 
-        public int NextInt(int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(0, maxExclusive) : _random!.Next(maxExclusive);
-        public int NextInt(int minInclusive, int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(minInclusive, maxExclusive) : _random!.Next(minInclusive, maxExclusive);
-        public bool NextBool() => _useCrypto ? NextCryptoRangeInt32(0, 2) == 0 : _random!.Next(2) == 0;
+        public int NextInt(int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(0, maxExclusive) : _xoshiro!.NextInt(maxExclusive);
+        public int NextInt(int minInclusive, int maxExclusive) => _useCrypto ? NextCryptoRangeInt32(minInclusive, maxExclusive) : _xoshiro!.NextInt(minInclusive, maxExclusive);
+        public bool NextBool() => _useCrypto ? NextCryptoRangeInt32(0, 2) == 0 : _xoshiro!.NextBool();
         public int Seed { get; }
 
         public void Dispose()
