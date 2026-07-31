@@ -1356,11 +1356,14 @@ namespace EnvObfuscator
 
             ulong NextSplitMix()
             {
-                x = unchecked(x + 0x9E3779B97F4A7C15UL);
-                ulong z = x;
-                z = unchecked((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL);
-                z = unchecked((z ^ (z >> 27)) * 0x94D049BB133111EBUL);
-                return z ^ (z >> 31);
+                unchecked
+                {
+                    x = x + 0x9E3779B97F4A7C15UL;
+                    ulong z = x;
+                    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+                    z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+                    return z ^ (z >> 31);
+                }
             }
 
             _s0 = NextSplitMix();
@@ -1378,6 +1381,18 @@ namespace EnvObfuscator
         private static ulong Rotl(ulong x, int k)
         {
             return (x << k) | (x >> (64 - k));
+        }
+
+        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static void ThrowMaxExclusiveMustBePositive()
+        {
+            throw new ArgumentOutOfRangeException("maxExclusive", "maxExclusive must be positive.");
+        }
+
+        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static void ThrowMaxExclusiveMustBeGreaterThanMinInclusive()
+        {
+            throw new ArgumentOutOfRangeException("maxExclusive", "maxExclusive must be greater than minInclusive.");
         }
 
         public ulong Next()
@@ -1405,7 +1420,7 @@ namespace EnvObfuscator
         {
             if (maxExclusive <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxExclusive), "maxExclusive must be positive.");
+                ThrowMaxExclusiveMustBePositive();
             }
 
             unchecked
@@ -1432,7 +1447,7 @@ namespace EnvObfuscator
         {
             if (minInclusive >= maxExclusive)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxExclusive), "maxExclusive must be greater than minInclusive.");
+                ThrowMaxExclusiveMustBeGreaterThanMinInclusive();
             }
 
             int range = maxExclusive - minInclusive;
@@ -1463,7 +1478,7 @@ namespace EnvObfuscator
             }
             else
             {
-                _xoshiro = new Xoshiro256PlusPlus((ulong)(uint)Seed);
+                _xoshiro = new Xoshiro256PlusPlus(unchecked((ulong)(uint)Seed));
             }
         }
 
