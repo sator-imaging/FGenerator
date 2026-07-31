@@ -1414,7 +1414,7 @@ namespace EnvObfuscator
         {
             if (maxExclusive <= 0)
             {
-                ThrowArgumentOutOfRange("maxExclusive", "maxExclusive must be positive.");
+                ThrowArgumentOutOfRange(nameof(maxExclusive), "maxExclusive must be positive.");
             }
 
             unchecked
@@ -1441,7 +1441,7 @@ namespace EnvObfuscator
         {
             if (minInclusive >= maxExclusive)
             {
-                ThrowArgumentOutOfRange("maxExclusive", "maxExclusive must be greater than minInclusive.");
+                ThrowArgumentOutOfRange(nameof(maxExclusive), "maxExclusive must be greater than minInclusive.");
             }
 
             int range = maxExclusive - minInclusive;
