@@ -1384,15 +1384,9 @@ namespace EnvObfuscator
         }
 
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-        private static void ThrowMaxExclusiveMustBePositive()
+        private static void ThrowArgumentOutOfRange(string paramName, string message)
         {
-            throw new ArgumentOutOfRangeException("maxExclusive", "maxExclusive must be positive.");
-        }
-
-        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-        private static void ThrowMaxExclusiveMustBeGreaterThanMinInclusive()
-        {
-            throw new ArgumentOutOfRangeException("maxExclusive", "maxExclusive must be greater than minInclusive.");
+            throw new ArgumentOutOfRangeException(paramName, message);
         }
 
         public ulong Next()
@@ -1420,7 +1414,7 @@ namespace EnvObfuscator
         {
             if (maxExclusive <= 0)
             {
-                ThrowMaxExclusiveMustBePositive();
+                ThrowArgumentOutOfRange("maxExclusive", "maxExclusive must be positive.");
             }
 
             unchecked
@@ -1447,7 +1441,7 @@ namespace EnvObfuscator
         {
             if (minInclusive >= maxExclusive)
             {
-                ThrowMaxExclusiveMustBeGreaterThanMinInclusive();
+                ThrowArgumentOutOfRange("maxExclusive", "maxExclusive must be greater than minInclusive.");
             }
 
             int range = maxExclusive - minInclusive;
