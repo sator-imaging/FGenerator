@@ -174,7 +174,8 @@ PluginImporter:
 
     internal static partial class LogRegex
     {
-        [GeneratedRegex(@"\b(warning(\(s\)|s)?|error(\(s\)|s)?|warn|err)(?!\w)", RegexOptions.IgnoreCase)]
+        // Non-capturing groups keep the match groups limited to the complete warning or error token.
+        [GeneratedRegex(@"\b(?:warning(?:\(s\)|s)?|error(?:\(s\)|s)?|warn|err)(?!\w)", RegexOptions.IgnoreCase)]
         public static partial Regex WarningOrError();
     }
 }
