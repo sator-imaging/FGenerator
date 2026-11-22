@@ -34,9 +34,10 @@ namespace FGenerator.Cli
             try
             {
                 process.Start();
+                process.WaitForExit();
+
                 stdout = process.StandardOutput.ReadToEnd();
                 stderr = process.StandardError.ReadToEnd();
-                process.WaitForExit();
                 exitCode = process.ExitCode;
             }
             finally
