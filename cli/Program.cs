@@ -23,7 +23,6 @@ namespace FGenerator.Cli
             {
                 Console.OutputEncoding = Encoding.UTF8;
                 Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
-                return await MainCore(args);
             }
             // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
             catch
@@ -31,8 +30,15 @@ namespace FGenerator.Cli
             }
             finally
             {
-                Console.OutputEncoding = originalOutputEncoding;
-                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
+                try
+                {
+                    return await MainCore(args);
+                }
+                finally
+                {
+                    Console.OutputEncoding = originalOutputEncoding;
+                    Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
+                }
             }
 
             return 0;
