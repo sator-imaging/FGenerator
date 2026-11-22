@@ -12,22 +12,29 @@ namespace FGenerator.Cli
         const string AnsiColorRed = "\u001b[97;41m";
         const string AnsiColorYellow = "\u001b[97;43m";
         const string AnsiColorReset = "\u001b[0m";
+        const string ForceUtf8EnvironmentVariable = "DOTNET_CLI_FORCE_UTF8_ENCODING";
 
         public static int ExecuteProcessAndCapture(string exe, string arguments, out string stdout, out string stderr)
         {
+            var procInfo = new ProcessStartInfo
+            {
+                FileName = exe,
+                Arguments = arguments,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                StandardErrorEncoding = Encoding.UTF8,
+                StandardOutputEncoding = Encoding.UTF8,
+            };
+
+            // No effect prior to net11.0
+            procInfo.EnvironmentVariables[ForceUtf8EnvironmentVariable] = "true";
+            procInfo.Environment[ForceUtf8EnvironmentVariable] = "true";
+
             using var process = new Process
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = exe,
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    StandardErrorEncoding = Encoding.UTF8,
-                    StandardOutputEncoding = Encoding.UTF8,
-                }
+                StartInfo = procInfo,
             };
 
             int exitCode = -1;
