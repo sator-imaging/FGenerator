@@ -31,7 +31,17 @@ namespace FGenerator.Cli
             };
             using var process = new Process
             {
-                StartInfo = procInfo
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = exe,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    StandardErrorEncoding = Encoding.UTF8,
+                    StandardOutputEncoding = Encoding.UTF8,
+                };
             };
 
             int exitCode = -1;
