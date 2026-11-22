@@ -34,9 +34,14 @@ namespace FGenerator.Cli
             try
             {
                 process.Start();
-                stdout = process.StandardOutput.ReadToEnd();
-                stderr = process.StandardError.ReadToEnd();
+                
+                // NOTE: this utility is for CLI tools. ok to use GetAwaiter()
+                var stdoutTask = process.StandardOutput.ReadToEndAsync();
+                var stderrTask = process.StandardError.ReadToEndAsync();
+                
                 process.WaitForExit();
+                stdout = stdoutTask.GetAwaiter().GetResult();
+                stderr = stderrTask.GetAwaiter().GetResult();
                 exitCode = process.ExitCode;
             }
             finally
