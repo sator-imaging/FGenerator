@@ -34,10 +34,11 @@ namespace FGenerator.Cli
             try
             {
                 process.Start();
+var stdoutTask = process.StandardOutput.ReadToEndAsync();
+                var stderrTask = process.StandardError.ReadToEndAsync();
                 process.WaitForExit();
-
-                stdout = process.StandardOutput.ReadToEnd();
-                stderr = process.StandardError.ReadToEnd();
+                stdout = stdoutTask.GetAwaiter().GetResult();
+                stderr = stderrTask.GetAwaiter().GetResult();
                 exitCode = process.ExitCode;
             }
             finally
