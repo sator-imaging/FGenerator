@@ -12,17 +12,33 @@ namespace FGenerator.Cli
     {
         private const int CleanupRetryCount = 3;
         private const int CleanupRetryDelayMs = 500;
+        private const string ForceUtf8EnvironmentVariable = "DOTNET_CLI_FORCE_UTF8_ENCODING";
 
-        static async Task<int> Main(string[] args)
+        static void SetupUtf8Environment()
         {
             try
             {
                 Console.OutputEncoding = Encoding.UTF8;
             }
-            // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
-            catch
+            // Ignore exception: Console state may be unavailable when output is redirected or hosted outside a console.
+            catch (IOException)
             {
             }
+            catch (InvalidOperationException)
+            {
+            }
+
+            Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
+        }
+
+        static async Task<int> Main(string[] args)
+        {
+            var originalOutputEncoding = Console.OutputEncoding;
+            var originalForceUtf8Environment = Environment.GetEnvironmentVariable(ForceUtf8EnvironmentVariable);
+
+            try
+            {
+            SetupUtf8Environment();
 
             if (!EnsureRequiredDotnetVersion())
             {
@@ -103,6 +119,24 @@ namespace FGenerator.Cli
             };
 
             return await rootCommand.Parse(args).InvokeAsync();
+            }
+            finally
+            {
+                // Restore process-global UTF-8 state so this entry point leaves the host unchanged.
+                try
+                {
+                    Console.OutputEncoding = originalOutputEncoding;
+                }
+                // Ignore exception: Console state may be unavailable while the process is redirected or shutting down.
+                catch (IOException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+
+                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
+            }
         }
 
 
