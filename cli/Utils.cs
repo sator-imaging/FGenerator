@@ -18,17 +18,6 @@ namespace FGenerator.Cli
             stdout = "";
             stderr = "";
 
-            var procInfo = new ProcessStartInfo
-            {
-                FileName = exe,
-                Arguments = arguments,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                StandardErrorEncoding = Encoding.UTF8,
-                StandardOutputEncoding = Encoding.UTF8,
-            };
             using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
