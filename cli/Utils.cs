@@ -189,7 +189,7 @@ PluginImporter:
             Console.WriteLine($"Generated meta for: {dllFile.Name}");
         }
 
-        // https://github.com/sator-imaging/FGenerator/blob/main/cli/Utils.cs
+        // reference: https://github.com/sator-imaging/FUnit/blob/v1.8.1/cli/Program.cs#L562-L606
         static string Colorize(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
