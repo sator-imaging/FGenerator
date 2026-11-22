@@ -4,6 +4,7 @@
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using System.CommandLine;
+using System.Text;
 
 namespace FGenerator.Cli
 {
@@ -11,8 +12,42 @@ namespace FGenerator.Cli
     {
         private const int CleanupRetryCount = 3;
         private const int CleanupRetryDelayMs = 500;
+        private const string ForceUtf8EnvironmentVariable = "DOTNET_CLI_FORCE_UTF8_ENCODING";
 
         static async Task<int> Main(string[] args)
+        {
+            var originalOutputEncoding = Console.OutputEncoding;
+            var originalForceUtf8Environment = Environment.GetEnvironmentVariable(ForceUtf8EnvironmentVariable);
+
+            try
+            {
+                try
+                {
+                    Console.OutputEncoding = Encoding.UTF8;
+                    Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
+                }
+                // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
+                catch
+                {
+                }
+
+                return await MainCore(args);
+            }
+            finally
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
+                    Console.OutputEncoding = originalOutputEncoding;
+                }
+                // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
+                catch
+                {
+                }
+            }
+        }
+
+        static async Task<int> MainCore(string[] args)
         {
             if (!EnsureRequiredDotnetVersion())
             {
