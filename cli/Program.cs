@@ -14,23 +14,6 @@ namespace FGenerator.Cli
         private const int CleanupRetryDelayMs = 500;
         private const string ForceUtf8EnvironmentVariable = "DOTNET_CLI_FORCE_UTF8_ENCODING";
 
-        static void SetupUtf8Environment()
-        {
-            try
-            {
-                Console.OutputEncoding = Encoding.UTF8;
-            }
-            // Ignore exception: Console state may be unavailable when output is redirected or hosted outside a console.
-            catch (IOException)
-            {
-            }
-            catch (InvalidOperationException)
-            {
-            }
-
-            Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
-        }
-
         static async Task<int> Main(string[] args)
         {
             var originalOutputEncoding = Console.OutputEncoding;
@@ -38,8 +21,42 @@ namespace FGenerator.Cli
 
             try
             {
-            SetupUtf8Environment();
+                try
+                {
+                    Console.OutputEncoding = Encoding.UTF8;
+                }
+                // Ignore exception: Console state may be unavailable when output is redirected or hosted outside a console.
+                catch (IOException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
 
+                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
+                return await MainCore(args);
+            }
+            finally
+            {
+                // Restore process-global UTF-8 state so this entry point leaves the host unchanged.
+                try
+                {
+                    Console.OutputEncoding = originalOutputEncoding;
+                }
+                // Ignore exception: Console state may be unavailable while the process is redirected or shutting down.
+                catch (IOException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+
+                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
+            }
+        }
+
+        static async Task<int> MainCore(string[] args)
+        {
             if (!EnsureRequiredDotnetVersion())
             {
                 return 1;
@@ -119,24 +136,6 @@ namespace FGenerator.Cli
             };
 
             return await rootCommand.Parse(args).InvokeAsync();
-            }
-            finally
-            {
-                // Restore process-global UTF-8 state so this entry point leaves the host unchanged.
-                try
-                {
-                    Console.OutputEncoding = originalOutputEncoding;
-                }
-                // Ignore exception: Console state may be unavailable while the process is redirected or shutting down.
-                catch (IOException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-
-                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
-            }
         }
 
 
