@@ -21,38 +21,21 @@ namespace FGenerator.Cli
 
             try
             {
-                try
-                {
-                    Console.OutputEncoding = Encoding.UTF8;
-                }
-                // Ignore exception: Console state may be unavailable when output is redirected or hosted outside a console.
-                catch (IOException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-
+                Console.OutputEncoding = Encoding.UTF8;
                 Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
                 return await MainCore(args);
             }
+            // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
+            catch
+            {
+            }
             finally
             {
-                // Restore process-global UTF-8 state so this entry point leaves the host unchanged.
-                try
-                {
-                    Console.OutputEncoding = originalOutputEncoding;
-                }
-                // Ignore exception: Console state may be unavailable while the process is redirected or shutting down.
-                catch (IOException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-
+                Console.OutputEncoding = originalOutputEncoding;
                 Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
             }
+
+            return 1;
         }
 
         static async Task<int> MainCore(string[] args)
