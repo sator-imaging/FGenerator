@@ -35,7 +35,7 @@ namespace FGenerator.Cli
                 Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
             }
 
-            return 1;
+            return 0;
         }
 
         static async Task<int> MainCore(string[] args)
