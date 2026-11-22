@@ -30,7 +30,7 @@ namespace FGenerator.Cli
                     CreateNoWindow = true,
                     StandardErrorEncoding = Encoding.UTF8,
                     StandardOutputEncoding = Encoding.UTF8,
-                };
+                }
             };
 
             int exitCode = -1;
