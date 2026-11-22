@@ -15,9 +15,6 @@ namespace FGenerator.Cli
 
         public static int ExecuteProcessAndCapture(string exe, string arguments, out string stdout, out string stderr)
         {
-            stdout = "";
-            stderr = "";
-
             using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
