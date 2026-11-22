@@ -30,15 +30,8 @@ namespace FGenerator.Cli
             }
             finally
             {
-                try
-                {
-                    return await MainCore(args);
-                }
-                finally
-                {
-                    Console.OutputEncoding = originalOutputEncoding;
-                    Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
-                }
+                Console.OutputEncoding = originalOutputEncoding;
+                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
             }
 
             return 0;
