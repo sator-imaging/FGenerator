@@ -13,6 +13,13 @@ namespace FGenerator.Cli
         const string AnsiColorYellow = "\u001b[97;43m";
         const string AnsiColorReset = "\u001b[0m";
 
+        private static void SetupUtf8Environment(ProcessStartInfo procInfo)
+        {
+            // No effect prior to net11.0
+            procInfo.EnvironmentVariables["DOTNET_CLI_FORCE_UTF8_ENCODING"] = "true";
+            procInfo.Environment["DOTNET_CLI_FORCE_UTF8_ENCODING"] = "true";
+        }
+
         public static int ExecuteProcessAndCapture(string exe, string arguments, out string stdout, out string stderr)
         {
             stdout = "";
@@ -29,6 +36,8 @@ namespace FGenerator.Cli
                 StandardErrorEncoding = Encoding.UTF8,
                 StandardOutputEncoding = Encoding.UTF8,
             };
+            SetupUtf8Environment(procInfo);
+
             using var process = new Process
             {
                 StartInfo = procInfo

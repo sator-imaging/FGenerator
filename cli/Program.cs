@@ -12,131 +12,97 @@ namespace FGenerator.Cli
     {
         private const int CleanupRetryCount = 3;
         private const int CleanupRetryDelayMs = 500;
-        private const string ForceUtf8EnvironmentVariable = "DOTNET_CLI_FORCE_UTF8_ENCODING";
 
-        static void SetupUtf8Environment()
+        static async Task<int> Main(string[] args)
         {
             try
             {
                 Console.OutputEncoding = Encoding.UTF8;
             }
-            // Ignore exception: Console state may be unavailable when output is redirected or hosted outside a console.
-            catch (IOException)
-            {
-            }
-            catch (InvalidOperationException)
+            // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
+            catch
             {
             }
 
-            Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
-        }
-
-        static async Task<int> Main(string[] args)
-        {
-            var originalOutputEncoding = Console.OutputEncoding;
-            var originalForceUtf8Environment = Environment.GetEnvironmentVariable(ForceUtf8EnvironmentVariable);
-
-            try
+            if (!EnsureRequiredDotnetVersion())
             {
-                SetupUtf8Environment();
-
-                if (!EnsureRequiredDotnetVersion())
-                {
-                    return 1;
-                }
-
-                var outputOption = new Option<DirectoryInfo>(name: "--output", "-o")
-                {
-                    Description = "Output directory (defaults to current directory)",
-                };
-
-                var debugOption = new Option<bool>(name: "--debug")
-                {
-                    Description = "Build using Debug configuration (defaults to Release)",
-                };
-
-                var configOption = new Option<string>(name: "--configuration", "-c")
-                {
-                    Description = "Build configuration (defaults to Release)",
-                };
-
-                var mergeOption = new Option<bool>(name: "--merge")
-                {
-                    Description = "Merge resulting .DLL files into one",
-                };
-
-                var unityOption = new Option<bool>(name: "--unity")
-                {
-                    Description = "Enable Unity .meta file generation (Unity 2022.3.12 or newer)",
-                };
-
-                var forceOption = new Option<bool>(name: "--force", "-f")
-                {
-                    Description = "Force overwrite existing files without prompting",
-                };
-
-                var inputArgument = new Argument<string[]>(name: "input")
-                {
-                    Description = "Input .cs files or glob patterns to process. Supports * (match files) and ** (recursive). e.g., file.cs, **/*.cs",
-                    Arity = ArgumentArity.OneOrMore,
-                };
-
-
-                var buildCmd = new Command("build")
-                {
-                    outputOption,
-                    unityOption,
-                    mergeOption,
-                    forceOption,
-                    debugOption,
-                    configOption,
-                    inputArgument
-                };
-
-                buildCmd.SetAction(parseResult =>
-                {
-                    var input = parseResult.GetRequiredValue(inputArgument);
-                    var output = parseResult.GetValue(outputOption) ?? new DirectoryInfo(Directory.GetCurrentDirectory());
-                    var unity = parseResult.GetValue(unityOption);
-                    var merge = parseResult.GetValue(mergeOption);
-                    var force = parseResult.GetValue(forceOption);
-
-                    // Determine configuration: '-c' wins over '--debug'
-                    var configuration = parseResult.GetValue(debugOption) ? "Debug" : "Release";
-                    var configValue = parseResult.GetValue(configOption);
-                    if (!string.IsNullOrWhiteSpace(configValue))
-                    {
-                        configuration = configValue;
-                    }
-
-                    return RunBuildWithGlobPattern(input, output, unity, merge, force, configuration);
-                });
-
-
-                var rootCommand = new RootCommand("FGenerator Build Tool")
-                {
-                    buildCmd,
-                };
-
-                return await rootCommand.Parse(args).InvokeAsync();
+                return 1;
             }
-            finally
+
+            var outputOption = new Option<DirectoryInfo>(name: "--output", "-o")
             {
-                // Restore process-global UTF-8 state so this entry point leaves the host unchanged.
-                try
+                Description = "Output directory (defaults to current directory)",
+            };
+
+            var debugOption = new Option<bool>(name: "--debug")
+            {
+                Description = "Build using Debug configuration (defaults to Release)",
+            };
+
+            var configOption = new Option<string>(name: "--configuration", "-c")
+            {
+                Description = "Build configuration (defaults to Release)",
+            };
+
+            var mergeOption = new Option<bool>(name: "--merge")
+            {
+                Description = "Merge resulting .DLL files into one",
+            };
+
+            var unityOption = new Option<bool>(name: "--unity")
+            {
+                Description = "Enable Unity .meta file generation (Unity 2022.3.12 or newer)",
+            };
+
+            var forceOption = new Option<bool>(name: "--force", "-f")
+            {
+                Description = "Force overwrite existing files without prompting",
+            };
+
+            var inputArgument = new Argument<string[]>(name: "input")
+            {
+                Description = "Input .cs files or glob patterns to process. Supports * (match files) and ** (recursive). e.g., file.cs, **/*.cs",
+                Arity = ArgumentArity.OneOrMore,
+            };
+
+
+            var buildCmd = new Command("build")
+            {
+                outputOption,
+                unityOption,
+                mergeOption,
+                forceOption,
+                debugOption,
+                configOption,
+                inputArgument
+            };
+
+            buildCmd.SetAction(parseResult =>
+            {
+                var input = parseResult.GetRequiredValue(inputArgument);
+                var output = parseResult.GetValue(outputOption) ?? new DirectoryInfo(Directory.GetCurrentDirectory());
+                var unity = parseResult.GetValue(unityOption);
+                var merge = parseResult.GetValue(mergeOption);
+                var force = parseResult.GetValue(forceOption);
+
+                // Determine configuration: '-c' wins over '--debug'
+                var configuration = parseResult.GetValue(debugOption) ? "Debug" : "Release";
+                var configValue = parseResult.GetValue(configOption);
+                if (!string.IsNullOrWhiteSpace(configValue))
                 {
-                    Console.OutputEncoding = originalOutputEncoding;
-                }
-                // Ignore exception: Console state may be unavailable while the process is redirected or shutting down.
-                catch (IOException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
+                    configuration = configValue;
                 }
 
-                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
-            }
+                return RunBuildWithGlobPattern(input, output, unity, merge, force, configuration);
+            });
+
+
+            var rootCommand = new RootCommand("FGenerator Build Tool")
+            {
+                buildCmd,
+            };
+
+            return await rootCommand.Parse(args).InvokeAsync();
         }
 
 
