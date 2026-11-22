@@ -31,7 +31,7 @@ namespace FGenerator.Cli
             try
             {
                 Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
-                    return await MainCore(args);
+                return await MainCore(args);
             }
             finally
             {
