@@ -18,35 +18,34 @@ namespace FGenerator.Cli
         {
             var originalOutputEncoding = Console.OutputEncoding;
             var originalForceUtf8Environment = Environment.GetEnvironmentVariable(ForceUtf8EnvironmentVariable);
-            ExceptionDispatchInfo? error = null;
 
             try
             {
                 Console.OutputEncoding = Encoding.UTF8;
-                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
-
-                try
-                {
-                    return await MainCore(args);
-                }
-                catch (Exception e)
-                {
-                    error = ExceptionDispatchInfo.Capture(e);
-                    throw;
-                }
             }
             // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
             catch
             {
-                error?.Throw();
+            }
+
+            try
+            {
+                Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, "true");
+                    return await MainCore(args);
             }
             finally
             {
-                Console.OutputEncoding = originalOutputEncoding;
                 Environment.SetEnvironmentVariable(ForceUtf8EnvironmentVariable, originalForceUtf8Environment);
-            }
 
-            return 0;
+                try
+                {
+                    Console.OutputEncoding = originalOutputEncoding;
+                }
+                // Ignore exception: Setting Console.OutputEncoding can throw an exception if the console is not available or redirected in some environments. Wrap this in a try-catch block to prevent the CLI tool from crashing in those environments.
+                catch
+                {
+                }
+            }
         }
 
         static async Task<int> MainCore(string[] args)
